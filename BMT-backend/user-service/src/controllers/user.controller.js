@@ -21,11 +21,33 @@ exports.getProfile = asyncHandler(async(req, res) =>{
 })
 
 exports.updateProfile = asyncHandler(async(req, res) =>{
-     // TODO TASK FOR YOU
+     const userId = req.user.id;
+     if(!userId){
+          throw new BadRequestError("User Id is missing");
+     }
+
+     const { firstName, lastName, email } = req.body;
+     const user = await userService.updateProfile(userId, { firstName, lastName, email });
+     return res.status(200).json({
+          success: true,
+          message: "User profile updated successfully",
+          data: {
+               user
+          }
+     })
 })
 
 exports.deleteProfile = asyncHandler(async(req, res) =>{
-     // TODO TASK FOR YOU
+     const userId = req.user.id;
+     if(!userId){
+          throw new BadRequestError("User Id is missing");
+     }
+
+     await userService.deleteProfile(userId);
+     return res.status(200).json({
+          success: true,
+          message: "User deleted successfully"
+     })
 })
 
 exports.getUserInternal = asyncHandler(async(req, res) =>{

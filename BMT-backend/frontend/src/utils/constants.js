@@ -12,14 +12,14 @@ export const SEAT_STATUS_COLORS = {
   AVAILABLE: 'bg-green-500',
   LOCKED: 'bg-yellow-500',
   BOOKED: 'bg-red-400',
-  SELECTED: 'bg-blue-500',
+  SELECTED: 'bg-primary-600',
 };
 
 export const BOOKING_STATUS_COLORS = {
   PENDING: 'bg-yellow-100 text-yellow-800',
   SEATS_HELD: 'bg-yellow-100 text-yellow-800',
   PAYMENT_PENDING: 'bg-orange-100 text-orange-800',
-  CONFIRMING: 'bg-blue-100 text-blue-800',
+  CONFIRMING: 'bg-primary-50 text-primary-800',
   CONFIRMED: 'bg-green-100 text-green-800',
   CANCELLING: 'bg-red-100 text-red-800',
   FAILED: 'bg-red-100 text-red-800',

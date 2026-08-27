@@ -17,7 +17,7 @@ const COLORS = {
   success: 'bg-green-600',
   error: 'bg-red-600',
   warning: 'bg-yellow-500',
-  info: 'bg-blue-600',
+  info: 'bg-primary-600',
 };
 
 export function ToastProvider({ children }) {

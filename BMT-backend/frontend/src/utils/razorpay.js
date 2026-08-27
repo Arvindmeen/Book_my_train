@@ -26,7 +26,7 @@ export function openRazorpayCheckout({ keyId, orderId, amount, currency, booking
     amount,
     currency: currency || 'INR',
     order_id: orderId,
-    name: 'IRCTC Booking',
+    name: 'BooK my Train Booking',
     description: bookingDescription || 'Train Ticket Booking',
     prefill: {
       name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',

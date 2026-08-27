@@ -63,3 +63,4 @@ process.on("uncaughtException", (error) => {
 });
 
 startNotificationService();
+// Nodemon restart trigger at 2026-08-27T12:18:59.894Z

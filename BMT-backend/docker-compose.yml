@@ -15,8 +15,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - BMT-network
-  
-  pgadmin: 
+
+  pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
     environment:
@@ -95,7 +95,7 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     networks:
       - BMT-network
-  
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
     container_name: elasticsearch

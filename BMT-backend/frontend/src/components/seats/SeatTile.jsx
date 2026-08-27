@@ -5,7 +5,7 @@ const STATUS_STYLES = {
   LOCKED: 'bg-yellow-100 border-yellow-400 cursor-not-allowed opacity-60',
   BOOKED: 'bg-red-100 border-red-300 cursor-not-allowed opacity-60',
   CANCELLED: 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-40',
-  SELECTED: 'bg-blue-500 border-blue-600 text-white cursor-pointer ring-2 ring-blue-300',
+  SELECTED: 'bg-primary-600 border-primary-700 text-white cursor-pointer ring-2 ring-primary-300',
 };
 
 export default function SeatTile({ seat, isSelected, onToggle }) {
@@ -26,7 +26,7 @@ export default function SeatTile({ seat, isSelected, onToggle }) {
       title={`Seat #${seat.seatNumber} - ${formatSeatType(seat.seatType)} - ${formatCurrency(seat.price)}`}
     >
       <p className={`text-sm font-bold ${isSelected ? 'text-white' : ''}`}>#{seat.seatNumber}</p>
-      <p className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-gray-500'}`}>{formatSeatType(seat.seatType)}</p>
+      <p className={`text-[10px] ${isSelected ? 'text-primary-100' : 'text-gray-500'}`}>{formatSeatType(seat.seatType)}</p>
       <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-gray-700'}`}>{formatCurrency(seat.price)}</p>
     </button>
   );

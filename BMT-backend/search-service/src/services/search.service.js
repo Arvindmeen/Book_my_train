@@ -333,27 +333,52 @@ const resolveStation = async (input) => {
 
 /**
  * Autocomplete station names as user types.
+ * Uses multi_match with fuzzy for case-insensitive matching (completion suggester is case-sensitive).
  */
 const autocompleteStation = async (prefix) => {
      const result = await esClient.search({
           index: STATION_INDEX,
-          suggest: {
-               station_suggest: {
-                    prefix,
-                    completion: {
-                         field: 'suggest',
-                         fuzzy: { fuzziness: 'AUTO' },
-                         size: 10,
-                    },
+          query: {
+               bool: {
+                    should: [
+                         // Exact prefix match on code (highest priority)
+                         {
+                              prefix: {
+                                   code: { value: prefix.toUpperCase(), boost: 10 }
+                              }
+                         },
+                         // Fuzzy match on name
+                         {
+                              match: {
+                                   name: {
+                                        query: prefix,
+                                        fuzziness: 'AUTO',
+                                        prefix_length: 1,
+                                        boost: 5,
+                                   }
+                              }
+                         },
+                         // Fuzzy match on city
+                         {
+                              match: {
+                                   city: {
+                                        query: prefix,
+                                        fuzziness: 'AUTO',
+                                        prefix_length: 1,
+                                        boost: 3,
+                                   }
+                              }
+                         },
+                    ],
                },
           },
+          size: 10,
      });
 
-     const options = result.suggest.station_suggest[0]?.options || [];
-     return options.map((o) => ({
-          name: o._source.name,
-          code: o._source.code,
-          stationId: o._source.stationId,
+     return result.hits.hits.map((h) => ({
+          name: h._source.name,
+          code: h._source.code,
+          stationId: h._source.stationId,
      }));
 };
 

@@ -13,11 +13,11 @@ export default function BookingStatusPoller({ status }) {
   };
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+    <div className="bg-primary-50/50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900/30 rounded-lg p-4 flex items-center gap-3">
       <Spinner size="sm" />
       <div>
-        <p className="text-sm font-semibold text-blue-800">{messages[status] || 'Processing...'}</p>
-        <p className="text-xs text-blue-600 mt-0.5">This page will update automatically</p>
+        <p className="text-sm font-semibold text-primary-800 dark:text-primary-300">{messages[status] || 'Processing...'}</p>
+        <p className="text-xs text-primary-600 dark:text-primary-400 mt-0.5">This page will update automatically</p>
       </div>
     </div>
   );

@@ -5,11 +5,9 @@ const { ipRateLimit, endpointRateLimit, combinedRateLimit } = require('../middle
 const { config } = require('../config');
 
 const router = express.Router();
-
 // ===========================
 // Service Proxy Routes
 // ===========================
-
 /**
  * USER SERVICE ROUTES
  * Gateway Path: /api/users/auth/login
@@ -240,20 +238,16 @@ router.post(
      combinedRateLimit(),
      bookingServiceProxy
 );
-
 // ===========================
 // PAYMENT SERVICE ROUTES (webhook only - public)
 // ===========================
 const paymentServiceProxy = createProxy('paymentService', config.SERVICES.PAYMENT_SERVICE_URL);
-
 // Razorpay webhook (public — no auth, signature-verified by payment-service)
 router.post(
      '/payments/webhooks/razorpay',
      paymentServiceProxy
 );
-
 // Gateway Health Status
-
 router.get('/gateway/health', (req, res) => {
      res.status(200).json({
           success: true,
@@ -261,7 +255,6 @@ router.get('/gateway/health', (req, res) => {
           timestamp: new Date().toISOString()
      });
 });
-
 router.get('/gateway/circuit-breakers', (req, res) => {
      const status = getCircuitBreakerStatus();
      res.status(200).json({
