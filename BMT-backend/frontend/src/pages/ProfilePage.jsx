@@ -92,7 +92,7 @@ export default function ProfilePage() {
       { key: 'gender', label: 'Gender', isFilled: Boolean(user?.gender?.trim()) },
       { key: 'dateOfBirth', label: 'Date of Birth', isFilled: Boolean(user?.dateOfBirth) },
       { key: 'location', label: 'City & State', isFilled: Boolean(user?.city?.trim() || user?.state?.trim()) },
-      { key: 'irctcUsername', label: 'IRCTC User ID', isFilled: Boolean(user?.irctcUsername?.trim()) },
+      { key: 'irctcUsername', label: 'BooK my Train User ID', isFilled: Boolean(user?.irctcUsername?.trim()) },
       { key: 'preferences', label: 'Berth / Food Preference', isFilled: Boolean(user?.berthPreference && user?.berthPreference !== 'No Preference') },
       { key: 'emergency', label: 'Emergency Contact', isFilled: Boolean(user?.emergencyContactPhone?.trim()) },
     ];
@@ -341,7 +341,7 @@ export default function ProfilePage() {
               <span className="text-[10px] text-slate-500 block">Scoped to this account</span>
             </div>
             <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
-              <span className="text-slate-400 text-[11px] font-bold block">IRCTC ACCOUNT</span>
+              <span className="text-slate-400 text-[11px] font-bold block">BOOK MY TRAIN ACCOUNT</span>
               <span className="font-black text-base text-slate-900">
                 {user?.irctcUsername ? user.irctcUsername : 'Not Linked'}
               </span>
@@ -365,7 +365,7 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-                  Provide your missing contact, address, and IRCTC preferences below. Having a 100% complete profile enables <strong>sub-50ms Tatkal passenger auto-fill</strong> and automated instant UPI refunds without confirmation delays.
+                  Provide your missing contact, address, and BooK my Train preferences below. Having a 100% complete profile enables <strong>sub-50ms Tatkal passenger auto-fill</strong> and automated instant UPI refunds without confirmation delays.
                 </p>
               </div>
 
@@ -420,7 +420,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="font-extrabold text-slate-900 text-sm">{isAdmin ? 'Admin Profile 100% Complete & Active' : 'User Profile 100% Complete & Active'}</p>
-                <p className="text-slate-600 text-[11px]">All personal details, FastPass attributes &amp; IRCTC linkages are active.</p>
+                <p className="text-slate-600 text-[11px]">All personal details, FastPass attributes &amp; BooK my Train linkages are active.</p>
               </div>
             </div>
             <button
@@ -540,12 +540,12 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">IRCTC User ID (FastPass Sync)</label>
+                    <label className="block text-slate-700 font-bold mb-1">BooK my Train User ID (FastPass Sync)</label>
                     <input
                       type="text"
                       value={formData.irctcUsername}
                       onChange={(e) => setFormData({ ...formData, irctcUsername: e.target.value })}
-                      placeholder="e.g. arvind_irctc"
+                      placeholder="e.g. arvind_bmt"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-emerald-500 focus:outline-none text-xs"
                     />
                   </div>
@@ -850,7 +850,7 @@ export default function ProfilePage() {
             {/* Right Card: BMT FastPass Integration */}
             <div className="bg-white rounded-3xl border border-slate-200/90 shadow-card p-6 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="font-serif font-bold text-base text-slate-900">BMT FastPass &amp; IRCTC</h3>
+                <h3 className="font-serif font-bold text-base text-slate-900">BMT FastPass &amp; BooK my Train</h3>
                 <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                   Authorized Link
                 </span>
@@ -863,7 +863,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-600 font-medium">IRCTC User ID:</span>
+                  <span className="text-slate-600 font-medium">BooK my Train User ID:</span>
                   {user?.irctcUsername ? (
                     <span className="font-bold text-slate-900">{user.irctcUsername} (Linked ✓)</span>
                   ) : (
@@ -871,7 +871,7 @@ export default function ProfilePage() {
                       onClick={() => setIsEditing(true)}
                       className="text-amber-600 font-bold hover:underline"
                     >
-                      + Link IRCTC User ID
+                      + Link BooK my Train User ID
                     </button>
                   )}
                 </div>
