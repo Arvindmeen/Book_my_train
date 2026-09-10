@@ -6,15 +6,36 @@
 
 // Class capacity weights and cancellation turnover multipliers
 const CLASS_FACTORS = {
-  '1A': { turnover: 0.25, threshold: 6, maxSafeWl: 3, name: 'First AC (1A)' },
-  'EC': { turnover: 0.35, threshold: 8, maxSafeWl: 4, name: 'Executive Chair Car (EC)' },
-  '2A': { turnover: 0.55, threshold: 18, maxSafeWl: 12, name: '2 Tier AC (2A)' },
-  '3A': { turnover: 0.85, threshold: 45, maxSafeWl: 30, name: '3 Tier AC (3A)' },
-  '3E': { turnover: 0.80, threshold: 40, maxSafeWl: 25, name: '3 AC Economy (3E)' },
-  'CC': { turnover: 0.75, threshold: 35, maxSafeWl: 20, name: 'AC Chair Car (CC)' },
-  'SL': { turnover: 1.20, threshold: 90, maxSafeWl: 60, name: 'Sleeper Class (SL)' },
-  '2S': { turnover: 1.10, threshold: 70, maxSafeWl: 50, name: 'Second Sitting (2S)' },
+  '1A': { turnover: 0.25, chanceMultiplier: 0.30, maxSafeWl: 3, name: 'First AC (1A)' },
+  'EC': { turnover: 0.35, chanceMultiplier: 0.42, maxSafeWl: 4, name: 'Executive Chair Car (EC)' },
+  '2A': { turnover: 0.55, chanceMultiplier: 0.60, maxSafeWl: 12, name: '2 Tier AC (2A)' },
+  '3A': { turnover: 0.85, chanceMultiplier: 1, maxSafeWl: 30, name: '3 Tier AC (3A)' },
+  '3E': { turnover: 0.80, chanceMultiplier: 0.92, maxSafeWl: 25, name: '3 AC Economy (3E)' },
+  'CC': { turnover: 0.75, chanceMultiplier: 0.85, maxSafeWl: 20, name: 'AC Chair Car (CC)' },
+  'SL': { turnover: 1.20, chanceMultiplier: 1.35, maxSafeWl: 60, name: 'Sleeper Class (SL)' },
+  '2S': { turnover: 1.10, chanceMultiplier: 1.20, maxSafeWl: 50, name: 'Second Sitting (2S)' },
 };
+
+// Baseline 3A confirmation chance by WL position. Values between points are
+// linearly interpolated, keeping the estimate predictable and easy to explain.
+const WL_CHANCE_CURVE = [
+  [0, 98], [1, 92], [5, 85], [10, 75], [20, 60], [30, 45],
+  [40, 30], [50, 15], [60, 8], [70, 3], [80, 1], [100, 1],
+];
+
+function getBaselineWlChance(wlPos) {
+  for (let index = 1; index < WL_CHANCE_CURVE.length; index += 1) {
+    const [previousPosition, previousChance] = WL_CHANCE_CURVE[index - 1];
+    const [nextPosition, nextChance] = WL_CHANCE_CURVE[index];
+
+    if (wlPos <= nextPosition) {
+      const progress = (wlPos - previousPosition) / (nextPosition - previousPosition);
+      return previousChance + (nextChance - previousChance) * Math.max(0, progress);
+    }
+  }
+
+  return 1;
+}
 
 /**
  * Predict confirmation probability for a given Waitlist or RAC position
@@ -75,14 +96,13 @@ export function predictWaitlist(trainNumber = '12301', classCode = '3A', statusS
 
   const classConfig = CLASS_FACTORS[classCode.toUpperCase()] || CLASS_FACTORS['3A'];
   const turnover = classConfig.turnover;
-  const threshold = classConfig.threshold;
 
-  // Formula: Decay function based on position vs class threshold & time
-  // Probability = 100 / (1 + (wlPos / threshold)^1.75) * (1 + 0.05 * Math.min(daysToDeparture, 7))
-  const timeBonus = 1 + (Math.min(daysToDeparture, 5) * 0.03);
-  const baseRatio = Math.pow(wlPos / threshold, 1.6);
-  let rawProb = (100 / (1 + baseRatio)) * timeBonus;
-  rawProb = Math.max(12, Math.min(96, rawProb)); // Cap between 12% and 96%
+  // WL 40 / 50 / 80 in 3A map to 30% / 15% / 1% respectively.
+  // Premium classes have fewer berths and lower turnover; Sleeper has more.
+  const baseChance = getBaselineWlChance(wlPos);
+  const departureTimeAdjustment = 1 + Math.max(-0.08, Math.min(0.10, (daysToDeparture - 2) * 0.02));
+  let rawProb = baseChance * classConfig.chanceMultiplier * departureTimeAdjustment;
+  rawProb = Math.max(1, Math.min(96, rawProb));
   const probability = Math.round(rawProb);
 
   let level = 'LOW';

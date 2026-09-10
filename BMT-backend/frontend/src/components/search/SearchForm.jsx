@@ -21,6 +21,7 @@ export default function SearchForm({ compact }) {
   const [travelDate, setTravelDate] = useState(date || new Date().toISOString().split('T')[0]);
   const [selectedQuota, setSelectedQuota] = useState(quota || 'GN');
   const [swapRotated, setSwapRotated] = useState(false);
+  const [autocompleteCloseSignal, setAutocompleteCloseSignal] = useState(0);
   const navigate = useNavigate();
   const showToast = useToast();
 
@@ -50,6 +51,7 @@ export default function SearchForm({ compact }) {
       return;
     }
 
+    setAutocompleteCloseSignal((signal) => signal + 1);
     setSearchParams(fromQuery, toQuery, travelDate, selectedQuota);
     setQuota(selectedQuota);
     setSearching(true);
@@ -116,6 +118,7 @@ export default function SearchForm({ compact }) {
             label="From Station"
             value={fromValue}
             onChange={(val) => setFromValue(val)}
+            closeSignal={autocompleteCloseSignal}
             placeholder="Boarding station or code"
             icon="🟢"
           />
@@ -147,6 +150,7 @@ export default function SearchForm({ compact }) {
             label="To Destination"
             value={toValue}
             onChange={(val) => setToValue(val)}
+            closeSignal={autocompleteCloseSignal}
             placeholder="Destination station or code"
             icon="🔴"
           />

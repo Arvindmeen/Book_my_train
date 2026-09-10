@@ -10,6 +10,11 @@ const {
     getBookingConfirmedTemplate,
     getBookingFailedTemplate,
     getBookingCancelledTemplate,
+    getOtpText,
+    getWelcomeText,
+    getBookingConfirmedText,
+    getBookingFailedText,
+    getBookingCancelledText,
 } = require("../templates");
 
 const transporter = nodemailer.createTransport({
@@ -74,7 +79,8 @@ class EmailService {
 
             subject: "Your Book My Train Verification Code",
 
-            html: getOtpTemplate(otp, ttlMinutes)
+            html: getOtpTemplate(otp, ttlMinutes),
+            text: getOtpText(otp, ttlMinutes)
 
         });
 
@@ -90,7 +96,8 @@ class EmailService {
 
             subject: "Welcome to Book My Train",
 
-            html: getWelcomeTemplate(firstName)
+            html: getWelcomeTemplate(firstName),
+            text: getWelcomeText(firstName)
 
         });
 
@@ -106,7 +113,8 @@ class EmailService {
 
             subject: `Booking Confirmed - ${bookingData.trainName || "Your Train Ticket"}`,
 
-            html: getBookingConfirmedTemplate(bookingData)
+            html: getBookingConfirmedTemplate(bookingData),
+            text: getBookingConfirmedText(bookingData)
 
         });
 
@@ -122,7 +130,8 @@ class EmailService {
 
             subject: "Booking Failed",
 
-            html: getBookingFailedTemplate(bookingData)
+            html: getBookingFailedTemplate(bookingData),
+            text: getBookingFailedText(bookingData)
 
         });
 
@@ -138,7 +147,8 @@ class EmailService {
 
             subject: "Booking Cancelled",
 
-            html: getBookingCancelledTemplate(bookingData)
+            html: getBookingCancelledTemplate(bookingData),
+            text: getBookingCancelledText(bookingData)
 
         });
 

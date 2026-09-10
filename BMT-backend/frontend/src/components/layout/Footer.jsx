@@ -1,4 +1,8 @@
+import { useNavigate } from 'react-router-dom';
+
 export default function Footer() {
+  const navigate = useNavigate();
+
   return (
     <footer className="mt-auto bg-gradient-to-b from-slate-50/80 via-white to-white border-t border-slate-200/90 text-slate-600 text-sm relative overflow-hidden">
       
@@ -11,7 +15,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Highlight 1: Instant Reservation */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5">
+          <div onClick={() => navigate('/?feature=tatkal')} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && navigate('/?feature=tatkal')} className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5 cursor-pointer">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-50 to-orange-50 text-amber-600 border border-amber-200/70 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform flex-shrink-0 shadow-xs">
               <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -28,7 +32,7 @@ export default function Footer() {
           </div>
 
           {/* Highlight 2: Zero Convenience Fee */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5">
+          <div onClick={() => navigate('/?feature=cancellation')} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && navigate('/?feature=cancellation')} className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5 cursor-pointer">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-50 to-teal-50 text-emerald-600 border border-emerald-200/70 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform flex-shrink-0 shadow-xs">
               <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -45,7 +49,7 @@ export default function Footer() {
           </div>
 
           {/* Highlight 3: 100% Secure Refunds */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5">
+          <div onClick={() => navigate('/?feature=refund')} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && navigate('/?feature=refund')} className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5 cursor-pointer">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-50 to-indigo-50 text-blue-600 border border-blue-200/70 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform flex-shrink-0 shadow-xs">
               <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -62,7 +66,7 @@ export default function Footer() {
           </div>
 
           {/* Highlight 4: AI Waitlist Predictor */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5">
+          <div onClick={() => navigate('/?feature=predictor')} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && navigate('/?feature=predictor')} className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-card-hover hover:border-emerald-400 hover:-translate-y-1.5 transition-all duration-300 group flex items-center gap-3.5 cursor-pointer">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-50 to-indigo-50 text-purple-600 border border-purple-200/70 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform flex-shrink-0 shadow-xs">
               <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -82,17 +86,17 @@ export default function Footer() {
       </div>
 
       {/* Main Footer Columns */}
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
+      <div className="max-w-7xl mx-auto px-4 pt-8 pb-2 sm:pt-12 sm:pb-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-10">
           
           {/* Column 1: Brand & Security Badges (Span 4) */}
-          <div className="lg:col-span-4 space-y-4">
+          <div className="lg:col-span-4 space-y-4 max-sm:rounded-2xl max-sm:border max-sm:border-slate-200 max-sm:bg-white max-sm:p-4 max-sm:shadow-sm">
             <div className="flex items-center gap-3 group">
-              <div className="relative flex items-center justify-center bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-500 text-white rounded-2xl p-2.5 shadow-md shadow-emerald-500/25 group-hover:scale-105 group-hover:shadow-emerald-500/40 transition-all duration-300">
-                <svg className="w-6 h-6 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </div>
+              <img
+                src="/navbar-logo.jpg"
+                alt="BooK my Train logo"
+                className="w-12 h-12 rounded-2xl border-2 border-emerald-500 bg-white object-cover shadow-md shadow-emerald-500/20 group-hover:scale-105 group-hover:shadow-emerald-500/35 transition-all duration-300"
+              />
               <span className="font-display font-black text-2xl text-slate-900 tracking-tight">
                 BooK my <span className="text-emerald-600 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Train</span>
               </span>
@@ -120,37 +124,37 @@ export default function Footer() {
           </div>
 
           {/* Column 2: Book Services (Span 2.5) */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-3 max-sm:rounded-2xl max-sm:border max-sm:border-slate-200 max-sm:bg-slate-50/70 max-sm:p-4">
             <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-2 border-emerald-500 pl-2.5">
               Book Services
             </h4>
-            <ul className="space-y-2 text-xs font-semibold text-slate-600">
+            <ul className="space-y-2 text-xs font-semibold text-slate-600 max-sm:space-y-0">
               <li>
-                <a href="/search" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="/search" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Book Train Tickets</span>
                 </a>
               </li>
               <li>
-                <a href="/pnr" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="/pnr" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Check PNR Live Status</span>
                 </a>
               </li>
               <li>
-                <a href="/services" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="/services" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Food on Track (E-Catering)</span>
                 </a>
               </li>
               <li>
-                <a href="/services" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="/services" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Hotels &amp; Station Lounges</span>
                 </a>
               </li>
               <li>
-                <a href="/services" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="/services" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Connecting Flights &amp; Cabs</span>
                 </a>
@@ -159,37 +163,37 @@ export default function Footer() {
           </div>
 
           {/* Column 3: Support & Legal (Span 2.5) */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-3 max-sm:rounded-2xl max-sm:border max-sm:border-slate-200 max-sm:bg-slate-50/70 max-sm:p-4">
             <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-2 border-emerald-500 pl-2.5">
               Support &amp; Legal
             </h4>
-            <ul className="space-y-2 text-xs font-semibold text-slate-600">
+            <ul className="space-y-2 text-xs font-semibold text-slate-600 max-sm:space-y-0">
               <li>
-                <a href="#terms" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="#terms" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Terms &amp; Conditions</span>
                 </a>
               </li>
               <li>
-                <a href="#privacy" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="#privacy" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Privacy Policy</span>
                 </a>
               </li>
               <li>
-                <a href="#refund" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="#refund" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Cancellation &amp; Refund Rules</span>
                 </a>
               </li>
               <li>
-                <a href="#helpdesk" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="#helpdesk" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Customer Care Helpline (139)</span>
                 </a>
               </li>
               <li>
-                <a href="#faq" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                <a href="#faq" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Frequently Asked Questions</span>
                 </a>
@@ -198,7 +202,7 @@ export default function Footer() {
           </div>
 
           {/* Column 4: Contact & Creator Desk (Span 3) - NAME ABOVE ADDRESS, REAL ICONS, ADDRESS LAST! */}
-          <div className="lg:col-span-4 space-y-3.5">
+          <div className="lg:col-span-4 space-y-3.5 max-sm:rounded-2xl max-sm:border max-sm:border-slate-200 max-sm:bg-white max-sm:p-4 max-sm:shadow-sm">
             <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-2 border-emerald-500 pl-2.5">
               Contact &amp; Developer
             </h4>
@@ -215,12 +219,11 @@ export default function Footer() {
                   title="Visit Arvind Meena's Portfolio: https://arvindmeena.vercel.app/"
                 >
                   <div className="flex items-center gap-2.5">
-                    {/* Real Avatar/Code SVG */}
-                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
+                    <img
+                      src="/arvind-meena.jpg"
+                      alt="Arvind Meena"
+                      className="w-10 h-10 rounded-xl border-2 border-white object-cover shadow-sm group-hover:scale-105 transition-transform flex-shrink-0"
+                    />
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">
                         Lead Developer &amp; Creator
@@ -338,9 +341,9 @@ export default function Footer() {
         </div>
 
         {/* Footer Bottom Line */}
-        <div className="mt-12 pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+        <div className="mt-6 pt-3 sm:mt-8 sm:pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 text-[11px] sm:text-xs text-slate-500 font-medium">
           <p>
-            &copy; {new Date().getFullYear()} BooK my Train Ltd. Crafted with precision for Indian Railways by{' '}
+            &copy; {new Date().getFullYear()} BooK my Train. All rights reserved. Designed and developed by{' '}
             <a
               href="https://arvindmeena.vercel.app/"
               target="_blank"
@@ -351,8 +354,8 @@ export default function Footer() {
             </a>
             .
           </p>
-          <p className="text-slate-400 text-center sm:text-right">
-            BooK my Train &mdash; Next-Gen Rail Architecture &middot; High Throughput &middot; Passenger-First
+          <p className="hidden sm:block text-slate-400 text-center sm:text-right">
+            Built for smarter Indian rail travel &middot; Fast, secure, passenger-first
           </p>
         </div>
 

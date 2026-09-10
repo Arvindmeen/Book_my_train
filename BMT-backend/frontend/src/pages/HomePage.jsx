@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SearchForm from '../components/search/SearchForm';
 import StationAutocomplete from '../components/search/StationAutocomplete';
 import BookingCard from '../components/bookings/BookingCard';
@@ -243,6 +243,7 @@ export default function HomePage() {
   const [recentBookings, setRecentBookings] = useState([]);
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // Tab states: search | pnr | live | food | hotels | flights
   const [activeTab, setActiveTab] = useState('search');
@@ -297,6 +298,15 @@ export default function HomePage() {
 
   // Speed feature modal: 'predictor' | 'refund' | 'cancellation' | 'tatkal' | null
   const [activeSpeedModal, setActiveSpeedModal] = useState(null);
+
+  useEffect(() => {
+    const feature = searchParams.get('feature');
+    const supportedFeatures = ['predictor', 'refund', 'cancellation', 'tatkal'];
+
+    if (supportedFeatures.includes(feature)) {
+      setActiveSpeedModal(feature);
+    }
+  }, [searchParams]);
 
   // AI Predictor interactive states
   const [predictorTab, setPredictorTab] = useState('calc'); // 'calc' | 'pnr'

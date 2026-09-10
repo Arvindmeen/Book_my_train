@@ -5,7 +5,7 @@ import { searchApi } from '../../api/search.api';
 /**
  * Modern Groww-style station autocomplete input with map pin and code badges.
  */
-export default function StationAutocomplete({ label, value, onChange, placeholder, icon }) {
+export default function StationAutocomplete({ label, value, onChange, placeholder, icon, closeSignal }) {
   const [query, setQuery] = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
@@ -13,26 +13,35 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
   const [selectedFromDropdown, setSelectedFromDropdown] = useState(!!value);
   const debouncedQuery = useDebounce(query, 250);
   const wrapperRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
+    if (selectedFromDropdown || debouncedQuery.length < 2) {
       setSuggestions([]);
+      setOpen(false);
       return;
     }
     let cancelled = false;
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     searchApi.autocomplete(debouncedQuery).then((res) => {
-      if (!cancelled) {
+      if (!cancelled && requestId === requestIdRef.current) {
         setSuggestions(res.data || []);
         setOpen(true);
       }
     }).catch(() => {
-      if (!cancelled) setSuggestions([]);
+      if (!cancelled && requestId === requestIdRef.current) setSuggestions([]);
     }).finally(() => {
-      if (!cancelled) setLoading(false);
+      if (!cancelled && requestId === requestIdRef.current) setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, selectedFromDropdown]);
+
+  useEffect(() => {
+    requestIdRef.current += 1;
+    setOpen(false);
+    setSuggestions([]);
+  }, [closeSignal]);
 
   useEffect(() => {
     function handleClickOutside(e) {
