@@ -64,14 +64,8 @@ export default function PwaInstallModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Gradient Banner */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-3xl mx-auto shadow-md shadow-emerald-500/25">
-          <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <rect x="4" y="3" width="16" height="16" rx="2" />
-            <path d="M4 11h16" />
-            <path d="M12 3v8" />
-            <circle cx="8" cy="15" r="1.5" fill="currentColor" />
-            <circle cx="16" cy="15" r="1.5" fill="currentColor" />
-          </svg>
+        <div className="w-16 h-16 rounded-2xl bg-white border border-emerald-200 p-1.5 flex items-center justify-center mx-auto shadow-md shadow-emerald-500/25">
+          <img src="/navbar-logo.jpg" alt="BooK my Train logo" className="w-full h-full rounded-xl object-contain" />
         </div>
 
         <div>

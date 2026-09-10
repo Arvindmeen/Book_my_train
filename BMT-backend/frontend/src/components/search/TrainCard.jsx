@@ -186,7 +186,9 @@ export default function TrainCard({ train }) {
               </span>
               <div className="w-full flex items-center">
                 <div className="h-1 bg-slate-200 rounded-full flex-1" />
-                <span className="px-2 text-emerald-600 text-sm animate-pulse">🚄</span>
+                <span className="px-2 animate-pulse">
+                  <img src="/navbar-logo.jpg" alt="Train route" className="w-5 h-5 rounded-md object-contain" />
+                </span>
                 <div className="h-1 bg-slate-200 rounded-full flex-1" />
               </div>
               <span className="text-[10px] text-emerald-700 font-bold mt-1">

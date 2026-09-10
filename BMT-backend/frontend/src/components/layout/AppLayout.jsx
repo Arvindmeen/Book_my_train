@@ -3,6 +3,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import { ToastProvider } from '../ui/Toast';
 import ErrorBoundary from '../common/ErrorBoundary';
+import SupportChatbot from '../common/SupportChatbot';
 
 export default function AppLayout() {
   return (
@@ -15,6 +16,7 @@ export default function AppLayout() {
           </ErrorBoundary>
         </main>
         <Footer />
+        <SupportChatbot />
       </div>
     </ToastProvider>
   );

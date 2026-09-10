@@ -612,7 +612,7 @@ export default function ProfilePage() {
               {/* SECTION C: Rail Travel & Emergency Preferences */}
               <div className="space-y-3">
                 <h4 className="font-extrabold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5 pb-1 border-b border-slate-150">
-                  <span>🚄</span>
+                  <img src="/navbar-logo.jpg" alt="Train" className="w-4 h-4 rounded object-contain" />
                   <span>Travel Preferences &amp; Emergency Contact</span>
                 </h4>
 

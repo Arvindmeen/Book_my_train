@@ -573,7 +573,7 @@ export default function HomePage() {
 
             {/* 2. Main Heading: Clean normal font like Claude (Inter), smaller refined size, and using "and" */}
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-bold tracking-tight leading-snug text-slate-900 text-center">
-              Next-Gen Express Rail and <span className="text-emerald-600">Smart Tatkal</span> Portal
+              Next-Gen Express Rail and <span className="text-emerald-600">Smart Tikat</span> Portal
             </h1>
 
             {/* 3. Interactive Typewriter Line (Borderless chip, Explore: static in place, content moves forward) */}
@@ -624,13 +624,7 @@ export default function HomePage() {
                 }`}
               >
                 {/* Train Vector SVG */}
-                <svg className={`w-4 h-4 ${activeTab === 'search' ? 'text-white' : 'text-emerald-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <rect x="4" y="3" width="16" height="16" rx="2" />
-                  <path d="M4 11h16" />
-                  <path d="M12 3v8" />
-                  <circle cx="8" cy="15" r="1" fill="currentColor" />
-                  <circle cx="16" cy="15" r="1" fill="currentColor" />
-                </svg>
+                <img src="/navbar-logo.jpg" alt="BooK my Train logo" className="w-4 h-4 rounded object-contain" />
                 <span>Book Tickets</span>
               </button>
 
@@ -2851,8 +2845,12 @@ export default function HomePage() {
               
               {/* App Identity Row */}
               <div className="flex items-center justify-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-xl shadow-md shadow-emerald-500/25">
-                  🚅
+                <div className="w-11 h-11 rounded-2xl bg-white border border-emerald-200 flex items-center justify-center p-1 shadow-md shadow-emerald-500/25">
+                  <img
+                    src="/navbar-logo.jpg"
+                    alt="BooK my Train logo"
+                    className="h-full w-full rounded-xl object-contain"
+                  />
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-1.5">
