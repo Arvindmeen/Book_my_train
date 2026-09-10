@@ -7,7 +7,7 @@ import { loadRazorpayScript, openRazorpayCheckout } from '../../utils/razorpay';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 
-export default function PaymentButton({ passengers, scheduleId, seatIds, disabled }) {
+export default function PaymentButton({ passengers, scheduleId, seatIds, disabled, tripShield }) {
   const [loading, setLoading] = useState(false);
   const user = useAuthStore((s) => s.user);
   const reset = useBookingStore((s) => s.reset);
@@ -23,6 +23,7 @@ export default function PaymentButton({ passengers, scheduleId, seatIds, disable
       // --- SEGMENT BOOKING: Include fromStation/toStation segment params ---
       const res = await bookingApi.create({
         scheduleId, seatIds, passengers, idempotencyKey,
+        tripShield: Boolean(tripShield),
         fromStationId: fromStation?.stationId,
         toStationId: toStation?.stationId,
         fromSeq: fromStation?.sequenceNumber,

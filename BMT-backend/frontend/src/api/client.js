@@ -49,7 +49,27 @@ client.interceptors.response.use(
     }
 
     // Extract error message from backend response
-    const msg = error.response?.data?.message || error.response?.data?.error || error.message;
+    let msg = error.response?.data?.message || error.response?.data?.error || error.message;
+
+    // Detect service down, network disconnection, or 5xx outage
+    const isServiceDown =
+      !error.response ||
+      error.code === 'ERR_NETWORK' ||
+      error.response.status >= 500 ||
+      (typeof msg === 'string' && (
+        msg.includes('Network Error') ||
+        msg.includes('Failed to fetch') ||
+        msg.includes('ECONNREFUSED') ||
+        msg.includes('ENOTFOUND') ||
+        msg.includes('502') ||
+        msg.includes('503') ||
+        msg.includes('504')
+      ));
+
+    if (isServiceDown) {
+      msg = 'Currently this service is temporarily undergoing maintenance. We will connect back soon!';
+    }
+
     const enhancedError = new Error(msg);
     enhancedError.status = error.response?.status;
     enhancedError.code = error.response?.data?.code;

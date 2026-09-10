@@ -3,19 +3,15 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { searchApi } from '../../api/search.api';
 
 /**
- * Station autocomplete input.
- * onChange(value) is called:
- *   - with station.code when user clicks a suggestion
- *   - with the raw typed text on blur (so user can also just type and search)
+ * Modern Groww-style station autocomplete input with map pin and code badges.
  */
-export default function StationAutocomplete({ label, value, onChange, placeholder }) {
+export default function StationAutocomplete({ label, value, onChange, placeholder, icon }) {
   const [query, setQuery] = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Track whether the user explicitly selected from dropdown
   const [selectedFromDropdown, setSelectedFromDropdown] = useState(!!value);
-  const debouncedQuery = useDebounce(query, 300);
+  const debouncedQuery = useDebounce(query, 250);
   const wrapperRef = useRef(null);
 
   useEffect(() => {
@@ -48,7 +44,6 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Sync external value changes (e.g. swap button)
   useEffect(() => {
     if (value !== undefined && value !== query) {
       setQuery(value);
@@ -73,45 +68,63 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
     }
   };
 
-  // On blur: if user typed something but didn't select from dropdown, use typed text
   const handleBlur = () => {
     setTimeout(() => {
       setOpen(false);
       if (!selectedFromDropdown && query.trim().length >= 2) {
-        // Pass the raw typed query — backend resolveStation handles fuzzy matching
         onChange(query.trim());
       }
-    }, 150); // small delay so click on suggestion fires first
+    }, 150);
   };
 
   return (
     <div className="relative" ref={wrapperRef}>
-      {label && <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}</label>}
-      <input
-        type="text"
-        value={query}
-        onChange={handleInputChange}
-        onBlur={handleBlur}
-        onFocus={() => suggestions.length > 0 && setOpen(true)}
-        placeholder={placeholder}
-        className="input-field"
-        autoComplete="off"
-      />
-      {loading && (
-        <div className="absolute right-3 top-[38px]">
-          <div className="animate-spin h-4 w-4 border-b-2 border-primary-900 rounded-full" />
-        </div>
+      {label && (
+        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+          {label}
+        </label>
       )}
+      <div className="relative flex items-center">
+        <span className="absolute left-3.5 text-slate-400 pointer-events-none text-sm">
+          {icon || (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          )}
+        </span>
+        <input
+          type="text"
+          value={query}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          onFocus={() => suggestions.length > 0 && setOpen(true)}
+          placeholder={placeholder}
+          className="input-field pl-10 pr-9 font-medium text-slate-800 focus:bg-white"
+          autoComplete="off"
+        />
+        {loading && (
+          <div className="absolute right-3">
+            <div className="animate-spin h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full" />
+          </div>
+        )}
+      </div>
+
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-30 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+        <ul className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-card-hover max-h-60 overflow-y-auto p-1.5 animate-scale-in">
           {suggestions.map((s) => (
             <li
               key={s.stationId || s.code}
-              onMouseDown={() => handleSelect(s)}  // mousedown fires before blur
-              className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-sm flex justify-between"
+              onMouseDown={() => handleSelect(s)}
+              className="px-3.5 py-2.5 hover:bg-emerald-50/70 rounded-xl cursor-pointer text-sm flex items-center justify-between transition-colors group"
             >
-              <span className="font-medium">{s.name}</span>
-              <span className="text-slate-400 dark:text-slate-500 text-xs font-bold">{s.code}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-slate-400 group-hover:text-emerald-600 transition-colors">🚉</span>
+                <span className="font-semibold text-slate-800 truncate group-hover:text-slate-900">{s.name}</span>
+              </div>
+              <span className="text-emerald-800 bg-emerald-100 font-bold text-xs px-2 py-0.5 rounded-md ml-2 flex-shrink-0">
+                {s.code}
+              </span>
             </li>
           ))}
         </ul>

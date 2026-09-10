@@ -1,17 +1,17 @@
 const items = [
-  { label: 'Available', color: 'bg-green-100 border-green-400' },
-  { label: 'Selected', color: 'bg-primary-600 border-primary-750' },
-  { label: 'Locked', color: 'bg-yellow-100 border-yellow-400' },
-  { label: 'Booked', color: 'bg-red-100 border-red-300' },
+  { label: 'Available', color: 'bg-white border-emerald-400' },
+  { label: 'Selected', color: 'bg-emerald-600 border-emerald-700' },
+  { label: 'Held', color: 'bg-amber-50 border-amber-300' },
+  { label: 'Booked', color: 'bg-slate-100 border-slate-300' },
 ];
 
 export default function SeatLegend() {
   return (
-    <div className="flex flex-wrap gap-4 mb-4">
+    <div className="flex flex-wrap gap-4 items-center">
       {items.map((item) => (
-        <div key={item.label} className="flex items-center gap-2">
-          <span className={`w-5 h-5 rounded border-2 ${item.color}`} />
-          <span className="text-xs text-gray-600">{item.label}</span>
+        <div key={item.label} className="flex items-center gap-1.5">
+          <span className={`w-3.5 h-3.5 rounded-md border-2 ${item.color}`} />
+          <span className="text-xs font-semibold text-slate-600">{item.label}</span>
         </div>
       ))}
     </div>

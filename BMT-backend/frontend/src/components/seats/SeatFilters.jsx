@@ -5,18 +5,22 @@ export default function SeatFilters({ activeFilter, onChange }) {
     <div className="flex flex-wrap gap-2 mb-4">
       <button
         onClick={() => onChange(null)}
-        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-          !activeFilter ? 'bg-primary-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+          !activeFilter
+            ? 'bg-slate-900 text-white shadow-xs'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
         }`}
       >
-        All
+        All Berths
       </button>
       {SEAT_TYPES.map((type) => (
         <button
           key={type}
           onClick={() => onChange(type)}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            activeFilter === type ? 'bg-primary-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            activeFilter === type
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
           }`}
         >
           {SEAT_TYPE_LABELS[type]}

@@ -27,4 +27,28 @@ const getProfile = async(userId) =>{
      return safeUser;
 }
 
-module.exports = {getProfile}
+const updateProfile = async (userId, data) => {
+     logger.info(`Updating user ${userId} in DB`);
+     const { firstName, lastName, email } = data;
+     const updateData = {};
+     if (firstName !== undefined) updateData.firstName = firstName;
+     if (lastName !== undefined) updateData.lastName = lastName;
+     if (email !== undefined) updateData.email = email;
+
+     const updatedUser = await prisma.user.update({
+          where: { id: userId },
+          data: updateData
+     });
+
+     const { password: _password, ...safeUser } = updatedUser;
+     await redis.set(`user:${userId}`, JSON.stringify(safeUser), 'EX', config.REDIS_USER_TTL);
+     return safeUser;
+};
+
+const deleteProfile = async (userId) => {
+     logger.info(`Deleting user ${userId} from DB and Redis`);
+     await prisma.user.delete({ where: { id: userId } });
+     await redis.del(`user:${userId}`);
+};
+
+module.exports = { getProfile, updateProfile, deleteProfile };

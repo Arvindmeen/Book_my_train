@@ -175,7 +175,7 @@ const FAILURE_REASON_MESSAGES = {
 
 const CANCELLATION_REASON_MESSAGES = {
   user_cancelled: 'You requested to cancel this booking.',
-  schedule_cancelled: 'The train schedule for this booking was cancelled by IRCTC.',
+  schedule_cancelled: 'The train schedule for this booking was cancelled by Indian Railways.',
 };
 
 function getBookingConfirmedTemplate(data) {
@@ -286,7 +286,7 @@ function getBookingFailedTemplate(data) {
       </div>
 
       <p style="font-size: 15px; color: #555;">
-        If any amount was debited, it will be refunded to your original payment method automatically. You can try booking again from your IRCTC account.
+        If any amount was debited, it will be refunded to your original payment method automatically. You can try booking again from your BooK my Train account.
       </p>
 
       <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;" />

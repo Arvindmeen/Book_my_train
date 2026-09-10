@@ -1,7 +1,7 @@
 const FILTERS = [
-  { label: 'All', value: '' },
+  { label: 'All Bookings', value: '' },
   { label: 'Confirmed', value: 'CONFIRMED' },
-  { label: 'Pending', value: 'PAYMENT_PENDING' },
+  { label: 'Pending Payment', value: 'PAYMENT_PENDING' },
   { label: 'Cancelled', value: 'CANCELLED' },
   { label: 'Failed', value: 'FAILED' },
 ];
@@ -13,8 +13,10 @@ export default function BookingFilters({ active, onChange }) {
         <button
           key={f.value}
           onClick={() => onChange(f.value)}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            active === f.value ? 'bg-primary-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            active === f.value
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
           }`}
         >
           {f.label}

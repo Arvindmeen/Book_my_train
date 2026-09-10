@@ -1,17 +1,15 @@
 import { formatSeatType, formatCurrency } from '../../utils/format';
 
 const STATUS_STYLES = {
-  AVAILABLE: 'bg-green-100 border-green-400 hover:bg-green-200 cursor-pointer',
-  LOCKED: 'bg-yellow-100 border-yellow-400 cursor-not-allowed opacity-60',
-  BOOKED: 'bg-red-100 border-red-300 cursor-not-allowed opacity-60',
-  CANCELLED: 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-40',
-  SELECTED: 'bg-primary-600 border-primary-700 text-white cursor-pointer ring-2 ring-primary-300',
+  AVAILABLE: 'bg-white hover:bg-emerald-50/80 border-2 border-emerald-300 hover:border-emerald-500 text-slate-800 shadow-xs cursor-pointer hover:-translate-y-0.5',
+  LOCKED: 'bg-amber-50 border-2 border-amber-200/80 text-amber-700/80 cursor-not-allowed opacity-70',
+  BOOKED: 'bg-slate-100 border-2 border-slate-200 text-slate-400 cursor-not-allowed opacity-60',
+  CANCELLED: 'bg-slate-50 border-2 border-slate-200 text-slate-300 cursor-not-allowed opacity-40',
+  SELECTED: 'bg-emerald-600 border-2 border-emerald-700 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-200 cursor-pointer -translate-y-0.5',
 };
 
 export default function SeatTile({ seat, isSelected, onToggle }) {
   // --- SEGMENT BOOKING: When segmentStatus is present, trust it as authoritative ---
-  // segmentStatus comes from segment-overlap check; seat.status reflects overall seat_inventory state.
-  // A seat can be BOOKED overall but AVAILABLE for a non-overlapping segment.
   const effectiveStatus = seat.segmentStatus
     ? (seat.segmentStatus === 'AVAILABLE' ? 'AVAILABLE' : 'BOOKED')
     : seat.status;
@@ -20,14 +18,21 @@ export default function SeatTile({ seat, isSelected, onToggle }) {
 
   return (
     <button
+      type="button"
       onClick={() => canSelect && onToggle(seat)}
       disabled={!canSelect && !isSelected}
-      className={`border-2 rounded-lg p-2 text-center transition-all min-w-[70px] ${STATUS_STYLES[status]}`}
+      className={`rounded-xl p-2.5 text-center transition-all duration-200 min-w-[72px] flex flex-col items-center justify-between ${STATUS_STYLES[status]}`}
       title={`Seat #${seat.seatNumber} - ${formatSeatType(seat.seatType)} - ${formatCurrency(seat.price)}`}
     >
-      <p className={`text-sm font-bold ${isSelected ? 'text-white' : ''}`}>#{seat.seatNumber}</p>
-      <p className={`text-[10px] ${isSelected ? 'text-primary-100' : 'text-gray-500'}`}>{formatSeatType(seat.seatType)}</p>
-      <p className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-gray-700'}`}>{formatCurrency(seat.price)}</p>
+      <span className={`text-xs font-black ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+        #{seat.seatNumber}
+      </span>
+      <span className={`text-[9.5px] font-bold uppercase tracking-wider my-0.5 ${isSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
+        {formatSeatType(seat.seatType)}
+      </span>
+      <span className={`text-[11px] font-extrabold ${isSelected ? 'text-white' : 'text-emerald-700'}`}>
+        {formatCurrency(seat.price)}
+      </span>
     </button>
   );
 }

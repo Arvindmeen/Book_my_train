@@ -16,15 +16,15 @@ export const SEAT_STATUS_COLORS = {
 };
 
 export const BOOKING_STATUS_COLORS = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  SEATS_HELD: 'bg-yellow-100 text-yellow-800',
-  PAYMENT_PENDING: 'bg-orange-100 text-orange-800',
-  CONFIRMING: 'bg-primary-50 text-primary-800',
-  CONFIRMED: 'bg-green-100 text-green-800',
-  CANCELLING: 'bg-red-100 text-red-800',
-  FAILED: 'bg-red-100 text-red-800',
-  CANCELLED: 'bg-gray-100 text-gray-800',
-  EXPIRED: 'bg-gray-100 text-gray-800',
+  PENDING: 'bg-amber-50 text-amber-700 border border-amber-200/60',
+  SEATS_HELD: 'bg-blue-50 text-blue-700 border border-blue-200/60',
+  PAYMENT_PENDING: 'bg-orange-50 text-orange-700 border border-orange-200/60',
+  CONFIRMING: 'bg-indigo-50 text-indigo-700 border border-indigo-200/60',
+  CONFIRMED: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+  CANCELLING: 'bg-rose-50 text-rose-700 border border-rose-200/60',
+  FAILED: 'bg-rose-50 text-rose-700 border border-rose-200/60',
+  CANCELLED: 'bg-slate-100 text-slate-600 border border-slate-200/60',
+  EXPIRED: 'bg-slate-100 text-slate-500 border border-slate-200/60',
 };
 
 export const MAX_SEATS_PER_BOOKING = 6;
