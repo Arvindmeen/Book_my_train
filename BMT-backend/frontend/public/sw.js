@@ -1,10 +1,10 @@
 // BooK my Train - PWA Service Worker
-const CACHE_NAME = 'bmt-app-v1';
+const CACHE_NAME = 'bmt-app-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg'
+  '/favicon.png'
 ];
 
 self.addEventListener('install', (event) => {
