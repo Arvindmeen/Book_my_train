@@ -38,7 +38,7 @@ export default function ProfilePage() {
     ? `${user.city}, ${user.state}` 
     : (user?.city || user?.state || 'Location not set');
   const fastPassId = user?.fastPassId || `BMT-FAST-${(user?.id || user?.email || 'RAIL').slice(0, 8).toUpperCase()}`;
-  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true || user?.email?.toLowerCase() === 'arvindmeena8171@gmail.com';
+  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true;
 
   // Form state for profile editing
   const [formData, setFormData] = useState({

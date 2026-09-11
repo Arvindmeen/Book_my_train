@@ -10,8 +10,8 @@ export default function AdminPage() {
   const [tab, setTab] = useState('Stations');
   const { user } = useAuthStore();
 
-  const adminName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Arvind Meena';
-  const adminEmail = user?.email || 'arvindmeena8171@gmail.com';
+  const adminName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Administrator';
+  const adminEmail = user?.email || '';
 
   return (
     <div className="min-h-screen bg-slate-50/70 py-8 px-4 sm:px-6 lg:px-8">

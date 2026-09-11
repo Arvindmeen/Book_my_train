@@ -18,8 +18,7 @@ export default function AdminRoute() {
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  // Check if user is the administrator (arvindmeena8171@gmail.com)
-  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true || user?.email?.toLowerCase() === 'arvindmeena8171@gmail.com';
+  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true;
 
   // If not admin -> show restricted 403 screen and block access to admin features
   if (!isAdmin) {
@@ -35,7 +34,7 @@ export default function AdminRoute() {
             </span>
             <h2 className="text-xl font-black text-slate-900">Administrator Privileges Required</h2>
             <p className="text-xs text-slate-500 leading-relaxed">
-              The Admin Control Center is reserved exclusively for the system administrator (<strong>arvindmeena8171@gmail.com</strong>).
+              The Admin Control Center is reserved for authorized administrators.
             </p>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1 text-left">
               <p><strong>Your Account:</strong> {user?.email || 'Standard User'}</p>

@@ -1,21 +1,15 @@
 import { create } from 'zustand';
 import { authApi } from '../api/auth.api';
 
-const ADMIN_EMAIL = 'arvindmeena8171@gmail.com';
-
 const enrichUserRole = (rawUser) => {
   if (!rawUser) return null;
   const email = (rawUser.email || '').trim().toLowerCase();
-  const isAdmin = email === ADMIN_EMAIL;
+  const isAdmin = rawUser.role === 'ADMIN' || rawUser.isAdmin === true;
   return {
     ...rawUser,
-    email: rawUser.email || (isAdmin ? ADMIN_EMAIL : ''),
-    role: isAdmin ? 'ADMIN' : 'USER',
+    email: rawUser.email || email,
+    role: rawUser.role || (isAdmin ? 'ADMIN' : 'USER'),
     isAdmin: isAdmin,
-    ...(isAdmin ? {
-      firstName: rawUser.firstName || 'Arvind',
-      lastName: rawUser.lastName || 'Meena',
-    } : {})
   };
 };
 
@@ -58,16 +52,6 @@ export const useAuthStore = create((set, get) => ({
       set({ user, isAuthenticated: !!user, isLoading: false });
       return user;
     } catch {
-      // Check if previously logged in as admin locally
-      const savedAdmin = typeof window !== 'undefined' ? localStorage.getItem('bmt_admin_session') : null;
-      if (savedAdmin) {
-        try {
-          const parsed = JSON.parse(savedAdmin);
-          const user = mergeExtendedProfile(parsed);
-          set({ user, isAuthenticated: true, isLoading: false });
-          return user;
-        } catch {}
-      }
       set({ user: null, isAuthenticated: false, isLoading: false });
       return null;
     }

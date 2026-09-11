@@ -260,9 +260,7 @@ export default function Footer() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <a href="mailto:arvindmeena8171@gmail.com" className="hover:text-emerald-600 transition-colors font-semibold truncate">
-                  arvindmeena8171@gmail.com
-                </a>
+                <span className="font-semibold truncate">Contact support through your account</span>
               </li>
 
               {/* 4. ADDRESS COMES LAST (REAL SVG ICON!) */}

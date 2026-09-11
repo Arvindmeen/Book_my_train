@@ -53,7 +53,7 @@ export default function Navbar() {
   };
 
   const isActive = (path) => location.pathname === path;
-  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true || user?.email?.toLowerCase() === 'arvindmeena8171@gmail.com';
+  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true;
 
   return (
     <nav
@@ -181,7 +181,7 @@ export default function Navbar() {
                   )}
                 </Link>
 
-                {/* Admin Portal (Strictly for Administrator: arvindmeena8171@gmail.com) */}
+                {/* Admin Portal for server-authorized administrators */}
                 {isAdmin && (
                   <Link
                     to="/admin"

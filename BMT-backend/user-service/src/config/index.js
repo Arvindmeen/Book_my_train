@@ -30,6 +30,7 @@ const config = {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 
   INTERNAL_SERVICE_KEY: process.env.INTERNAL_SERVICE_KEY,
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL,
 }
 
 

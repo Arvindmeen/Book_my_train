@@ -21,7 +21,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showAdminPass, setShowAdminPass] = useState(false);
 
   // Register form
   const [regData, setRegData] = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
@@ -42,53 +41,9 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const cleanEmail = email.trim().toLowerCase();
-    const isAdminEmail = cleanEmail === 'arvindmeena8171@gmail.com';
-
-    // 1. ADMIN LOGIN: arvindmeena8171@gmail.com with password 1234567
-    if (isAdminEmail && (password === '1234567' || password === '12345')) {
-      const adminUser = {
-        id: 'admin-arvind-meena-001',
-        firstName: 'Arvind',
-        lastName: 'Meena',
-        email: 'arvindmeena8171@gmail.com',
-        role: 'ADMIN',
-        isAdmin: true,
-        phone: '+91 7217332482',
-        city: 'IIT Kharagpur',
-        state: 'West Bengal',
-        irctcUsername: 'arvind_admin',
-        berthPreference: 'Lower Berth',
-      };
-
-      try {
-        localStorage.setItem('bmt_admin_session', JSON.stringify(adminUser));
-      } catch {}
-
-      try {
-        const res = await authApi.login(email, password);
-        const backendUser = res.loggedInUser || res.data?.user || res.data;
-        setUser({ ...backendUser, ...adminUser, role: 'ADMIN', isAdmin: true });
-      } catch {
-        setUser(adminUser);
-      }
-
-      showToast('Welcome back, Admin Arvind Meena! All administrative access granted. 🛡️', 'success');
-      navigate(redirect !== '/' ? redirect : '/admin', { replace: true });
-      setLoading(false);
-      return;
-    }
-
-    // 2. STANDARD USER LOGIN:
     try {
       const res = await authApi.login(email, password);
       let user = res.loggedInUser || res.data?.user || res.data;
-      
-      if (user?.email?.toLowerCase() === 'arvindmeena8171@gmail.com') {
-        user = { ...user, firstName: 'Arvind', lastName: 'Meena', role: 'ADMIN', isAdmin: true };
-      } else {
-        user = { ...user, role: 'USER', isAdmin: false };
-      }
 
       setUser(user);
       showToast('Welcome back to BooK my Train!', 'success');
@@ -235,50 +190,6 @@ export default function LoginPage() {
                 </Button>
               </div>
 
-              {/* Admin Access Quick Fill Box */}
-              <div className="mt-4 p-3 bg-emerald-50/80 border border-emerald-200/90 rounded-2xl flex items-center justify-between text-xs animate-fade-in-up">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm">🛡️</span>
-                    <span className="font-extrabold text-emerald-950 text-xs">Administrator Access:</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 font-mono flex items-center gap-1.5">
-                    <span>arvindmeena8171@gmail.com &bull; pass:</span>
-                    <strong className="tracking-widest text-slate-800">
-                      {showAdminPass ? '1234567' : '*******'}
-                    </strong>
-                    <button
-                      type="button"
-                      onClick={() => setShowAdminPass(!showAdminPass)}
-                      className="text-slate-400 hover:text-slate-700 transition-colors p-0.5"
-                      title={showAdminPass ? "Hide password" : "Show password"}
-                      tabIndex={-1}
-                    >
-                      {showAdminPass ? (
-                        <svg className="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                          <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      )}
-                    </button>
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('arvindmeena8171@gmail.com');
-                    setPassword('1234567');
-                  }}
-                  className="px-3 py-1.5 bg-white hover:bg-emerald-600 hover:text-white border border-emerald-300 text-emerald-800 font-bold text-[11px] rounded-xl shadow-xs transition-all active:scale-95 whitespace-nowrap"
-                >
-                  Auto-Fill Admin
-                </button>
-              </div>
             </form>
           )}
 

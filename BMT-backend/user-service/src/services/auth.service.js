@@ -11,6 +11,12 @@ const jwt = require('jsonwebtoken');
 const {OAuth2Client} = require("google-auth-library");
 const client = new OAuth2Client(config.GOOGLE_CLIENT_ID);
 
+const toSafeUser = (user) => {
+     const {password: _password, ...safeUser} = user;
+     const isAdmin = Boolean(config.ADMIN_EMAIL && user.email?.toLowerCase() === config.ADMIN_EMAIL.toLowerCase());
+     return {...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin};
+};
+
 const sendOTP = async(firstName, lastName, email, password) =>{
      const existingUser = await prisma.user.findUnique({
           where: {email}
@@ -69,7 +75,7 @@ const login = async(email, password, deviceId) =>{
      const refreshToken = generateRefreshToken(existingUser.id);
      const {jti} = jwt.decode(refreshToken);
      await redis.set(`refresh:${existingUser.id}:${deviceId}`, jti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
-     const {password: _password, ...safeUser} = existingUser;
+     const safeUser = toSafeUser(existingUser);
      await redis.set(`user:${existingUser.id}`, JSON.stringify(safeUser), 'EX', config.REDIS_USER_TTL);
      return {accessToken, refreshToken, loggedInUser: safeUser};
 }
@@ -164,7 +170,7 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
      const refreshToken = generateRefreshToken(user.id);
      const {jti} = jwt.decode(refreshToken);
      await redis.set(`refresh:${user.id}:${deviceId}`, jti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
-     const {password: _password, ...safeUser} = user;
+     const safeUser = toSafeUser(user);
      await redis.set(`user:${user.id}`, JSON.stringify(safeUser), 'EX', config.REDIS_USER_TTL);
      return {accessToken, refreshToken, loggedInUser: safeUser};
      

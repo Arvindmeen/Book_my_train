@@ -35,19 +35,21 @@ export default function BookingPage() {
     }
   }, [seats.length, navigate]);
 
-  // Fast Tatkal 1-Click Autofill from Master Passenger List
   const handleAutofillMasterPassengers = () => {
     try {
       let masterList = [];
-      const saved = localStorage.getItem('bmt_master_passengers');
+      const passengerStorageKey = `bmt_master_passengers_${user?.id || user?.email || 'default'}`;
+      const saved = localStorage.getItem(passengerStorageKey);
       if (saved) {
         masterList = JSON.parse(saved);
       }
       if (!masterList || masterList.length === 0) {
-        masterList = [
-          { name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Arvind Meena', age: 21, gender: 'MALE' },
-          { name: 'Rohan Sharma', age: 22, gender: 'MALE' }
-        ];
+        const ownName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+        if (!ownName) {
+          showToast('Add passenger details to your profile before using autofill', 'error');
+          return;
+        }
+        masterList = [{ name: ownName, age: Number(user?.age) || 25, gender: user?.gender || 'MALE' }];
       }
 
       seats.forEach((seat, idx) => {

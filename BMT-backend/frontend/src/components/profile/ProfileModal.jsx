@@ -52,7 +52,7 @@ export default function ProfileModal({
   const displayName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
     : (user?.name || (isAuthenticated ? (user?.email ? user.email.split('@')[0] : 'Traveler') : 'Guest Traveler'));
-  const isEffectiveAdmin = Boolean(isAdmin || user?.role === 'ADMIN' || user?.isAdmin === true || user?.email?.toLowerCase() === 'arvindmeena8171@gmail.com');
+  const isEffectiveAdmin = Boolean(isAdmin || user?.role === 'ADMIN' || user?.isAdmin === true);
   const displaySubtitle = user?.city && user?.state
     ? `${user.city}, ${user.state}`
     : (isEffectiveAdmin ? 'System Administrator' : 'Registered User');
@@ -291,7 +291,7 @@ export default function ProfileModal({
               </span>
             </div>
 
-            {/* 7. Admin Control Center (Strictly for Administrator: arvindmeena8171@gmail.com) */}
+            {/* 7. Admin Control Center for server-authorized administrators */}
             {isAdmin && (
               <div
                 onClick={() => { onClose(); navigate('/admin'); }}

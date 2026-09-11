@@ -94,6 +94,7 @@ services:
       DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/user_service_database
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       KAFKA_BROKER: kafka:9092
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
