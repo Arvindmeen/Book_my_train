@@ -1622,7 +1622,7 @@ export default function HomePage() {
           </div>
 
           {/* Dedicated High-Speed Train Track (Engine leading in front, 4 coaches trailing behind!) */}
-          <div className="w-full max-w-4xl mx-auto mt-5 pointer-events-none hidden md:block">
+          <div className="w-full max-w-4xl mx-auto mt-5 pointer-events-none">
             <div className="relative h-8 border-b border-dashed border-emerald-300/80 overflow-hidden">
               <div className="animate-train-glide absolute bottom-0.5 flex items-end">
                 {/* Coach 4 (Tail Guard Coach with Red Blinking Beacon) */}
