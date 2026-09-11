@@ -71,11 +71,11 @@ const login = async(email, password, deviceId) =>{
      if(!doesPasswordMatch){
           throw new UnauthorizedError("Invalid email or password", "INVALID_CREDENTIALS");
      }
-     const accessToken = generateAccessToken(existingUser.id);
+     const safeUser = toSafeUser(existingUser);
+     const accessToken = generateAccessToken(existingUser.id, safeUser.role);
      const refreshToken = generateRefreshToken(existingUser.id);
      const {jti} = jwt.decode(refreshToken);
      await redis.set(`refresh:${existingUser.id}:${deviceId}`, jti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
-     const safeUser = toSafeUser(existingUser);
      await redis.set(`user:${existingUser.id}`, JSON.stringify(safeUser), 'EX', config.REDIS_USER_TTL);
      return {accessToken, refreshToken, loggedInUser: safeUser};
 }
@@ -92,7 +92,18 @@ const rotateRefreshToken = async(refreshToken, deviceId) =>{
           await redis.del(`refresh:${userId}:${deviceId}`);
           throw new ForbiddenError("Refresh token reused", "LOGIN AGAIN")
      }
-     const newAccessToken = generateAccessToken(payload.id);
+     let safeUser;
+     const cachedUser = await redis.get(`user:${userId}`);
+     if (cachedUser) {
+          try {
+               safeUser = JSON.parse(cachedUser);
+          } catch (e) {}
+     }
+     if (!safeUser) {
+          const user = await prisma.user.findUnique({ where: { id: userId } });
+          safeUser = user ? toSafeUser(user) : { role: 'USER' };
+     }
+     const newAccessToken = generateAccessToken(payload.id, safeUser.role || 'USER');
      const newRefreshToken = generateRefreshToken(payload.id);
      const {jti: newJti} = jwt.decode(newRefreshToken);
      await redis.set(`refresh:${payload.id}:${deviceId}`, newJti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
@@ -166,11 +177,11 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
           })
      })
 
-     const accessToken = generateAccessToken(user.id);
+     const safeUser = toSafeUser(user);
+     const accessToken = generateAccessToken(user.id, safeUser.role);
      const refreshToken = generateRefreshToken(user.id);
      const {jti} = jwt.decode(refreshToken);
      await redis.set(`refresh:${user.id}:${deviceId}`, jti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
-     const safeUser = toSafeUser(user);
      await redis.set(`user:${user.id}`, JSON.stringify(safeUser), 'EX', config.REDIS_USER_TTL);
      return {accessToken, refreshToken, loggedInUser: safeUser};
      

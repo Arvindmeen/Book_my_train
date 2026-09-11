@@ -17,21 +17,12 @@ async function startNotificationService() {
     try {
         logger.info("Starting Notification Service...");
 
-        // Required environment variables
-        const requiredEnvVars = [
-            "EMAIL_USER",
-            "EMAIL_PASS",
-            "KAFKA_BROKER",
-        ];
+        if (!process.env.KAFKA_BROKER) {
+            throw new Error("Missing required environment variable: KAFKA_BROKER");
+        }
 
-        const missing = requiredEnvVars.filter(
-            (varName) => !process.env[varName]
-        );
-
-        if (missing.length > 0) {
-            throw new Error(
-                `Missing required environment variables: ${missing.join(", ")}`
-            );
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            logger.warn("⚠️ EMAIL_USER or EMAIL_PASS not set. Notification service will log simulated emails instead of sending live messages.");
         }
 
         await emailConsumer.start();
@@ -54,13 +45,12 @@ async function startNotificationService() {
 }
 
 process.on("unhandledRejection", (reason) => {
-    console.error(reason);
+    console.error("Unhandled Rejection:", reason);
 });
 
 process.on("uncaughtException", (error) => {
-    console.error(error);
+    console.error("Uncaught Exception:", error);
     process.exit(1);
 });
 
 startNotificationService();
-// Nodemon restart trigger at 2026-09-10T13:47:00.000Z

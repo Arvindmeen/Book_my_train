@@ -87,19 +87,31 @@ async function forwardRequest(serviceUrl, path, method, data, headers, circuitBr
      const url = `${serviceUrl}${path}`;
      logger.info(url);
      // http://localhost:4001/auth/login
+     const sanitizedHeaders = { ...headers };
+     // Strip hop-by-hop and browser-specific headers
+     delete sanitizedHeaders['host'];
+     delete sanitizedHeaders['origin'];
+     delete sanitizedHeaders['content-length'];
+
+     // Strip untrusted client-supplied internal authentication headers
+     delete sanitizedHeaders['x-internal-service-key'];
+
+     // Strip x-user-id and x-user-role if not explicitly validated by requireAuth
+     if (!headers['x-user-id']) {
+          delete sanitizedHeaders['x-user-id'];
+          delete sanitizedHeaders['x-user-role'];
+     }
+
+     // If gateway has an internal service key configured, attach it for downstream trust
+     if (config.INTERNAL_SERVICE_KEY) {
+          sanitizedHeaders['x-internal-service-key'] = config.INTERNAL_SERVICE_KEY;
+     }
+
      const requestConfig = {
           method,
           url,
           timeout: config.SERVICE_TIMEOUT_MS,
-          headers: {
-               ...headers,
-               // Remove host header to avoid conflicts
-               host: undefined,
-               origin: undefined,
-
-               // Remove content-length to let axios recalculate
-               'content-length': undefined,
-          },
+          headers: sanitizedHeaders,
           // Important: Don't validate status, let service response through
           validateStatus: () => true,
           // Set max redirects

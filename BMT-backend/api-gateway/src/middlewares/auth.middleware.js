@@ -1,12 +1,11 @@
 const jwt = require('jsonwebtoken');
 const { config } = require('../config');
-const { UnauthorizedError } = require('../utils/error');
+const { UnauthorizedError, ForbiddenError } = require('../utils/error');
 const logger = require('../config/logger');
 
 /**
- * Middleware to verify access token from Authorization header
- * This is going to be our authentication mechanism which will authenticate user
- * Extracts user ID and attaches it to request headers for downstream services
+ * Middleware to verify access token from Authorization header or cookie
+ * Extracts user ID & role and attaches them to request headers for downstream services
  */
 function requireAuth(req, res, next) {
      try {
@@ -34,15 +33,19 @@ function requireAuth(req, res, next) {
                throw new UnauthorizedError('Invalid token payload');
           }
 
+          const userRole = payload.role || 'USER';
+
           // Attach user context to request for downstream services
           req.user = {
                id: payload.id,
+               role: userRole,
           };
 
-          // Add user ID to headers for proxied requests
+          // Add user ID and role to headers for proxied requests
           req.headers['x-user-id'] = payload.id.toString();
+          req.headers['x-user-role'] = userRole;
 
-          logger.debug(`User ${payload.id} authenticated successfully`);
+          logger.debug(`User ${payload.id} (${userRole}) authenticated successfully`);
 
           next();
      } catch (err) {
@@ -56,4 +59,17 @@ function requireAuth(req, res, next) {
      }
 }
 
-module.exports = { requireAuth };
+/**
+ * Middleware that requires the user to have the ADMIN role
+ */
+function requireAdmin(req, res, next) {
+     requireAuth(req, res, (err) => {
+          if (err) return next(err);
+          if (req.user?.role !== 'ADMIN') {
+               return next(new ForbiddenError('Access denied: Administrator privileges required'));
+          }
+          next();
+     });
+}
+
+module.exports = { requireAuth, requireAdmin };

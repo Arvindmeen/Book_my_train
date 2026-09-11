@@ -46,16 +46,21 @@ class RazorpayGateway extends BaseGateway {
      }
 
      verifyPaymentSignature(orderId, paymentId, signature) {
+          if (!signature || typeof signature !== 'string') return false;
           const body = `${orderId}|${paymentId}`;
           const expectedSignature = crypto
                .createHmac('sha256', this.keySecret)
                .update(body)
                .digest('hex');
 
-          return crypto.timingSafeEqual(
-               Buffer.from(expectedSignature, 'hex'),
-               Buffer.from(signature, 'hex')
-          );
+          try {
+               const expectedBuf = Buffer.from(expectedSignature, 'hex');
+               const sigBuf = Buffer.from(signature, 'hex');
+               if (expectedBuf.length !== sigBuf.length) return false;
+               return crypto.timingSafeEqual(expectedBuf, sigBuf);
+          } catch {
+               return false;
+          }
      }
 
      verifyWebhookSignature(rawBody, signature) {

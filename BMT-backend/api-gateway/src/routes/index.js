@@ -1,5 +1,5 @@
 const express = require('express');
-const { requireAuth } = require('../middlewares/auth.middleware');
+const { requireAuth, requireAdmin } = require('../middlewares/auth.middleware');
 const { createProxy, getCircuitBreakerStatus } = require('../services/proxy');
 const { ipRateLimit, endpointRateLimit, combinedRateLimit } = require('../middlewares/rateLimiting.middleware')
 const { config } = require('../config');
@@ -75,87 +75,87 @@ const adminServiceProxy = createProxy(
 );
 
 // ===========================
-// STATIONS
+// STATIONS (Admin Only)
 // ===========================
 
 router.post(
     '/admins/stations/station',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/stations/station',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 // ===========================
-// TRAINS
+// TRAINS (Admin Only)
 // ===========================
 
 router.post(
     '/admins/trains/train',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/trains/train',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/trains/train/:trainId',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 // ===========================
-// ROUTES
+// ROUTES (Admin Only)
 // ===========================
 
 router.post(
     '/admins/trains/route',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/trains/route',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 // ===========================
-// SCHEDULES
+// SCHEDULES (Admin Only)
 // ===========================
 
 router.post(
     '/admins/schedules/schedule',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/schedules/schedule',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
 
 router.put(
     '/admins/schedules/schedule/:scheduleId',
-    requireAuth,
+    requireAdmin,
     combinedRateLimit(),
     adminServiceProxy
 );
