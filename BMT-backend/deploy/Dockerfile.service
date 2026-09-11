@@ -1,0 +1,17 @@
+FROM node:20-bookworm-slim
+
+ARG SERVICE
+ENV NODE_ENV=production
+WORKDIR /app
+
+COPY ${SERVICE}/package.json ${SERVICE}/package-lock.json /app/service/
+WORKDIR /app/service
+RUN npm ci
+
+WORKDIR /app
+COPY shared /app/shared
+COPY ${SERVICE} /app/service
+WORKDIR /app/service
+
+EXPOSE 4000
+CMD ["node", "src/index.js"]

@@ -1,0 +1,272 @@
+name: bmt-production
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/01-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [bmt]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [bmt]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks: [bmt]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafka:9092 --list >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+    networks: [bmt]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+    networks: [bmt]
+
+  user-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: user-service }
+    env_file: .env
+    environment:
+      PORT: 4001
+      DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/user_service_database
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [bmt]
+
+  search-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: search-service }
+    env_file: .env
+    environment:
+      PORT: 4002
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      KAFKA_BROKER: kafka:9092
+      ES_RECREATE_INDICES: "false"
+    depends_on:
+      elasticsearch: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [bmt]
+
+  admin-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: admin-service }
+    env_file: .env
+    environment:
+      PORT: 4003
+      DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/admin_service_database
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [bmt]
+
+  notification-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: notification-service }
+    env_file: .env
+    environment:
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      kafka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [bmt]
+
+  payment-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: payment-service }
+    env_file: .env
+    environment:
+      PORT: 4006
+      DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/payment_service_database
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [bmt]
+
+  inventory-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: inventory-service }
+    env_file: .env
+    environment:
+      PORT: 4007
+      DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/inventory_service_database
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [bmt]
+
+  booking-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: booking-service }
+    env_file: .env
+    environment:
+      PORT: 4005
+      DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/booking_service_database
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      KAFKA_BROKER: kafka:9092
+      INVENTORY_SERVICE_URL: http://inventory-service:4007
+      PAYMENT_SERVICE_URL: http://payment-service:4006
+      USER_SERVICE_URL: http://user-service:4001
+      ADMIN_SERVICE_URL: http://admin-service:4003
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      inventory-service: { condition: service_started }
+      payment-service: { condition: service_started }
+    restart: unless-stopped
+    networks: [bmt]
+
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args: { SERVICE: api-gateway }
+    env_file: .env
+    environment:
+      PORT: 4000
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      USER_SERVICE_URL: http://user-service:4001
+      SEARCH_SERVICE_URL: http://search-service:4002
+      ADMIN_SERVICE_URL: http://admin-service:4003
+      NOTIFICATION_SERVICE_URL: http://notification-service:4004
+      BOOKING_SERVICE_URL: http://booking-service:4005
+      PAYMENT_SERVICE_URL: http://payment-service:4006
+      INVENTORY_SERVICE_URL: http://inventory-service:4007
+    depends_on:
+      redis: { condition: service_healthy }
+      user-service: { condition: service_started }
+      search-service: { condition: service_started }
+      admin-service: { condition: service_started }
+      booking-service: { condition: service_started }
+      payment-service: { condition: service_started }
+      inventory-service: { condition: service_started }
+    restart: unless-stopped
+    networks: [bmt]
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      api-gateway: { condition: service_started }
+    restart: unless-stopped
+    networks: [bmt]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api-gateway: { condition: service_started }
+    networks: [bmt]
+
+volumes:
+  postgres_data:
+  redis_data:
+  zookeeper_data:
+  zookeeper_logs:
+  kafka_data:
+  es_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  bmt:
+    driver: bridge

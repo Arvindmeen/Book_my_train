@@ -5,11 +5,12 @@ const authService = require('../services/auth.service');
 const getDeviceFingerprint = require("../utils/deviceFingerPrint");
 
 const isProd = process.env.NODE_ENV === 'production';
+const sameSite = process.env.COOKIE_SAME_SITE || (isProd ? 'strict' : 'lax');
 
 const cookieOptions = (maxAge) => ({
      httpOnly: true,
      secure: isProd,
-     sameSite: isProd ? 'strict' : 'lax',
+     sameSite,
      maxAge,
 });
 

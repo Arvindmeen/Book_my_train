@@ -1,0 +1,101 @@
+BOOK MY TRAIN - DEPLOYMENT QUESTIONS
+=====================================
+
+Open this file with Windows Notepad and fill in only the non-secret answers.
+Never write passwords, private keys, API tokens, Razorpay secrets, or email
+provider secrets in this file or send them in chat.
+
+1. GitHub repository URL
+------------------------
+Example: https://github.com/username/book-my-train
+Answer:
+
+2. Vercel project URL
+---------------------
+Example: https://book-my-train.vercel.app
+Answer:
+
+3. Vercel account ready?
+------------------------
+Answer: Yes / No
+
+4. Oracle Cloud account ready?
+------------------------------
+Answer: Yes / No
+
+5. Oracle VM created?
+---------------------
+Answer: Yes / No
+
+6. Oracle VM public IP address
+------------------------------
+Answer:
+
+7. Oracle VM SSH username
+-------------------------
+Usually: ubuntu
+Answer:
+
+8. Domain name available?
+-------------------------
+Example: example.com
+Answer: Yes / No
+Domain:
+
+9. API hostname you want to use
+--------------------------------
+Example: api.example.com
+Answer:
+
+10. DNS record created?
+----------------------
+Answer: Yes / No
+
+11. Deployment purpose
+----------------------
+Answer: Demo / Staging / Real production
+
+12. Email provider selected
+---------------------------
+Answer: SendGrid / SMTP / None yet
+
+13. Sender email address
+------------------------
+This is not a password.
+Answer:
+
+14. Google login required?
+--------------------------
+Answer: Yes / No
+
+15. Razorpay mode
+-----------------
+Answer: Test mode / Live mode / Not yet
+
+16. Razorpay webhook URL configured?
+------------------------------------
+Answer: Yes / No / Not yet
+
+17. Preferred frontend hosting
+-----------------------------
+Answer: Vercel / Container on Oracle / Not decided
+
+18. Is this repository public or private?
+-----------------------------------------
+Answer: Public / Private
+
+19. Current blocker or error message
+------------------------------------
+Paste only non-secret error text here:
+
+20. What should happen next?
+----------------------------
+Answer: Prepare code / Deploy frontend / Deploy backend / Test deployment
+
+Deployment safety reminder
+==========================
+- Do not put SSH private keys in this file.
+- Do not put passwords in this file.
+- Do not put JWT secrets in this file.
+- Do not put Razorpay secret keys in this file.
+- Do not put email API keys in this file.
