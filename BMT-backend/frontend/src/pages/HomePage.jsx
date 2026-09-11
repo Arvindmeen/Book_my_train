@@ -2704,8 +2704,12 @@ export default function HomePage() {
             <div>
               <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
                 <img 
-                  src="/vande_bharat.jpg" 
+                  src="/vande_bharat_optimized.jpg" 
                   alt="Vande Bharat Express" 
+                  width="800"
+                  height="800"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-4 left-4 bg-emerald-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
@@ -2729,8 +2733,12 @@ export default function HomePage() {
             <div>
               <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
                 <img 
-                  src="/palace_on_wheels.jpg" 
+                  src="/palace_on_wheels_optimized.jpg" 
                   alt="Palace on Wheels" 
+                  width="800"
+                  height="800"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-4 left-4 bg-amber-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
@@ -2754,8 +2762,12 @@ export default function HomePage() {
             <div>
               <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
                 <img 
-                  src="/nilgiri_toy_train.jpg" 
+                  src="/nilgiri_toy_train_optimized.jpg" 
                   alt="Nilgiri Mountain Toy Train" 
+                  width="800"
+                  height="800"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-4 left-4 bg-teal-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
