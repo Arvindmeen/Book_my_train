@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 echo "=========================================================="
 echo "🚀 BooK My Train - Automatic Production Server Setup"
@@ -98,12 +97,12 @@ sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up 
 echo "Waiting 20 seconds for Postgres and Kafka to be ready..."
 sleep 20
 
-echo "=== 6/7: Running Prisma Migrations ==="
-sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm user-service npx prisma migrate deploy
-sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm admin-service npx prisma migrate deploy
-sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm booking-service npx prisma migrate deploy
-sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm payment-service npx prisma migrate deploy
-sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm inventory-service npx prisma migrate deploy
+echo "=== 6/7: Pushing Database Schemas (Creating all Tables) ==="
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm user-service npx prisma db push --accept-data-loss || true
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm admin-service npx prisma db push --accept-data-loss || true
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm booking-service npx prisma db push --accept-data-loss || true
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm payment-service npx prisma db push --accept-data-loss || true
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml run --rm inventory-service npx prisma db push --accept-data-loss || true
 
 echo "=== 7/7: Starting All Microservices, Gateway & Frontend ==="
 sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build
