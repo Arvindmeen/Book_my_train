@@ -2,6 +2,7 @@ const { UnauthorizedError } = require('../utils/error');
 
 function getUserContext(req, res, next) {
      const userId = req.headers['x-user-id'];
+     const userRole = req.headers['x-user-role'];
 
      if (!userId) {
           return next(
@@ -9,7 +10,7 @@ function getUserContext(req, res, next) {
           );
      }
 
-     req.user = { id: userId };
+     req.user = { id: userId, role: userRole };
      next();
 }
 

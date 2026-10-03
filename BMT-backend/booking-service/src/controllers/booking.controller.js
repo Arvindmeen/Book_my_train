@@ -30,12 +30,17 @@ exports.getBooking = asyncHandler(async (req, res) => {
 
 exports.getUserBookings = asyncHandler(async (req, res) => {
      const userId = req.user.id;
-     const { status, page, limit } = req.query;
+     const userRole = req.user.role;
+     const { status, page, limit, all, search } = req.query;
+
+     const isAdminAll = (all === 'true' || all === true) || userRole === 'ADMIN';
 
      const result = await bookingService.getUserBookings(userId, {
           status,
           page: page ? parseInt(page, 10) : 1,
-          limit: limit ? parseInt(limit, 10) : 10,
+          limit: limit ? parseInt(limit, 10) : 50,
+          all: isAdminAll,
+          search,
      });
 
      res.status(200).json({ success: true, data: result });

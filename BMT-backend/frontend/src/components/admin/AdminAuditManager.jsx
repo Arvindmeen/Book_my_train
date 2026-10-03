@@ -1,111 +1,57 @@
-import { useState } from 'react';
-
-const MOCK_SYSTEM_BOOKINGS = [
-  {
-    pnr: '2489182301',
-    trainNumber: '12301',
-    trainName: 'Howrah Rajdhani Express',
-    route: 'New Delhi (NDLS) → Howrah Jn (HWH)',
-    travelDate: '2026-10-15',
-    passenger: { name: 'Dr. Ramesh Sharma', age: 48, gender: 'Male', email: 'ramesh.sharma@aiims.edu', phone: '+91 98765 43210' },
-    berth: 'Coach B3 • Berth 18 (Lower)',
-    classType: '3A (AC 3 Tier)',
-    quota: 'General (GN)',
-    fare: '₹2,240',
-    status: 'CONFIRMED',
-    paymentStatus: 'PAID',
-    paymentId: 'pay_live_0982348102',
-    bookedAt: 'Today, 14:20 IST'
-  },
-  {
-    pnr: '6523019842',
-    trainNumber: '22436',
-    trainName: 'Varanasi Vande Bharat Express',
-    route: 'New Delhi (NDLS) → Varanasi Jn (BSB)',
-    travelDate: '2026-10-12',
-    passenger: { name: 'Pooja Agarwal', age: 29, gender: 'Female', email: 'pooja.agarwal@gmail.com', phone: '+91 98111 22334' },
-    berth: 'Coach C2 • Seat 34 (Window)',
-    classType: 'CC (AC Chair Car)',
-    quota: 'Tatkal (TQ)',
-    fare: '₹1,750',
-    status: 'CONFIRMED',
-    paymentStatus: 'PAID',
-    paymentId: 'pay_live_7718293012',
-    bookedAt: 'Today, 11:02 IST'
-  },
-  {
-    pnr: '8104592019',
-    trainNumber: '12952',
-    trainName: 'Mumbai Rajdhani Express',
-    route: 'New Delhi (NDLS) → Mumbai Central (MMCT)',
-    travelDate: '2026-10-14',
-    passenger: { name: 'Vikramaditya Rao', age: 35, gender: 'Male', email: 'v.rao@techcorp.in', phone: '+91 99200 44556' },
-    berth: 'WL 14 / WL 6 (Waitlisted)',
-    classType: '2A (AC 2 Tier)',
-    quota: 'General (GN)',
-    fare: '₹3,180',
-    status: 'WAITLIST',
-    paymentStatus: 'PAID',
-    paymentId: 'pay_live_3349182012',
-    bookedAt: 'Today, 09:45 IST'
-  },
-  {
-    pnr: '4928172039',
-    trainNumber: '12002',
-    trainName: 'Bhopal Shatabdi Express',
-    route: 'New Delhi (NDLS) → Agra Cantt (AGC)',
-    travelDate: '2026-10-18',
-    passenger: { name: 'Ananya Mukherjee', age: 24, gender: 'Female', email: 'ananya.m@outlook.com', phone: '+91 97110 88990' },
-    berth: 'Coach E1 • Seat 12 (Aisle)',
-    classType: 'EC (Exec Chair Car)',
-    quota: 'General (GN)',
-    fare: '₹1,290',
-    status: 'CONFIRMED',
-    paymentStatus: 'PAID',
-    paymentId: 'pay_live_8912730192',
-    bookedAt: 'Yesterday, 18:30 IST'
-  },
-  {
-    pnr: '3910482910',
-    trainNumber: '12626',
-    trainName: 'Kerala Express',
-    route: 'New Delhi (NDLS) → Trivandrum Central (TVC)',
-    travelDate: '2026-10-20',
-    passenger: { name: 'K. S. Narayanan', age: 62, gender: 'Male', email: 'ks.narayanan@kerala.gov.in', phone: '+91 94470 12345' },
-    berth: 'Cancelled (Refunded)',
-    classType: 'SL (Sleeper Class)',
-    quota: 'Senior Citizen',
-    fare: '₹680',
-    status: 'CANCELLED',
-    paymentStatus: 'REFUNDED',
-    paymentId: 'rfnd_live_5510293819',
-    bookedAt: '2 days ago'
-  }
-];
+import { useState, useEffect } from 'react';
+import { adminApi } from '../../api/admin.api';
+import { formatCurrency, formatDate, formatDateTime, formatSeatType } from '../../utils/format';
 
 export default function AdminAuditManager() {
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [copiedPnr, setCopiedPnr] = useState(null);
 
-  const filtered = MOCK_SYSTEM_BOOKINGS.filter((b) => {
-    const matchesQuery =
-      b.pnr.includes(query) ||
-      b.passenger.name.toLowerCase().includes(query.toLowerCase()) ||
-      b.passenger.email.toLowerCase().includes(query.toLowerCase()) ||
-      b.trainName.toLowerCase().includes(query.toLowerCase()) ||
-      b.trainNumber.includes(query);
+  const fetchBookings = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await adminApi.getBookings(
+        filterStatus === 'ALL' ? undefined : filterStatus,
+        1,
+        100,
+        query
+      );
+      const data = res.data || res;
+      setBookings(data.bookings || []);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch bookings from server');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const matchesStatus =
-      filterStatus === 'ALL' ? true : b.status === filterStatus;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchBookings();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [filterStatus, query]);
 
-    return matchesQuery && matchesStatus;
-  });
+  const handleCopyPnr = (pnr) => {
+    navigator.clipboard.writeText(pnr);
+    setCopiedPnr(pnr);
+    setTimeout(() => setCopiedPnr(null), 2000);
+  };
+
+  const confirmedCount = bookings.filter((b) => b.status === 'CONFIRMED').length;
+  const totalRevenue = bookings
+    .filter((b) => b.status === 'CONFIRMED')
+    .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
       
-      {/* Header (Clean White Card Styling) */}
+      {/* Header (Executive Admin Style) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs text-slate-900">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center shrink-0">
@@ -118,15 +64,50 @@ export default function AdminAuditManager() {
               System-Wide PNR Inspector &amp; Master Booking Ledger
             </h2>
             <p className="text-xs text-slate-500 font-medium">
-              Global ticket search, passenger manifest audit &amp; electronic ticketing verification
+              Live railway reservations, route telemetry &amp; passenger manifest verification
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={fetchBookings}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-purple-700 bg-slate-50 hover:bg-purple-50 border border-slate-200 rounded-xl transition-all cursor-pointer shadow-xs"
+          >
+            <span className={loading ? 'animate-spin' : ''}>🔄</span>
+            <span>Refresh</span>
+          </button>
           <span className="text-xs font-bold bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-xl text-purple-700">
-            Audit Authority Active
+            Live Central DB Connected
           </span>
+        </div>
+      </div>
+
+      {/* Summary Metrics Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+          <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider">TOTAL SYSTEM BOOKINGS</span>
+          <span className="font-black text-xl text-slate-900">{bookings.length}</span>
+          <span className="text-[10px] text-slate-500 block">Reservations in DB</span>
+        </div>
+        <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200/80">
+          <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider">CONFIRMED TICKETS</span>
+          <span className="font-black text-xl text-emerald-800">{confirmedCount}</span>
+          <span className="text-[10px] text-emerald-600 block">Active CNF Journeys</span>
+        </div>
+        <div className="bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-200/80">
+          <span className="text-indigo-700 text-[10px] font-bold block uppercase tracking-wider">TOTAL PASSENGERS</span>
+          <span className="font-black text-xl text-indigo-800">
+            {bookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0)}
+          </span>
+          <span className="text-[10px] text-indigo-600 block">Manifest Travellers</span>
+        </div>
+        <div className="bg-purple-50/50 p-3.5 rounded-2xl border border-purple-200/80">
+          <span className="text-purple-700 text-[10px] font-bold block uppercase tracking-wider">NET REVENUE</span>
+          <span className="font-black text-xl text-purple-900">{formatCurrency(totalRevenue)}</span>
+          <span className="text-[10px] text-purple-600 block">Processed via Gateway</span>
         </div>
       </div>
 
@@ -139,13 +120,14 @@ export default function AdminAuditManager() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by 10-digit PNR, Passenger Name, Email, or Train #..."
+              placeholder="Search by PNR, Passenger Name, Train #, or Train Name..."
               className="input-field w-full pl-10 text-xs font-medium"
             />
             {query && (
               <button
+                type="button"
                 onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
               >
                 Clear
               </button>
@@ -153,17 +135,18 @@ export default function AdminAuditManager() {
           </div>
 
           <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto text-xs font-bold">
-            {['ALL', 'CONFIRMED', 'WAITLIST', 'CANCELLED'].map((st) => (
+            {['ALL', 'CONFIRMED', 'PAYMENT_PENDING', 'CANCELLED'].map((st) => (
               <button
                 key={st}
+                type="button"
                 onClick={() => setFilterStatus(st)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   filterStatus === st
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                {st === 'ALL' ? 'All Tickets' : st}
+                {st === 'ALL' ? 'All Bookings' : st}
               </button>
             ))}
           </div>
@@ -176,66 +159,155 @@ export default function AdminAuditManager() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-slate-150 bg-slate-50/70 text-slate-400 uppercase font-extrabold text-[10px]">
-                <th className="py-3 px-4">PNR Number</th>
+                <th className="py-3 px-4">PNR / Booking ID</th>
                 <th className="py-3 px-4">Train &amp; Route</th>
-                <th className="py-3 px-4">Primary Passenger</th>
-                <th className="py-3 px-4">Coach / Berth</th>
+                <th className="py-3 px-4">Travel Date</th>
+                <th className="py-3 px-4">Passenger Manifest</th>
+                <th className="py-3 px-4">Coach / Seats</th>
                 <th className="py-3 px-4">Fare Paid</th>
-                <th className="py-3 px-4">Ticket Status</th>
+                <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {filtered.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
-                    No PNR or bookings matching "{query}"
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <div className="inline-flex items-center gap-2 font-bold text-slate-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent" />
+                      Loading live bookings from server...
+                    </div>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={8} className="py-10 text-center text-rose-600 font-medium">
+                    <p className="font-bold">Error loading bookings</p>
+                    <p className="text-xs text-rose-500 mt-1">{error}</p>
+                    <button
+                      type="button"
+                      onClick={fetchBookings}
+                      className="mt-3 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold cursor-pointer"
+                    >
+                      Try Again
+                    </button>
+                  </td>
+                </tr>
+              ) : bookings.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
+                    <div className="max-w-xs mx-auto space-y-1">
+                      <span className="text-3xl block">🎫</span>
+                      <p className="font-bold text-slate-700">No bookings found</p>
+                      <p className="text-xs text-slate-500">
+                        {query ? `No records matching "${query}"` : 'Book a ticket on the portal to see it here live!'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                filtered.map((b) => (
-                  <tr key={b.pnr} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 tracking-wider">
-                      {b.pnr.slice(0, 3)}-{b.pnr.slice(3, 6)}-{b.pnr.slice(6)}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{b.trainNumber} - {b.trainName}</div>
-                      <div className="text-[11px] text-slate-500">{b.route}</div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{b.passenger.name}</div>
-                      <div className="text-[11px] text-slate-400">{b.passenger.email}</div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-semibold text-slate-800">{b.berth}</span>
-                      <div className="text-[10px] text-slate-400 uppercase font-bold">{b.classType} &bull; {b.quota}</div>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-800">
-                      {b.fare}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          b.status === 'CONFIRMED'
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                            : b.status === 'WAITLIST'
-                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                            : 'bg-rose-100 text-rose-800 border border-rose-200'
-                        }`}
-                      >
-                        {b.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => setSelectedBooking(b)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
-                      >
-                        Audit Details
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                bookings.map((b) => {
+                  const passengerCount = b.passengers?.length || b.seatCount || 1;
+                  const firstPassenger = b.passengers?.[0];
+                  const seatList = b.seats?.map((s) => `#${s.seatNumber}`).join(', ') || 'Assigned';
+
+                  return (
+                    <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
+                      {/* PNR / Booking ID */}
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900 tracking-wider">
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[11px]">
+                            {b.id.substring(0, 10).toUpperCase()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyPnr(b.id)}
+                            title="Copy full Booking ID"
+                            className="text-slate-400 hover:text-purple-600 transition-colors cursor-pointer"
+                          >
+                            {copiedPnr === b.id ? '✓' : '📋'}
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Train & Route */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span>🚆</span>
+                          <span>{b.trainNumber} - {b.trainName}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-medium">
+                          {b.fromStationId || 'Boarding'} ➔ {b.toStationId || 'Destination'}
+                        </div>
+                      </td>
+
+                      {/* Travel Date */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-bold text-slate-800">{formatDate(b.departureDate)}</div>
+                        <div className="text-[10px] text-slate-400">Booked {formatDateTime(b.createdAt)}</div>
+                      </td>
+
+                      {/* Passenger Manifest */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            👥 {passengerCount} {passengerCount > 1 ? 'Passengers' : 'Passenger'}
+                          </span>
+                        </div>
+                        {firstPassenger && (
+                          <div className="text-[11px] text-slate-800 font-bold mt-1">
+                            {firstPassenger.name}
+                            {firstPassenger.age ? ` (${firstPassenger.age}y, ${firstPassenger.gender || 'M'})` : ''}
+                            {passengerCount > 1 ? ` +${passengerCount - 1} more` : ''}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Coach / Seats */}
+                      <td className="py-3.5 px-4">
+                        <span className="font-semibold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                          Seat {seatList}
+                        </span>
+                        <div className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">
+                          {b.seats?.[0]?.seatType ? formatSeatType(b.seats[0].seatType) : 'Standard'}
+                        </div>
+                      </td>
+
+                      {/* Fare Paid */}
+                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-800 whitespace-nowrap">
+                        {formatCurrency(b.totalAmount)}
+                      </td>
+
+                      {/* Ticket Status */}
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                            b.status === 'CONFIRMED'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : b.status === 'WAITLIST'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : b.status === 'CANCELLED'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          {b.status}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBooking(b)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer"
+                        >
+                          Audit Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -245,67 +317,110 @@ export default function AdminAuditManager() {
       {/* Selected Booking Audit Modal */}
       {selectedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl space-y-4 animate-scale-in">
+          <div className="bg-white rounded-3xl border border-slate-200 max-w-xl w-full p-6 shadow-2xl space-y-4 animate-scale-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
               <div>
                 <span className="text-[10px] font-black uppercase text-indigo-600 tracking-wider">
                   OFFICIAL PASSENGER AUDIT RECORD
                 </span>
                 <h3 className="text-base font-black text-slate-900 font-mono">
-                  PNR #{selectedBooking.pnr}
+                  PNR #{selectedBooking.id}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedBooking(null)}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1"
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase">Train Service</span>
-                <p className="font-bold text-slate-900">{selectedBooking.trainNumber} - {selectedBooking.trainName}</p>
-                <p className="text-slate-600">{selectedBooking.route}</p>
-                <p className="text-slate-500 font-medium">Date of Journey: {selectedBooking.travelDate}</p>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase">Passenger Information</span>
-                <p className="font-bold text-slate-900">{selectedBooking.passenger.name} ({selectedBooking.passenger.age} yrs / {selectedBooking.passenger.gender})</p>
-                <p className="text-slate-600">Email: {selectedBooking.passenger.email}</p>
-                <p className="text-slate-600">Phone: {selectedBooking.passenger.phone}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-3 bg-slate-50 rounded-xl">
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase block">Seat Allocation</span>
-                  <p className="font-bold text-slate-900 mt-0.5">{selectedBooking.berth}</p>
-                  <p className="text-[11px] text-slate-500 font-medium">{selectedBooking.classType} &bull; {selectedBooking.quota}</p>
+            <div className="space-y-4 text-xs">
+              {/* Train & Route Details */}
+              <div className="p-3.5 bg-slate-50 rounded-xl space-y-1.5 border border-slate-150">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                  TRAIN SERVICE &amp; ROUTE
+                </span>
+                <p className="font-extrabold text-slate-900 text-sm">
+                  🚆 {selectedBooking.trainNumber} - {selectedBooking.trainName}
+                </p>
+                <div className="flex items-center gap-2 text-slate-600 font-medium">
+                  <span>From: <strong className="text-slate-900">{selectedBooking.fromStationId || 'Origin'}</strong></span>
+                  <span>➔</span>
+                  <span>To: <strong className="text-slate-900">{selectedBooking.toStationId || 'Destination'}</strong></span>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-xl">
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase block">Payment &amp; Gateway</span>
-                  <p className="font-bold text-emerald-700 mt-0.5">{selectedBooking.fare} ({selectedBooking.paymentStatus})</p>
-                  <p className="text-[10px] font-mono text-slate-500 truncate">{selectedBooking.paymentId}</p>
+                <p className="text-slate-500 font-medium">
+                  📅 Journey Date: <strong className="text-slate-800">{formatDate(selectedBooking.departureDate)}</strong>
+                </p>
+              </div>
+
+              {/* Complete Passenger Manifest Table */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                  PASSENGER MANIFEST ({selectedBooking.passengers?.length || selectedBooking.seatCount || 1} TRAVELLERS)
+                </span>
+                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-[10px] uppercase text-slate-400 font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="py-2 px-3">#</th>
+                        <th className="py-2 px-3">Passenger Name</th>
+                        <th className="py-2 px-3">Age / Gender</th>
+                        <th className="py-2 px-3">Allocated Berth</th>
+                        <th className="py-2 px-3 text-right">Fare</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(selectedBooking.passengers || []).map((p, idx) => {
+                        const seat = selectedBooking.seats?.[idx];
+                        return (
+                          <tr key={idx} className="hover:bg-slate-50/50">
+                            <td className="py-2 px-3 font-bold text-slate-400">{idx + 1}</td>
+                            <td className="py-2 px-3 font-bold text-slate-900">{p.name}</td>
+                            <td className="py-2 px-3 text-slate-600">
+                              {p.age} yrs / {p.gender || 'Male'}
+                            </td>
+                            <td className="py-2 px-3 font-semibold text-emerald-800">
+                              {seat ? `Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})` : 'CNF'}
+                            </td>
+                            <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
+                              {seat?.price ? formatCurrency(seat.price) : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Payment & Security Audit Block */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-150">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase block">FINANCIAL LEDGER</span>
+                  <p className="font-black text-emerald-800 text-sm mt-0.5">
+                    {formatCurrency(selectedBooking.totalAmount)}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-medium">Status: <strong className="text-slate-800">{selectedBooking.status}</strong></p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-150">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase block">GATEWAY TRACKING</span>
+                  <p className="text-[11px] font-mono text-slate-700 truncate mt-1">
+                    {selectedBooking.paymentOrderId || 'Pre-Paid / Simulated'}
+                  </p>
+                  <p className="text-[10px] text-slate-400">Created: {formatDateTime(selectedBooking.createdAt)}</p>
                 </div>
               </div>
             </div>
 
             <div className="pt-2 flex justify-end gap-2 border-t border-slate-150">
               <button
+                type="button"
                 onClick={() => setSelectedBooking(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
               >
-                Close Audit
-              </button>
-              <button
-                onClick={() => {
-                  alert(`Administrative Advisory notification sent to ${selectedBooking.passenger.email}`);
-                }}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs"
-              >
-                Send Official SMS / Email Alert
+                Close Audit Record
               </button>
             </div>
           </div>

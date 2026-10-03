@@ -625,10 +625,20 @@ const getBooking = async (bookingId, userId) => {
 
 // ─── Get User Bookings ───────────────────────────────────────────────────────
 
-const getUserBookings = async (userId, { status, page = 1, limit = 10 } = {}) => {
+const getUserBookings = async (userId, { status, page = 1, limit = 10, all = false, search = '' } = {}) => {
      const skip = (page - 1) * limit;
-     const where = { userId };
-     if (status) where.status = status.toUpperCase();
+     const where = all ? {} : { userId };
+     if (status && status !== 'ALL') where.status = status.toUpperCase();
+
+     if (search && search.trim()) {
+          const q = search.trim();
+          where.OR = [
+               { id: { contains: q, mode: 'insensitive' } },
+               { trainNumber: { contains: q, mode: 'insensitive' } },
+               { trainName: { contains: q, mode: 'insensitive' } },
+               { passengers: { some: { name: { contains: q, mode: 'insensitive' } } } },
+          ];
+     }
 
      const [bookings, total] = await Promise.all([
           prisma.booking.findMany({

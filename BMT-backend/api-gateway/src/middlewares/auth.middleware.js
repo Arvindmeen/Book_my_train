@@ -33,10 +33,14 @@ async function requireAuth(req, res, next) {
                throw new UnauthorizedError('Invalid token payload');
           }
 
-          const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
+          const adminEmails = [
+               'arvindmeena8171@gmail.com',
+               'rinkumeena2482@gmail.com',
+               ...((config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || '').toLowerCase().split(',').map(e => e.trim()).filter(Boolean))
+          ];
           let userRole = payload.role || 'USER';
 
-          if (payload.email && payload.email.toLowerCase().trim() === adminEmail) {
+          if (payload.email && adminEmails.includes(payload.email.toLowerCase().trim())) {
                userRole = 'ADMIN';
           } else if (userRole !== 'ADMIN') {
                try {
@@ -44,7 +48,7 @@ async function requireAuth(req, res, next) {
                     const cached = await redis.get(`user:${payload.id}`);
                     if (cached) {
                          const u = JSON.parse(cached);
-                         if (u.role === 'ADMIN' || (u.email && u.email.toLowerCase().trim() === adminEmail)) {
+                         if (u.role === 'ADMIN' || (u.email && adminEmails.includes(u.email.toLowerCase().trim()))) {
                               userRole = 'ADMIN';
                          }
                     }
