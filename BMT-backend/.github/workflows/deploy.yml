@@ -1,0 +1,23 @@
+name: Deploy to Oracle Cloud VM
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy to Oracle VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USER || 'ubuntu' }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: 22
+          script: |
+            cd ~/book-my-train-repo || cd /home/ubuntu/book-my-train-repo
+            git pull origin main
+            docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build
+            echo "Deployment successfully completed!"
