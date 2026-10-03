@@ -70,9 +70,9 @@ SUPPORT_EMAIL=arvindmeena8171@gmail.com
 
 # Payment Gateway
 PAYMENT_GATEWAY=razorpay
-RAZORPAY_KEY_ID=rzp_test_placeholder
-RAZORPAY_KEY_SECRET=placeholder_secret
-RAZORPAY_WEBHOOK_SECRET=placeholder_webhook
+RAZORPAY_KEY_ID=rzp_test_TjXEDJyNSNA5Md
+RAZORPAY_KEY_SECRET=qHT0gvh81z4C1RC9lEng8yWg
+RAZORPAY_WEBHOOK_SECRET=BmtRazorpaySecret2026!
 
 # Rate Limits & Timeouts
 RATE_LIMIT_WINDOW_MS=900000
