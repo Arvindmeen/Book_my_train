@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.ORACLE_SSH_KEY }}
           port: 22
           script: |
-            cd ~/book-my-train-repo || cd /home/ubuntu/book-my-train-repo
+            cd ~/Book_my_train 2>/dev/null || cd ~/book-my-train-repo 2>/dev/null || cd /home/ubuntu/Book_my_train
             git pull origin main
             docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build
             echo "Deployment successfully completed!"
