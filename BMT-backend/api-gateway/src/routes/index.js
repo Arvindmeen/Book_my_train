@@ -260,6 +260,13 @@ router.post(
      paymentServiceProxy
 );
 // Gateway Health Status
+router.get('/health', (req, res) => {
+     res.status(200).json({
+          success: true,
+          message: "API Gateway is healthy",
+          timestamp: new Date().toISOString()
+     });
+});
 router.get('/gateway/health', (req, res) => {
      res.status(200).json({
           success: true,
@@ -278,13 +285,14 @@ router.get('/gateway/circuit-breakers', (req, res) => {
 // Real-Time Microservices & Infrastructure Cluster Ping
 router.get('/admin/system-health', async (req, res) => {
      const services = [
-          { name: 'API Gateway', port: 4000, url: 'http://localhost:4000/health', role: 'Reverse proxy, JWT verification & rate limiting' },
-          { name: 'User Service', port: 4001, url: 'http://localhost:4001/health', role: 'Authentication, Redis OTP & bcrypt sessions' },
-          { name: 'Search Service', port: 4002, url: 'http://localhost:4002/health', role: 'Elasticsearch Lucene route & station indexing' },
-          { name: 'Admin Service', port: 4003, url: 'http://localhost:4003/health', role: 'Master train, station, route & timetable CRUD' },
-          { name: 'Notification Service', port: 4004, url: 'http://localhost:4004/health', role: 'Kafka consumer, Gmail Nodemailer & SMS alerts' },
-          { name: 'Booking Service', port: 4005, url: 'http://localhost:4005/health', role: 'Distributed ticket reservations & state machine' },
-          { name: 'Payment Service', port: 4006, url: 'http://localhost:4006/health', role: 'Razorpay UPI Webhooks & ledger verification' },
+          { name: 'API Gateway', port: 4000, url: 'http://127.0.0.1:4000/health', role: 'Reverse proxy, JWT verification & rate limiting' },
+          { name: 'User Service', port: 4001, url: `${config.SERVICES.USER_SERVICE_URL}/health`, role: 'Authentication, Redis OTP & bcrypt sessions' },
+          { name: 'Search Service', port: 4002, url: `${config.SERVICES.SEARCH_SERVICE_URL}/health`, role: 'Elasticsearch Lucene route & station indexing' },
+          { name: 'Admin Service', port: 4003, url: `${config.SERVICES.ADMIN_SERVICE_URL}/health`, role: 'Master train, station, route & timetable CRUD' },
+          { name: 'Notification Service', port: 4004, url: `${config.SERVICES.NOTIFICATION_SERVICE_URL}/health`, role: 'Kafka consumer, Gmail Nodemailer & SMS alerts' },
+          { name: 'Booking Service', port: 4005, url: `${config.SERVICES.BOOKING_SERVICE_URL}/health`, role: 'Distributed ticket reservations & state machine' },
+          { name: 'Payment Service', port: 4006, url: `${config.SERVICES.PAYMENT_SERVICE_URL}/health`, role: 'Razorpay UPI Webhooks & ledger verification' },
+          { name: 'Inventory Service', port: 4007, url: `${config.SERVICES.INVENTORY_SERVICE_URL}/health`, role: 'Real-time seat locks & coach quotas' },
      ];
 
      const results = await Promise.all(services.map(async (s) => {
@@ -323,9 +331,10 @@ router.get('/admin/system-health', async (req, res) => {
      // Ping Elasticsearch Cluster Health
      let esStatus = 'Healthy';
      let esLatency = 0;
+     const esHost = process.env.ELASTICSEARCH_URL || 'http://elasticsearch:9200';
      try {
           const esStart = Date.now();
-          const esRes = await fetch('http://localhost:9200/_cluster/health', { signal: AbortSignal.timeout(2000) });
+          const esRes = await fetch(`${esHost}/_cluster/health`, { signal: AbortSignal.timeout(2000) });
           esLatency = Date.now() - esStart;
           const esData = await esRes.json();
           esStatus = esData.status === 'green' || esData.status === 'yellow' ? 'Healthy' : 'Degraded';
