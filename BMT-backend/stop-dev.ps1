@@ -7,8 +7,8 @@ Write-Host "==========================================" -ForegroundColor Yellow
 Write-Host "Stopping BooK My Train Microservices..." -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor Yellow
 
-# 1. Stop all services listening on ports 4000 to 4007
-$ports = 4000..4007
+# 1. Stop all services listening on port 3000 (frontend) and ports 4000 to 4007 (backend)
+$ports = @(3000) + (4000..4007)
 foreach ($port in $ports) {
     $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
     if ($conns) {
@@ -22,7 +22,7 @@ foreach ($port in $ports) {
 }
 
 # 2. Stop any remaining background service processes
-$services = @("api-gateway", "user-service", "search-service", "admin-service", "notification-service", "booking-service", "payment-service", "inventory-service")
+$services = @("api-gateway", "user-service", "search-service", "admin-service", "notification-service", "booking-service", "payment-service", "inventory-service", "frontend")
 foreach ($service in $services) {
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | 
         Where-Object { $_.CommandLine -like "*$service*" -and $_.Name -like "*node*" } | 

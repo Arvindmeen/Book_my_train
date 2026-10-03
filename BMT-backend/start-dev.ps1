@@ -11,11 +11,12 @@ $services = @(
     "notification-service",
     "booking-service",
     "payment-service",
-    "inventory-service"
+    "inventory-service",
+    "frontend"
 )
 
 Write-Host "==========================================" -ForegroundColor Yellow
-Write-Host "Starting BooK My Train Microservices..." -ForegroundColor Yellow
+Write-Host "Starting BooK My Train Microservices & Frontend..." -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor Yellow
 
 foreach ($service in $services) {
@@ -28,5 +29,9 @@ foreach ($service in $services) {
     }
 }
 
-Write-Host "`nAll services have been launched in separate terminal windows!" -ForegroundColor Green
-Write-Host "API Gateway is available at: http://localhost:4000/api" -ForegroundColor Green
+Write-Host "`nAll services & frontend have been launched!" -ForegroundColor Green
+Write-Host "👉 Open in Chrome: http://localhost:3000" -ForegroundColor Yellow
+Write-Host "API Gateway: http://localhost:4000/api" -ForegroundColor Green
+
+#   .\start-dev.ps1  or Ctrl+Shift+B
+#   .\stop-dev.ps1

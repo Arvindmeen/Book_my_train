@@ -11,7 +11,8 @@
         "notification-service",
         "booking-service",
         "payment-service",
-        "inventory-service"
+        "inventory-service",
+        "frontend"
       ],
       "group": {
         "kind": "build",
@@ -123,6 +124,20 @@
       "command": "npm run dev",
       "options": {
         "cwd": "${workspaceFolder}/inventory-service"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "frontend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
       },
       "isBackground": true,
       "problemMatcher": [],
