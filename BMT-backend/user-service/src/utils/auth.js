@@ -9,8 +9,8 @@ exports.hashToken = (refreshToken) => {
 }
 
 exports.generateAccessToken = (userId, role = 'USER', email = '') => {
-     const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase();
-     const isUserAdmin = role === 'ADMIN' || (email && email.toLowerCase() === adminEmail);
+     const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
+     const isUserAdmin = Boolean(email && email.toLowerCase().trim() === adminEmail);
      const payload = {
           id: userId,
           role: isUserAdmin ? 'ADMIN' : 'USER',

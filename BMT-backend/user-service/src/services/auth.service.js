@@ -13,14 +13,10 @@ const client = new OAuth2Client(config.GOOGLE_CLIENT_ID);
 
 const toSafeUser = (user) => {
      const {password: _password, ...safeUser} = user;
-     const adminEmails = [
-          'arvindmeena8171@gmail.com',
-          'rinkumeena2482@gmail.com',
-          ...((config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || '').toLowerCase().split(',').map(e => e.trim()).filter(Boolean))
-     ];
+     const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
      const userEmail = (user.email || '').toLowerCase().trim();
-     const isAdmin = Boolean(adminEmails.includes(userEmail) || user.role === 'ADMIN');
-     return {...safeUser, role: isAdmin ? 'ADMIN' : (user.role || 'USER'), isAdmin};
+     const isAdmin = Boolean(userEmail && userEmail === adminEmail);
+     return {...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin};
 };
 
 const sendOTP = async(firstName, lastName, email, password) =>{

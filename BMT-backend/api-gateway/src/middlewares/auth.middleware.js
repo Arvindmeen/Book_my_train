@@ -33,26 +33,11 @@ async function requireAuth(req, res, next) {
                throw new UnauthorizedError('Invalid token payload');
           }
 
-          const adminEmails = [
-               'arvindmeena8171@gmail.com',
-               'rinkumeena2482@gmail.com',
-               ...((config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || '').toLowerCase().split(',').map(e => e.trim()).filter(Boolean))
-          ];
-          let userRole = payload.role || 'USER';
+          const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
+          let userRole = 'USER';
 
-          if (payload.email && adminEmails.includes(payload.email.toLowerCase().trim())) {
+          if (payload.email && payload.email.toLowerCase().trim() === adminEmail) {
                userRole = 'ADMIN';
-          } else if (userRole !== 'ADMIN') {
-               try {
-                    const redis = require('../config/redis').getInstance();
-                    const cached = await redis.get(`user:${payload.id}`);
-                    if (cached) {
-                         const u = JSON.parse(cached);
-                         if (u.role === 'ADMIN' || (u.email && adminEmails.includes(u.email.toLowerCase().trim()))) {
-                              userRole = 'ADMIN';
-                         }
-                    }
-               } catch (_) {}
           }
 
           // Attach user context to request for downstream services

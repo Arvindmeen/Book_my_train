@@ -18,7 +18,7 @@ export default function AdminRoute() {
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true;
+  const isAdmin = (user?.email || '').trim().toLowerCase() === 'arvindmeena8171@gmail.com' && (user?.role === 'ADMIN' || user?.isAdmin === true);
 
   // If not admin -> show restricted 403 screen and block access to admin features
   if (!isAdmin) {

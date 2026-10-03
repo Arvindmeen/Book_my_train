@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { authApi } from '../api/auth.api';
 
+const ADMIN_EMAIL = 'arvindmeena8171@gmail.com';
+
 const enrichUserRole = (rawUser) => {
   if (!rawUser) return null;
   const email = (rawUser.email || '').trim().toLowerCase();
-  const isAdmin = rawUser.role === 'ADMIN' || rawUser.isAdmin === true;
+  const isAdmin = email === ADMIN_EMAIL;
   return {
     ...rawUser,
     email: rawUser.email || email,
-    role: rawUser.role || (isAdmin ? 'ADMIN' : 'USER'),
+    role: isAdmin ? 'ADMIN' : 'USER',
     isAdmin: isAdmin,
   };
 };
