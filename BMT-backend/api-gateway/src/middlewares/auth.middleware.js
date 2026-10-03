@@ -7,7 +7,7 @@ const logger = require('../config/logger');
  * Middleware to verify access token from Authorization header or cookie
  * Extracts user ID & role and attaches them to request headers for downstream services
  */
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
      try {
           let accessToken;
 
@@ -33,11 +33,28 @@ function requireAuth(req, res, next) {
                throw new UnauthorizedError('Invalid token payload');
           }
 
-          const userRole = payload.role || 'USER';
+          const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
+          let userRole = payload.role || 'USER';
+
+          if (payload.email && payload.email.toLowerCase().trim() === adminEmail) {
+               userRole = 'ADMIN';
+          } else if (userRole !== 'ADMIN') {
+               try {
+                    const redis = require('../config/redis').getInstance();
+                    const cached = await redis.get(`user:${payload.id}`);
+                    if (cached) {
+                         const u = JSON.parse(cached);
+                         if (u.role === 'ADMIN' || (u.email && u.email.toLowerCase().trim() === adminEmail)) {
+                              userRole = 'ADMIN';
+                         }
+                    }
+               } catch (_) {}
+          }
 
           // Attach user context to request for downstream services
           req.user = {
                id: payload.id,
+               email: payload.email || undefined,
                role: userRole,
           };
 

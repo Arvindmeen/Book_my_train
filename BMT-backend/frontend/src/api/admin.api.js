@@ -17,4 +17,6 @@ export const adminApi = {
   createSchedule: (data) => client.post('/admins/schedules/schedule', data).then((r) => r.data),
   getSchedules: (query = '') => client.get(`/admins/schedules/schedule${query ? '?' + query : ''}`).then((r) => r.data),
   cancelSchedule: (id) => client.put(`/admins/schedules/schedule/${id}`).then((r) => r.data),
+
+  getSystemHealth: () => client.get('/admin/system-health').then((r) => r.data),
 };

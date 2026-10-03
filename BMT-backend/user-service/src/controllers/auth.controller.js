@@ -99,3 +99,42 @@ exports.verifyGoogleIdToken = asyncHandler(async(req, res) =>{
           loggedInUser
      })
 })
+
+exports.forgotPassword = asyncHandler(async (req, res) => {
+     const { email } = req.body;
+     if (!email) {
+          throw new BadRequestError("Email address is required");
+     }
+
+     const { otpSessionId } = await authService.forgotPassword(email);
+     res.cookie("otp_session", otpSessionId, cookieOptions(config.OTP_TTL * 1000)).status(200).json({
+          success: true,
+          message: "Password reset OTP sent to your registered email",
+          otpSessionId
+     });
+});
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+     const { otp, newPassword, confirmPassword, otpSessionId: bodySessionId } = req.body;
+     const otpSessionId = bodySessionId || req.cookies?.otp_session;
+
+     if (!otp || !otpSessionId) {
+          throw new BadRequestError("OTP code and session are required");
+     }
+
+     if (!newPassword || newPassword.length < 6) {
+          throw new BadRequestError("Password must be at least 6 characters long");
+     }
+
+     if (newPassword !== confirmPassword) {
+          throw new BadRequestError("Passwords do not match");
+     }
+
+     await authService.resetPassword(otp, otpSessionId, newPassword);
+     res.clearCookie("otp_session");
+
+     res.status(200).json({
+          success: true,
+          message: "Password has been reset successfully. Please sign in with your new password."
+     });
+});

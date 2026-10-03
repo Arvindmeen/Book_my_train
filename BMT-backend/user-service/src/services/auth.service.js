@@ -1,4 +1,4 @@
-const { ConflictError, BadRequestError, ForbiddenError, UnauthorizedError } = require("../utils/error")
+const { ConflictError, BadRequestError, ForbiddenError, UnauthorizedError, NotFoundError } = require("../utils/error")
 const {generateAndStoreOtp, verifyOtp} = require('../utils/otp');
 const {generateAccessToken, generateRefreshToken, verifyRefreshToken} = require('../utils/auth');
 const notificationProducer = require('../kafka/producer/notification.producer')
@@ -13,8 +13,10 @@ const client = new OAuth2Client(config.GOOGLE_CLIENT_ID);
 
 const toSafeUser = (user) => {
      const {password: _password, ...safeUser} = user;
-     const isAdmin = Boolean(config.ADMIN_EMAIL && user.email?.toLowerCase() === config.ADMIN_EMAIL.toLowerCase());
-     return {...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin};
+     const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
+     const userEmail = (user.email || '').toLowerCase().trim();
+     const isAdmin = Boolean(adminEmail && userEmail === adminEmail);
+     return {...safeUser, role: isAdmin ? 'ADMIN' : (user.role || 'USER'), isAdmin};
 };
 
 const sendOTP = async(firstName, lastName, email, password) =>{
@@ -72,7 +74,7 @@ const login = async(email, password, deviceId) =>{
           throw new UnauthorizedError("Invalid email or password", "INVALID_CREDENTIALS");
      }
      const safeUser = toSafeUser(existingUser);
-     const accessToken = generateAccessToken(existingUser.id, safeUser.role);
+     const accessToken = generateAccessToken(existingUser.id, safeUser.role, existingUser.email);
      const refreshToken = generateRefreshToken(existingUser.id);
      const {jti} = jwt.decode(refreshToken);
      await redis.set(`refresh:${existingUser.id}:${deviceId}`, jti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
@@ -96,14 +98,16 @@ const rotateRefreshToken = async(refreshToken, deviceId) =>{
      const cachedUser = await redis.get(`user:${userId}`);
      if (cachedUser) {
           try {
-               safeUser = JSON.parse(cachedUser);
+               safeUser = toSafeUser(JSON.parse(cachedUser));
           } catch (e) {}
      }
-     if (!safeUser) {
+     if (!safeUser || !safeUser.email) {
           const user = await prisma.user.findUnique({ where: { id: userId } });
           safeUser = user ? toSafeUser(user) : { role: 'USER' };
      }
-     const newAccessToken = generateAccessToken(payload.id, safeUser.role || 'USER');
+     // Re-save healed safeUser to Redis
+     await redis.set(`user:${userId}`, JSON.stringify(safeUser), 'EX', config.REDIS_USER_TTL);
+     const newAccessToken = generateAccessToken(payload.id, safeUser.role || 'USER', safeUser.email);
      const newRefreshToken = generateRefreshToken(payload.id);
      const {jti: newJti} = jwt.decode(newRefreshToken);
      await redis.set(`refresh:${payload.id}:${deviceId}`, newJti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
@@ -186,4 +190,68 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
      return {accessToken, refreshToken, loggedInUser: safeUser};
      
 }
-module.exports = {sendOTP, verifyOTP, login, rotateRefreshToken, verifyGoogleIdToken}
+
+const forgotPassword = async (email) => {
+     const normalizedEmail = email.toLowerCase().trim();
+     const user = await prisma.user.findUnique({
+          where: { email: normalizedEmail }
+     });
+
+     if (!user) {
+          throw new NotFoundError("No account found with this email address");
+     }
+
+     if (!user.password) {
+          throw new BadRequestError("This account was registered with Google. Please sign in using Google.");
+     }
+
+     const meta = { email: user.email, purpose: 'PASSWORD_RESET', userId: user.id };
+     const { otp, otpSessionId } = await generateAndStoreOtp(meta);
+
+     await notificationProducer.sendOtpEmail(user.email, otp, Math.round(config.OTP_TTL / 60));
+     logger.info(`Password reset OTP sent to: ${user.email}`);
+
+     return { otpSessionId };
+};
+
+const resetPassword = async (otp, otpSessionId, newPassword) => {
+     if (!newPassword || newPassword.length < 6) {
+          throw new BadRequestError("Password must be at least 6 characters long");
+     }
+
+     const meta = await verifyOtp(otp, otpSessionId);
+     if (!meta || meta.purpose !== 'PASSWORD_RESET') {
+          throw new BadRequestError("Invalid or expired OTP code", "OTP_INVALID");
+     }
+
+     const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+     const updatedUser = await prisma.user.update({
+          where: { email: meta.email },
+          data: { password: hashedPassword }
+     });
+
+     // Invalidate existing sessions in Redis for security
+     try {
+          const keys = await redis.keys(`refresh:${meta.userId || updatedUser.id}:*`);
+          if (keys && keys.length > 0) {
+               await redis.del(...keys);
+          }
+          await redis.del(`user:${meta.userId || updatedUser.id}`);
+     } catch (err) {
+          logger.warn(`Could not clear old sessions from Redis: ${err.message}`);
+     }
+
+     logger.info(`Password successfully reset for: ${meta.email}`);
+     return { email: meta.email };
+};
+
+module.exports = {
+     sendOTP, 
+     verifyOTP, 
+     login, 
+     rotateRefreshToken, 
+     verifyGoogleIdToken,
+     forgotPassword,
+     resetPassword
+};

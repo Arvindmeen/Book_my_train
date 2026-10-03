@@ -27,6 +27,21 @@ async function startNotificationService() {
 
         await emailConsumer.start();
 
+        const express = require("express");
+        const app = express();
+        app.get("/health", (req, res) => {
+            res.status(200).json({
+                success: true,
+                message: "Notification Service is healthy",
+                kafkaBroker: process.env.KAFKA_BROKER,
+                timestamp: new Date().toISOString()
+            });
+        });
+        const PORT = process.env.PORT || 4004;
+        app.listen(PORT, () => {
+            logger.info(`Notification Service health server running on port ${PORT}`);
+        });
+
         logger.info("✅ Notification Service started successfully");
         logger.info("Service is ready to process notifications");
     } catch (error) {

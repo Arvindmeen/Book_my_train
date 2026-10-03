@@ -24,7 +24,10 @@ client.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Do NOT attempt token refresh for public auth endpoints (login, register, forgot-password, reset-password, send-otp, verify-otp, or refresh itself)
+    const isAuthEndpoint = originalRequest?.url?.includes('/users/auth/');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -48,8 +51,23 @@ client.interceptors.response.use(
       }
     }
 
-    // Extract error message from backend response
-    let msg = error.response?.data?.message || error.response?.data?.error || error.message;
+    // Extract real error message from backend response
+    let msg = error.response?.data?.message || error.response?.data?.error;
+
+    // Provide clean, human-friendly fallbacks instead of technical Axios error strings
+    if (!msg || (typeof msg === 'string' && msg.includes('status code'))) {
+      if (error.response?.status === 401) {
+        msg = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.response?.status === 403) {
+        msg = 'You do not have permission to access this resource.';
+      } else if (error.response?.status === 404) {
+        msg = 'The requested account or resource was not found.';
+      } else if (error.response?.status === 429) {
+        msg = 'Too many requests. Please wait a moment and try again.';
+      } else {
+        msg = error.message || 'Something went wrong. Please try again.';
+      }
+    }
 
     // Detect service down, network disconnection, or 5xx outage
     const isServiceDown =
@@ -74,6 +92,7 @@ client.interceptors.response.use(
     enhancedError.status = error.response?.status;
     enhancedError.code = error.response?.data?.code;
     enhancedError.data = error.response?.data;
+    enhancedError.response = error.response;
     return Promise.reject(enhancedError);
   }
 );

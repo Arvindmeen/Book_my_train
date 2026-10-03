@@ -32,6 +32,7 @@ const config = {
      CIRCUIT_BREAKER_TIMEOUT: parseInt(process.env.CIRCUIT_BREAKER_TIMEOUT || '60000', 10),
 
      INTERNAL_SERVICE_KEY: process.env.INTERNAL_SERVICE_KEY,
+     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com',
 };
 
 const requiredConfig = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];

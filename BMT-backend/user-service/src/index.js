@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const { config } = require('./config');
 const logger = require('./config/logger');
+// Loaded configuration with ADMIN_EMAIL: config.ADMIN_EMAIL
 
 const authRoutes = require('./routes/auth.route');
 const userRoutes = require('./routes/user.route');

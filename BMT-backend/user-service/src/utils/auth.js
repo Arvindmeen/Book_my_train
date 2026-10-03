@@ -8,13 +8,16 @@ exports.hashToken = (refreshToken) => {
      return crypto.createHash('sha256').update(refreshToken).digest('hex');
 }
 
-exports.generateAccessToken = (userId, role = 'USER') => {
+exports.generateAccessToken = (userId, role = 'USER', email = '') => {
+     const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase();
+     const isUserAdmin = role === 'ADMIN' || (email && email.toLowerCase() === adminEmail);
      const payload = {
           id: userId,
-          role: role || 'USER'
-     }
-     return jwt.sign(payload, config.JWT_ACCESS_SECRET, { expiresIn: config.ACCESS_TOKEN_EXP })
-}
+          role: isUserAdmin ? 'ADMIN' : 'USER',
+          email: email || undefined
+     };
+     return jwt.sign(payload, config.JWT_ACCESS_SECRET, { expiresIn: config.ACCESS_TOKEN_EXP });
+};
 
 exports.generateRefreshToken = (userId) => {
      const payload = {

@@ -9,6 +9,7 @@ import { bookingApi } from '../api/booking.api';
 import { useToast } from '../components/ui/Toast';
 import PwaInstallModal from '../components/common/PwaInstallModal';
 import { predictWaitlist, predictPnr } from '../utils/aiPrediction';
+import AdminHomeView from '../components/admin/AdminHomeView';
 
 // Express trains roster with real-time GPS telemetry
 const LIVE_TRAINS_DATA = [
@@ -240,6 +241,9 @@ const PORTAL_CAPABILITIES = [
 
 export default function HomePage() {
   const { user, isAuthenticated } = useAuthStore();
+  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true;
+  const [adminMode, setAdminMode] = useState('admin'); // 'admin' | 'passenger'
+
   const [recentBookings, setRecentBookings] = useState([]);
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -546,8 +550,27 @@ export default function HomePage() {
     setTimeout(() => setCopiedCode(null), 2500);
   };
 
+  if (isAdmin && adminMode === 'admin') {
+    return (
+      <AdminHomeView
+        onSwitchToPassenger={() => setAdminMode('passenger')}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-[#FAFCFE]">
+      {isAdmin && adminMode === 'passenger' && (
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 px-4 py-2 text-center text-xs font-bold flex items-center justify-center gap-3 sticky top-16 sm:top-20 z-40 shadow-md">
+          <span>👑 Administrator Mode &bull; Previewing Passenger Experience</span>
+          <button
+            onClick={() => setAdminMode('admin')}
+            className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs"
+          >
+            Return to Command Center &rarr;
+          </button>
+        </div>
+      )}
       
       {/* 1. Ambient Hero Canvas (Reduced padding to eliminate huge gaps) */}
       <div className="relative pt-8 pb-8 px-4 overflow-hidden bg-groww-hero border-b border-slate-150">
