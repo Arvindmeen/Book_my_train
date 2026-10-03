@@ -482,44 +482,37 @@ export default function TrainManager() {
               return (
                 <div
                   key={train.id}
-                  className="bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-300 transition-all shadow-xs hover:shadow-card overflow-hidden"
+                  className="bg-white rounded-xl border border-slate-200/90 hover:border-emerald-300 transition-all shadow-xs hover:shadow-sm overflow-hidden"
                 >
-                  {/* Card Header Row */}
-                  <div className="p-5 pb-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono font-black text-sm text-white bg-slate-900 px-3 py-1.5 rounded-xl shadow-xs tracking-wider">
+                  {/* Compact Header Row */}
+                  <div className="px-4 py-2.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-white">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
+                      <span className="font-mono font-black text-xs text-white bg-slate-900 px-2.5 py-1 rounded-lg shadow-xs shrink-0 tracking-wider">
                         #{train.trainNumber}
                       </span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-serif font-black text-base sm:text-lg text-slate-900 leading-snug">
-                            {train.trainName}
-                          </h4>
-                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                            {train.coachName || 'AC'} Coach
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-500">
-                          <span className="font-semibold text-slate-600">
-                            {train.totalSeats || train.seats?.length || 0} Seats Configured
-                          </span>
-                          <span>&bull;</span>
-                          <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                            {train.runsOn || 'Daily Service'}
-                          </span>
-                        </div>
-                      </div>
+                      <h4 className="font-serif font-black text-sm sm:text-base text-slate-900 truncate">
+                        {train.trainName}
+                      </h4>
+                      <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                        {train.coachName || 'AC'} Coach
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                        {train.totalSeats || train.seats?.length || 0} Seats
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 shrink-0">
+                        {train.runsOn || 'Daily Service'}
+                      </span>
                     </div>
 
                     {/* Operational Days Mini Matrix */}
-                    <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-xl border border-slate-200/80">
+                    <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/80 shrink-0">
                       {DAY_LETTERS.map((letter, dayIdx) => {
                         const operates = !train.runningDays || train.runningDays.includes(dayIdx);
                         return (
                           <div
                             key={dayIdx}
                             title={`${DAY_NAMES[dayIdx]}: ${operates ? 'Runs' : 'Does not run'}`}
-                            className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center transition-all ${
+                            className={`w-5 h-5 rounded-md text-[9px] font-black flex items-center justify-center transition-all ${
                               operates
                                 ? 'bg-emerald-600 text-white shadow-xs'
                                 : 'bg-slate-200/80 text-slate-400'
@@ -532,97 +525,63 @@ export default function TrainManager() {
                     </div>
                   </div>
 
-                  {/* Journey Corridor Section: When it starts and where it goes! */}
-                  <div className="p-5 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/70 border-b border-slate-100">
+                  {/* Compact Journey Corridor Strip (Height reduced significantly) */}
+                  <div className="px-4 py-2.5 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/70 border-b border-slate-100">
                     {hasRoute ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
                         {/* Origin (Starts here) */}
-                        <div className="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200/80 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full">
-                              Starts Here &bull; Origin
-                            </span>
-                            <span className="text-xs font-mono font-bold text-slate-600">
-                              0 km
-                            </span>
-                          </div>
-                          <div className="pt-1">
-                            <span className="font-serif font-black text-slate-900 text-base block">
-                              {firstStop.station?.name || 'Origin Station'}
-                            </span>
-                            <span className="text-xs font-mono font-bold text-emerald-800">
-                              Code: {firstStop.station?.code}
-                            </span>
-                          </div>
-                          <div className="pt-1 text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                            <span>🕒 Departs:</span>
-                            <span className="font-mono text-sm text-emerald-900 bg-white px-2 py-0.5 rounded border border-emerald-300">
-                              {firstStop.departureTime || 'Starts Origin'}
-                            </span>
-                          </div>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
+                            Starts
+                          </span>
+                          <span className="font-bold text-slate-900 truncate">
+                            {firstStop.station?.name || 'Origin Station'}
+                          </span>
+                          <span className="font-mono text-slate-500 font-bold shrink-0">
+                            ({firstStop.station?.code})
+                          </span>
+                          <span className="font-mono font-bold text-emerald-950 bg-white px-2 py-0.5 rounded border border-emerald-300 shadow-2xs shrink-0">
+                            🕒 {firstStop.departureTime || 'Starts'}
+                          </span>
                         </div>
 
-                        {/* Mid Corridor Track Arrow */}
-                        <div className="text-center px-2 py-1 space-y-1.5">
-                          <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-slate-500">
-                            <span>Corridor:</span>
-                            <span className="font-mono text-slate-700">{firstStop.station?.code} ➔ {lastStop.station?.code}</span>
-                          </div>
-                          <div className="relative flex items-center justify-center">
-                            <div className="h-0.5 w-full bg-slate-300 relative">
-                              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 -top-1.5 w-3 h-3 bg-emerald-600 rounded-full border-2 border-white shadow-xs" />
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-center gap-2 text-xs">
-                            <span className="px-2 py-0.5 rounded-full bg-slate-100 font-bold text-slate-700 border border-slate-200">
-                              {routeStations.length} Stops
-                            </span>
-                            <span className="px-2 py-0.5 rounded-full bg-slate-100 font-bold text-slate-700 border border-slate-200">
-                              {lastStop.distanceFromOrigin ? `${lastStop.distanceFromOrigin} km` : 'Direct Route'}
-                            </span>
-                          </div>
+                        {/* Mid Corridor Track Line */}
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 shrink-0 justify-center">
+                          <span className="hidden lg:inline text-slate-400 font-mono">
+                            {firstStop.station?.code} ➔ {lastStop.station?.code}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-[10px]">
+                            {routeStations.length} Stops &bull; {lastStop.distanceFromOrigin ? `${lastStop.distanceFromOrigin} km` : 'Direct'}
+                          </span>
+                          <span className="text-slate-400 font-bold">&rarr;</span>
                         </div>
 
                         {/* Destination (Where it goes) */}
-                        <div className="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-200/80 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-800 bg-indigo-100/80 px-2 py-0.5 rounded-full">
-                              Terminus &bull; Final Stop
-                            </span>
-                            <span className="text-xs font-mono font-bold text-slate-600">
-                              {lastStop.distanceFromOrigin} km
-                            </span>
-                          </div>
-                          <div className="pt-1">
-                            <span className="font-serif font-black text-slate-900 text-base block">
-                              {lastStop.station?.name || 'Destination Station'}
-                            </span>
-                            <span className="text-xs font-mono font-bold text-indigo-800">
-                              Code: {lastStop.station?.code}
-                            </span>
-                          </div>
-                          <div className="pt-1 text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-                            <span>🏁 Arrives:</span>
-                            <span className="font-mono text-sm text-indigo-900 bg-white px-2 py-0.5 rounded border border-indigo-300">
-                              {lastStop.arrivalTime || 'Terminates'}
-                            </span>
-                          </div>
+                        <div className="flex items-center gap-2 min-w-0 justify-start md:justify-end">
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 shrink-0">
+                            Terminus
+                          </span>
+                          <span className="font-bold text-slate-900 truncate">
+                            {lastStop.station?.name || 'Destination Station'}
+                          </span>
+                          <span className="font-mono text-slate-500 font-bold shrink-0">
+                            ({lastStop.station?.code})
+                          </span>
+                          <span className="font-mono font-bold text-indigo-950 bg-white px-2 py-0.5 rounded border border-indigo-300 shadow-2xs shrink-0">
+                            🏁 {lastStop.arrivalTime || 'Terminates'}
+                          </span>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-amber-50/80 rounded-xl border border-amber-200">
-                        <div className="flex items-center gap-2 text-amber-800 text-xs font-semibold">
-                          <span>⚠️ No station corridor attached to this train yet.</span>
-                        </div>
-                        <span className="text-xs text-slate-500 font-medium">
-                          Use the <span className="font-bold text-slate-700">"Create Route"</span> tab to map stations.
-                        </span>
+                      <div className="flex items-center justify-between text-xs py-0.5">
+                        <span className="text-amber-800 font-semibold">⚠️ No station corridor attached yet.</span>
+                        <span className="text-slate-500 text-[11px]">Use "Create Route" tab to attach stations.</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Card Footer: Accordion toggle for complete station timeline */}
-                  <div className="p-4 bg-white flex flex-wrap items-center justify-between gap-3">
+                  {/* Compact Footer Strip: Accordion toggle for complete station timeline */}
+                  <div className="px-4 py-2 bg-white flex flex-wrap items-center justify-between gap-2 text-xs">
                     {hasRoute ? (
                       <button
                         type="button"
@@ -635,9 +594,8 @@ export default function TrainManager() {
                       <span className="text-xs text-slate-400">Route timeline unavailable</span>
                     )}
 
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-slate-400">Train ID:</span>
-                      <span className="font-mono text-slate-500 text-[11px] truncate max-w-[120px]">{train.id}</span>
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span className="font-mono text-[11px]">Train ID: {train.id?.slice(0, 18)}...</span>
                     </div>
                   </div>
 

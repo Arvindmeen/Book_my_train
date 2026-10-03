@@ -371,70 +371,65 @@ export default function SearchForm({ compact }) {
                     return (
                       <div
                         key={t.trainId || t.trainNumber}
-                        className="bg-white rounded-xl border border-slate-200 hover:border-emerald-300 transition-all p-4 shadow-xs hover:shadow-card space-y-3"
+                        className="bg-white rounded-xl border border-slate-200 hover:border-emerald-300 transition-all shadow-xs hover:shadow-sm overflow-hidden"
                       >
-                        {/* Header */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-black text-xs text-white bg-slate-900 px-2.5 py-1 rounded-lg">
+                        {/* Compact Header */}
+                        <div className="px-3.5 py-2 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-white">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-mono font-black text-xs text-white bg-slate-900 px-2 py-0.5 rounded shadow-xs shrink-0">
                               #{t.trainNumber}
                             </span>
-                            <h4 className="font-serif font-black text-slate-900 text-sm sm:text-base">
+                            <h4 className="font-serif font-black text-slate-900 text-xs sm:text-sm truncate">
                               {t.trainName}
                             </h4>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/70 shrink-0">
                               {t.runsOn || 'Daily Service'}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => handleSelectTrainForBooking(t)}
-                              className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
-                            >
-                              Book Ticket &rarr;
-                            </button>
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSelectTrainForBooking(t)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors shrink-0"
+                          >
+                            Book &rarr;
+                          </button>
                         </div>
 
-                        {/* Origin ➔ Destination Journey Bar */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-xs">
+                        {/* Compact Journey Strip */}
+                        <div className="px-3.5 py-2 bg-slate-50/70 flex flex-wrap items-center justify-between gap-2 text-xs">
                           {/* Origin */}
-                          <div className="space-y-0.5">
-                            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
-                              🟢 Starts At (Origin)
-                            </span>
-                            <span className="font-bold text-slate-900 text-sm block">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="font-bold text-slate-900 truncate">
                               {t.origin?.name} ({t.origin?.code})
                             </span>
-                            <span className="text-slate-600 font-medium">
-                              Departure Time: <strong className="text-slate-900">{t.origin?.departureTime}</strong>
+                            <span className="font-mono text-[11px] font-bold text-emerald-900 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                              🕒 {t.origin?.departureTime}
                             </span>
                           </div>
 
+                          <span className="text-slate-400 font-bold">&rarr;</span>
+
                           {/* Destination */}
-                          <div className="space-y-0.5">
-                            <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">
-                              🏁 Goes To (Destination)
-                            </span>
-                            <span className="font-bold text-slate-900 text-sm block">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-bold text-slate-900 truncate">
                               {t.destination?.name} ({t.destination?.code})
                             </span>
-                            <span className="text-slate-600 font-medium">
-                              Arrival Time: <strong className="text-slate-900">{t.destination?.arrivalTime}</strong>
-                              {t.totalDistance > 0 && ` (${t.totalDistance} km)`}
+                            <span className="font-mono text-[11px] font-bold text-indigo-900 bg-indigo-100 px-1.5 py-0.2 rounded border border-indigo-200 shrink-0">
+                              🏁 {t.destination?.arrivalTime}
                             </span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
                           </div>
                         </div>
 
-                        {/* Accordion toggle for stops */}
+                        {/* Compact Accordion toggle for stops */}
                         {t.route && t.route.length > 0 && (
-                          <div>
+                          <div className="px-3.5 py-1.5 bg-white border-t border-slate-100">
                             <button
                               type="button"
                               onClick={() => setExpandedTrainId(isExpanded ? null : t.trainId)}
-                              className="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1"
+                              className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 hover:underline"
                             >
                               <span>{isExpanded ? '▲ Hide Intermediate Stops' : `▼ View All ${t.route.length} Stops &amp; Timings`}</span>
                             </button>
