@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+// When running on Vercel, use same-domain relative '/api' to proxy via vercel.json (bypasses ISP/campus firewall blocks and cross-domain cookie limits)
+const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+const API_BASE = isVercel ? '/api' : (import.meta.env.VITE_API_BASE_URL || '/api');
 
 const client = axios.create({
   baseURL: API_BASE,

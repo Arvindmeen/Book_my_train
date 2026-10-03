@@ -18,7 +18,7 @@ export default function BookingPage() {
   const quota = useSearchStore((s) => s.quota);
   const user = useAuthStore((s) => s.user);
 
-  const [optTripShield, setOptTripShield] = useState(true);
+  const [optTripShield, setOptTripShield] = useState(false);
 
   const seats = useMemo(() => Array.from(selectedSeats.values()), [selectedSeats]);
   const seatIds = useMemo(() => seats.map((s) => s.seatId), [seats]);
@@ -108,6 +108,7 @@ export default function BookingPage() {
           totalPrice={totalPrice}
           tripShield={optTripShield}
           tripShieldFee={tripShieldFee}
+          onTripShieldChange={setOptTripShield}
         />
 
         {/* Fast Tatkal 1-Click Rush Autofill Banner */}
@@ -136,50 +137,6 @@ export default function BookingPage() {
           <form id="passenger-form" onSubmit={handleSubmit(() => {})}>
             <PassengerList seats={seats} register={register} errors={errors} />
           </form>
-        </div>
-
-        {/* Free Cancellation Pass (BMT Trip Shield) Opt-In Card */}
-        <div
-          onClick={() => setOptTripShield(!optTripShield)}
-          className={`p-5 rounded-2xl border transition-all cursor-pointer select-none relative overflow-hidden ${
-            optTripShield
-              ? 'bg-gradient-to-r from-emerald-50 via-teal-50/50 to-white border-emerald-300 shadow-md ring-1 ring-emerald-400'
-              : 'bg-white border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-14 h-14 rounded-2xl bg-white border border-emerald-200 p-1 flex-shrink-0 flex items-center justify-center shadow-xs overflow-hidden">
-                <img src="/free_cancellation.jpg" alt="Trip Shield" className="w-full h-full object-cover rounded-xl" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    Zero Clerkage Deduction
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-500">₹49 / passenger</span>
-                </div>
-                <h3 className="font-extrabold text-base text-slate-900 mt-0.5">
-                  Free Cancellation Pass &middot; BMT Trip Shield
-                </h3>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Eliminate all railway clerkage fees. Cancel anytime prior to chart preparation and receive an instant 100% full refund to UPI.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <input
-                type="checkbox"
-                checked={optTripShield}
-                onChange={() => setOptTripShield(!optTripShield)}
-                className="w-5 h-5 text-emerald-600 rounded-md border-slate-300 focus:ring-emerald-500 cursor-pointer"
-              />
-              <span className="text-xs font-bold text-slate-700 hidden sm:inline-block">
-                {optTripShield ? 'Included' : 'Add Pass'}
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* Payment Confirmation Card */}

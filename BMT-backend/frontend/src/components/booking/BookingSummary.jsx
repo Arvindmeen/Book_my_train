@@ -1,6 +1,6 @@
 import { formatCurrency, formatSeatType, formatDate } from '../../utils/format';
 
-export default function BookingSummary({ train, seats, totalPrice, departureDate, tripShield = false, tripShieldFee = 0 }) {
+export default function BookingSummary({ train, seats, totalPrice, departureDate, tripShield = false, tripShieldFee = 0, onTripShieldChange }) {
   const finalPayable = totalPrice + (tripShield ? tripShieldFee : 0);
 
   return (
@@ -52,15 +52,20 @@ export default function BookingSummary({ train, seats, totalPrice, departureDate
           <span className="text-emerald-700 font-bold">INCLUDED</span>
         </div>
 
-        {tripShield && (
-          <div className="flex justify-between items-center text-emerald-900 font-semibold bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
-            <span className="flex items-center gap-1.5">
-              <span>🛡️</span>
-              <span>BMT Trip Shield Pass (100% Zero-Deduction Refund)</span>
-            </span>
-            <span className="font-bold text-emerald-800">+{formatCurrency(tripShieldFee)}</span>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-emerald-900 font-semibold bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tripShield}
+              onChange={(event) => onTripShieldChange?.(event.target.checked)}
+              className="w-4 h-4 accent-emerald-600 cursor-pointer"
+            />
+            <span>Optional Cancellation Protection</span>
+          </label>
+          <span className="font-bold text-emerald-800">
+            {tripShield ? `+${formatCurrency(tripShieldFee)}` : `${formatCurrency(49)} / passenger`}
+          </span>
+        </div>
 
         <div className="flex justify-between items-baseline pt-2 border-t border-slate-100 text-slate-900">
           <span className="font-bold text-sm">Total Payable</span>
