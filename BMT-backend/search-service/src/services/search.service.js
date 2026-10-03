@@ -222,6 +222,7 @@ const searchTrains = async (from, to, date) => {
      if (!toStation) return { trains: [], message: `Station "${to}" not found. Please select a valid station from the suggestions.` };
 
      const fromStationId = fromStation.stationId || fromStation.id;
+     const toStationId = toStation.stationId || toStation.id;
      const fromStationCode = fromStation.code ? fromStation.code.toUpperCase() : null;
      const toStationCode = toStation.code ? toStation.code.toUpperCase() : null;
 
@@ -293,11 +294,11 @@ const searchTrains = async (from, to, date) => {
 
      const targetDate = date ? normalizeDateStr(date) : null;
 
-     const trains = result.hits.hits
+     const trains = (result.hits?.hits || [])
           .map((hit) => {
                const src = hit._source;
-               const fromHit = hit.inner_hits.from_station.hits.hits[0]?._source;
-               const toHit = hit.inner_hits.to_station.hits.hits[0]?._source;
+               const fromHit = hit.inner_hits?.from_station?.hits?.hits?.[0]?._source;
+               const toHit = hit.inner_hits?.to_station?.hits?.hits?.[0]?._source;
 
                if (!fromHit || !toHit || fromHit.sequenceNumber >= toHit.sequenceNumber) {
                     return null;
@@ -472,11 +473,32 @@ const autocompleteStation = async (prefix) => {
           size: 10,
      });
 
-     return result.hits.hits.map((h) => ({
-          name: h._source.name,
-          code: h._source.code,
-          stationId: h._source.stationId,
-     }));
+     const seenCodes = new Set();
+     const seenNames = new Set();
+     const unique = [];
+
+     for (const h of (result.hits?.hits || [])) {
+          const s = h._source;
+          if (!s || !s.name || !s.code) continue;
+          const codeUpper = String(s.code).toUpperCase().trim();
+          const nameNorm = String(s.name).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+          if (seenCodes.has(codeUpper) || seenNames.has(nameNorm)) {
+               continue;
+          }
+
+          seenCodes.add(codeUpper);
+          seenNames.add(nameNorm);
+          unique.push({
+               name: s.name,
+               code: codeUpper,
+               stationId: s.stationId || h._id,
+          });
+
+          if (unique.length >= 8) break;
+     }
+
+     return unique;
 };
 
 /**
