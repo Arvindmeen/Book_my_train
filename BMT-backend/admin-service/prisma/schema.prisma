@@ -35,6 +35,9 @@ model Train {
   trainName   String // "Rajdhani Express"
   coachName   String   @default("AC") // Single coach per train (simplified)
   totalSeats  Int // Total seats in the single coach
+  runsOn      String   @default("Daily Service") // e.g. "Sun, Wed, Fri" or "Daily Service"
+  runningDays Int[]    @default([0, 1, 2, 3, 4, 5, 6]) // e.g. [0, 3, 5]
+  trainType   String   @default("EXPRESS") // "VANDE_BHARAT", "RAJDHANI", "SHATABDI", "EXPRESS"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

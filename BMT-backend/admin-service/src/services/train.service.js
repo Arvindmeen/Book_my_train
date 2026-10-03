@@ -5,7 +5,7 @@ const adminProducer = require('../kafka/producer/admin.producer');
 const logger = require("../config/logger");
 
 const createTrain = async (data) => {
-     const { trainNumber, trainName, coachName, seats } = data;
+     const { trainNumber, trainName, coachName, seats, runsOn, runningDays, trainType } = data;
      const existing = await prisma.train.findUnique(
           { where: { trainNumber } }
      )
@@ -25,6 +25,9 @@ const createTrain = async (data) => {
                trainName,
                coachName: coachName || 'AC',
                totalSeats: seats.length,
+               runsOn: runsOn || 'Daily Service',
+               runningDays: runningDays || [0, 1, 2, 3, 4, 5, 6],
+               trainType: trainType || 'EXPRESS',
                seats: {
                     create: seats.map((seat) => ({
                          seatNumber: seat.seatNumber,

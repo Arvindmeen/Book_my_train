@@ -809,12 +809,18 @@ async function seedRealIndianRailways() {
           trainName: t.trainName,
           coachName: t.coachName,
           totalSeats: t.seatsCount,
+          runsOn: t.runsOn,
+          runningDays: t.runningDays,
+          trainType: t.trainType || 'EXPRESS',
         },
         create: {
           trainNumber: t.trainNumber,
           trainName: t.trainName,
           coachName: t.coachName,
           totalSeats: t.seatsCount,
+          runsOn: t.runsOn,
+          runningDays: t.runningDays,
+          trainType: t.trainType || 'EXPRESS',
         },
       });
 
