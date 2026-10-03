@@ -162,6 +162,68 @@ const createRoute = async (data) => {
           logger.warn(`Could not auto-provision schedules for route: ${schedErr.message}`);
      }
 
+     // Direct ES indexing for instant searchability across all stops
+     const esUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
+     try {
+          const seatSummary = { total: (trainWithSeats.seats || []).length, LOWER: 0, MIDDLE: 0, UPPER: 0, SIDE_LOWER: 0, SIDE_UPPER: 0 };
+          (trainWithSeats.seats || []).forEach((s) => {
+               if (seatSummary[s.seatType] !== undefined) seatSummary[s.seatType]++;
+          });
+
+          const runningDays = Array.isArray(trainWithSeats.runningDays) && trainWithSeats.runningDays.length > 0
+               ? trainWithSeats.runningDays
+               : [0, 1, 2, 3, 4, 5, 6];
+
+          const doc = {
+               trainId: trainWithSeats.id,
+               trainNumber: trainWithSeats.trainNumber,
+               trainName: trainWithSeats.trainName,
+               runsOn: trainWithSeats.runsOn || 'Daily Service',
+               runningDays,
+               route: route.routeStations.map((rs) => ({
+                    stationId: rs.station.id,
+                    stationName: rs.station.name,
+                    stationCode: (rs.station.code || '').toUpperCase(),
+                    city: rs.station.city || '',
+                    sequenceNumber: rs.sequenceNumber,
+                    arrivalTime: rs.arrivalTime,
+                    departureTime: rs.departureTime,
+                    distanceFromOrigin: rs.distanceFromOrigin,
+               })),
+               schedules: [],
+               seatSummary,
+          };
+
+          await fetch(`${esUrl}/trains/_doc/${trainWithSeats.id}`, {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify(doc),
+               signal: AbortSignal.timeout(3000),
+          });
+
+          // Also index intermediate stations for autocomplete & resolution
+          for (const rs of route.routeStations) {
+               await fetch(`${esUrl}/stations/_doc/${rs.station.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                         stationId: rs.station.id,
+                         name: rs.station.name,
+                         code: (rs.station.code || '').toUpperCase(),
+                         city: rs.station.city || '',
+                         suggest: {
+                              input: [rs.station.name, rs.station.code, rs.station.city].filter(Boolean),
+                              weight: 10,
+                         },
+                    }),
+                    signal: AbortSignal.timeout(2000),
+               });
+          }
+          await fetch(`${esUrl}/trains/_refresh`, { method: 'POST', signal: AbortSignal.timeout(2000) });
+          await fetch(`${esUrl}/stations/_refresh`, { method: 'POST', signal: AbortSignal.timeout(2000) });
+          logger.info(`Directly indexed train ${trainWithSeats.trainNumber} and ${route.routeStations.length} stops to Elasticsearch`);
+     } catch (_) {}
+
      return route;
 };
 

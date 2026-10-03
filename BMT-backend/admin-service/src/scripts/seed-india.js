@@ -1048,10 +1048,51 @@ async function seedRealIndianRailways() {
     }
   }
 
-  // Also sync all stations directly to Elasticsearch if available
+  // Also sync all stations and trains directly to Elasticsearch if available
   if (esAvailable) {
-    console.log('\n🔍 Syncing all stations directly to Elasticsearch for instant autocomplete...');
-    await directIndexStationsToEs(esUrl, Array.from(stationMap.values()));
+    console.log('\n🔍 Syncing all stations from PostgreSQL directly to Elasticsearch...');
+    const allDbStations = await prisma.station.findMany();
+    await directIndexStationsToEs(esUrl, allDbStations);
+
+    console.log('🔍 Syncing all trains and routes (including any custom admin routes) from PostgreSQL to Elasticsearch...');
+    const allDbTrains = await prisma.train.findMany({
+      include: {
+        route: {
+          include: {
+            routeStations: {
+              include: { station: true },
+              orderBy: { sequenceNumber: 'asc' },
+            },
+          },
+        },
+        schedules: true,
+        seats: true,
+      },
+    });
+
+    for (const dbTrain of allDbTrains) {
+      if (dbTrain.route && dbTrain.route.routeStations && dbTrain.route.routeStations.length >= 2) {
+        await directIndexTrainToEs(
+          esUrl,
+          dbTrain,
+          {
+            seatsCount: dbTrain.seats?.length || dbTrain.totalSeats || 72,
+            runsOn: dbTrain.runsOn || 'Daily Service',
+            runningDays: dbTrain.runningDays || [0, 1, 2, 3, 4, 5, 6],
+          },
+          dbTrain.route.routeStations,
+          (dbTrain.schedules || []).map((s) => ({
+            scheduleId: s.id,
+            departureDate: s.departureDate.toISOString().split('T')[0],
+            status: s.status,
+            available: dbTrain.seats?.length || dbTrain.totalSeats || 72,
+            locked: 0,
+            booked: 0,
+          }))
+        );
+      }
+    }
+    console.log(`✅ Synced ${allDbStations.length} stations and ${allDbTrains.length} trains to Elasticsearch!`);
   }
 
   console.log('\n🎉 ALL REALISTIC INDIAN RAILWAY DATA SUCCESSFULLY SEEDED!');

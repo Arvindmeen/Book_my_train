@@ -7,11 +7,11 @@ const logger = require('../config/logger');
 
 /**
  * When admin creates a station, index it for autocomplete.
- * Event shape: { eventType, data: { id, name, code, city, state }, timestamp }
+ * Event shape: { eventType, data: { id, name, code, city, state }, timestamp } or raw station
  */
 const indexStation = async (event) => {
-     const station = event.data;
-     if (!station) return;
+     const station = event?.data || event;
+     if (!station || !station.id) return;
 
      try {
           await esClient.index({
@@ -20,8 +20,8 @@ const indexStation = async (event) => {
                document: {
                     stationId: station.id,
                     name: station.name,
-                    code: station.code,
-                    city: station.city,
+                    code: (station.code || '').toUpperCase(),
+                    city: station.city || '',
                     suggest: {
                          input: [station.name, station.code, station.city].filter(Boolean),
                          weight: 10,
@@ -39,7 +39,8 @@ const indexStation = async (event) => {
  * When admin creates a route, we get enriched payload with train+seats+routeStations.
  */
 const indexTrainRoute = async (routeEvent) => {
-     const { train, routeStations } = routeEvent;
+     const data = routeEvent?.data || routeEvent;
+     const { train, routeStations } = data;
      if (!train || !routeStations) return;
 
      const seatSummary = { total: 0, LOWER: 0, MIDDLE: 0, UPPER: 0, SIDE_LOWER: 0, SIDE_UPPER: 0 };
@@ -54,15 +55,18 @@ const indexTrainRoute = async (routeEvent) => {
           trainName: train.trainName,
           runsOn: train.runsOn || 'Daily Service',
           runningDays: train.runningDays || [0, 1, 2, 3, 4, 5, 6],
-          route: (routeStations || []).map((rs) => ({
-               stationId: rs.station?.id || rs.stationId,
-               stationName: rs.station?.name || rs.stationName || 'Station',
-               stationCode: rs.station?.code || rs.stationCode || '',
-               sequenceNumber: rs.sequenceNumber,
-               arrivalTime: rs.arrivalTime,
-               departureTime: rs.departureTime,
-               distanceFromOrigin: rs.distanceFromOrigin,
-          })),
+          route: (routeStations || []).map((rs) => {
+               const st = rs.station || rs;
+               return {
+                    stationId: st.id || rs.stationId,
+                    stationName: st.name || rs.stationName || 'Station',
+                    stationCode: (st.code || rs.stationCode || '').toUpperCase(),
+                    sequenceNumber: rs.sequenceNumber,
+                    arrivalTime: rs.arrivalTime,
+                    departureTime: rs.departureTime,
+                    distanceFromOrigin: rs.distanceFromOrigin,
+               };
+          }),
           schedules: [],
           seatSummary,
      };
@@ -74,20 +78,21 @@ const indexTrainRoute = async (routeEvent) => {
           refresh: true,
      });
 
-     // Also index/update stations for autocomplete
+     // Also index/update ALL stations on this route for autocomplete and resolution
      for (const rs of (routeStations || [])) {
-          const st = rs.station;
-          if (!st || !st.id) continue;
+          const st = rs.station || rs;
+          const stId = st.id || rs.stationId;
+          if (!stId) continue;
           await esClient.index({
                index: STATION_INDEX,
-               id: st.id,
+               id: stId,
                document: {
-                    stationId: st.id,
-                    name: st.name,
-                    code: st.code,
-                    city: st.city,
+                    stationId: stId,
+                    name: st.name || rs.stationName || 'Station',
+                    code: (st.code || rs.stationCode || '').toUpperCase(),
+                    city: st.city || '',
                     suggest: {
-                         input: [st.name, st.code, st.city].filter(Boolean),
+                         input: [st.name || rs.stationName, st.code || rs.stationCode, st.city].filter(Boolean),
                          weight: 10,
                     },
                },
@@ -224,10 +229,16 @@ const searchTrains = async (from, to, date) => {
      if (fromStationCode) {
           fromQueries.push({ term: { 'route.stationCode': fromStationCode } });
      }
+     if (fromStation.name) {
+          fromQueries.push({ match_phrase: { 'route.stationName': fromStation.name } });
+     }
 
      const toQueries = [{ term: { 'route.stationId': toStationId } }];
      if (toStationCode) {
           toQueries.push({ term: { 'route.stationCode': toStationCode } });
+     }
+     if (toStation.name) {
+          toQueries.push({ match_phrase: { 'route.stationName': toStation.name } });
      }
 
      const query = {
@@ -311,13 +322,14 @@ const searchTrains = async (from, to, date) => {
                     }
                }
 
-               // If no schedule document exists yet in ES but train operates on targetDay, provide active schedule
-               if (!scheduleInfo && operatesOnTargetDay && targetDate) {
+               // Always ensure scheduleInfo exists so the user can see seats & availability
+               if (!scheduleInfo) {
+                    const fallbackDate = targetDate || normalizeDateStr(new Date());
                     scheduleInfo = {
-                         scheduleId: `${src.trainId}-${targetDate}`,
-                         departureDate: targetDate,
+                         scheduleId: `${src.trainId}-${fallbackDate}`,
+                         departureDate: fallbackDate,
                          status: 'ACTIVE',
-                         available: src.seatSummary?.total || 50,
+                         available: src.seatSummary?.total || 72,
                          locked: 0,
                          booked: 0,
                     };

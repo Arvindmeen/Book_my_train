@@ -22,8 +22,30 @@ const createStation = async (data) => {
      await adminProducer.publishStationCreated(station).catch((err) => {
           logger.error('Failed to publish station created event', { error: err.message });
      });
+
+     // Direct ES index for instant availability across search & autocomplete
+     const esUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
+     try {
+          await fetch(`${esUrl}/stations/_doc/${station.id}`, {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                    stationId: station.id,
+                    name: station.name,
+                    code: (station.code || '').toUpperCase(),
+                    city: station.city || '',
+                    suggest: {
+                         input: [station.name, station.code, station.city].filter(Boolean),
+                         weight: 10,
+                    },
+               }),
+               signal: AbortSignal.timeout(2000),
+          });
+          await fetch(`${esUrl}/stations/_refresh`, { method: 'POST', signal: AbortSignal.timeout(2000) });
+     } catch (_) {}
+
      return station;
-}
+};
 
 const getAllStations = async (page, limit, search) => {
      const skip = (page - 1) * limit;

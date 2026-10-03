@@ -129,6 +129,7 @@ services:
       PORT: 4003
       DATABASE_URL: postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/admin_service_database
       KAFKA_BROKER: kafka:9092
+      ELASTICSEARCH_URL: http://elasticsearch:9200
     depends_on:
       postgres: { condition: service_healthy }
       kafka: { condition: service_healthy }
