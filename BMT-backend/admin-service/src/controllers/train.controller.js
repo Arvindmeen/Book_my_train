@@ -41,9 +41,11 @@ exports.createRoute = asyncHandler(async(req, res) =>{
 });
 
 exports.getAllTrains = asyncHandler(async(req, res) =>{
-     const trains = await trainService.getAllTrains();
+     const { search } = req.query;
+     const trains = await trainService.getAllTrains(search);
      return res.status(200).json({
           success: true,
+          count: trains.length,
           data: trains
      })
 })

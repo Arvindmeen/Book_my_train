@@ -227,8 +227,32 @@ const createRoute = async (data) => {
      return route;
 };
 
-const getAllTrains = async () => {
+const getAllTrains = async (search) => {
+     const trimmed = String(search || '').trim();
+     const where = trimmed ? {
+          OR: [
+               { trainNumber: { contains: trimmed, mode: 'insensitive' } },
+               { trainName: { contains: trimmed, mode: 'insensitive' } },
+               {
+                    route: {
+                         routeStations: {
+                              some: {
+                                   station: {
+                                        OR: [
+                                             { name: { contains: trimmed, mode: 'insensitive' } },
+                                             { code: { contains: trimmed, mode: 'insensitive' } },
+                                             { city: { contains: trimmed, mode: 'insensitive' } },
+                                        ]
+                                   }
+                              }
+                         }
+                    }
+               }
+          ]
+     } : {};
+
      return prisma.train.findMany({
+          where,
           include: {
                seats: { orderBy: { seatNumber: 'asc' } },
                route: {

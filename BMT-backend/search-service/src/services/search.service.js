@@ -525,6 +525,113 @@ const getAllTrains = async () => {
      return result.hits.hits.map((h) => h._source);
 };
 
+const formatTrainSchedule = (source) => {
+     const rawRoute = Array.isArray(source.route) ? [...source.route] : [];
+     rawRoute.sort((a, b) => (a.sequenceNumber || 0) - (b.sequenceNumber || 0));
+
+     const firstStop = rawRoute[0] || null;
+     const lastStop = rawRoute.length > 0 ? rawRoute[rawRoute.length - 1] : null;
+
+     const origin = firstStop ? {
+          stationId: firstStop.stationId,
+          name: firstStop.stationName,
+          code: firstStop.stationCode,
+          departureTime: firstStop.departureTime || '--:--',
+          arrivalTime: firstStop.arrivalTime || 'Starts Here',
+     } : null;
+
+     const destination = lastStop ? {
+          stationId: lastStop.stationId,
+          name: lastStop.stationName,
+          code: lastStop.stationCode,
+          arrivalTime: lastStop.arrivalTime || '--:--',
+          departureTime: lastStop.departureTime || 'Terminates Here',
+     } : null;
+
+     const totalDistance = lastStop?.distanceFromOrigin || 0;
+
+     const formattedRoute = rawRoute.map((stop, idx) => ({
+          sequenceNumber: stop.sequenceNumber || (idx + 1),
+          stationId: stop.stationId,
+          stationName: stop.stationName,
+          stationCode: stop.stationCode,
+          arrivalTime: stop.arrivalTime || (idx === 0 ? 'Starts Here' : '--:--'),
+          departureTime: stop.departureTime || (idx === rawRoute.length - 1 ? 'Terminates' : '--:--'),
+          distanceFromOrigin: stop.distanceFromOrigin || 0,
+     }));
+
+     return {
+          trainId: source.trainId,
+          trainNumber: source.trainNumber,
+          trainName: source.trainName,
+          runsOn: source.runsOn || 'Daily Service',
+          runningDays: source.runningDays || [0, 1, 2, 3, 4, 5, 6],
+          totalStops: rawRoute.length,
+          totalDistance,
+          origin,
+          destination,
+          route: formattedRoute,
+          seatSummary: source.seatSummary || {},
+          schedulesCount: Array.isArray(source.schedules) ? source.schedules.length : 0,
+     };
+};
+
+/**
+ * Search trains by train number, train name, or station name/code on its route.
+ * Returns when it starts (origin + dep time) and where it goes (destination + arr time).
+ */
+const searchByTrain = async (query) => {
+     const q = String(query || '').trim();
+
+     let esQuery;
+     if (!q) {
+          esQuery = { match_all: {} };
+     } else {
+          const isNum = /^\d+$/.test(q);
+          const should = [
+               { prefix: { trainNumber: { value: q, boost: 10 } } },
+               { match: { trainName: { query: q, fuzziness: 'AUTO', boost: 8 } } },
+               {
+                    nested: {
+                         path: 'route',
+                         query: {
+                              bool: {
+                                   should: [
+                                        { term: { 'route.stationCode': { value: q.toUpperCase(), boost: 6 } } },
+                                        { match: { 'route.stationName': { query: q, fuzziness: 'AUTO', boost: 4 } } },
+                                   ]
+                              }
+                         }
+                    }
+               }
+          ];
+
+          if (isNum) {
+               should.unshift({ term: { trainNumber: { value: q, boost: 20 } } });
+          }
+
+          esQuery = {
+               bool: {
+                    should,
+                    minimum_should_match: 1,
+               }
+          };
+     }
+
+     try {
+          const result = await esClient.search({
+               index: TRAIN_INDEX,
+               query: esQuery,
+               size: 50,
+          });
+
+          return (result.hits?.hits || []).map((h) => formatTrainSchedule(h._source));
+     } catch (err) {
+          logger.error(`searchByTrain error: ${err.message}`);
+          return [];
+     }
+};
+
 module.exports = {
      indexStation,
      indexTrainRoute,
@@ -535,4 +642,5 @@ module.exports = {
      autocompleteStation,
      getAllStations,
      getAllTrains,
+     searchByTrain,
 };

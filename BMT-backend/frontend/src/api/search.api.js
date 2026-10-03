@@ -72,4 +72,15 @@ export const searchApi = {
     );
     return { data: filtered.length > 0 ? filtered : FALLBACK_STATIONS.slice(0, 8) };
   },
+
+  searchByTrain: async (query = '') => {
+    try {
+      const qs = query ? `?q=${encodeURIComponent(query)}` : '';
+      const res = await client.get(`/search/by-train${qs}`);
+      return res.data?.data || [];
+    } catch (err) {
+      console.error('searchByTrain error:', err);
+      return [];
+    }
+  },
 };

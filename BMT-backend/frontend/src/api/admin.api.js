@@ -9,7 +9,10 @@ export const adminApi = {
   },
 
   createTrain: (data) => client.post('/admins/trains/train', data).then((r) => r.data),
-  getTrains: () => client.get('/admins/trains/train').then((r) => r.data),
+  getTrains: (search = '') => {
+    const qs = search ? `?search=${encodeURIComponent(search)}` : '';
+    return client.get(`/admins/trains/train${qs}`).then((r) => r.data);
+  },
   getTrainById: (id) => client.get(`/admins/trains/train/${id}`).then((r) => r.data),
 
   createRoute: (data) => client.post('/admins/trains/route', data).then((r) => r.data),

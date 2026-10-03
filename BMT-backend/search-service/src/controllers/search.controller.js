@@ -16,6 +16,12 @@ exports.autocomplete = asyncHandler(async (req, res) => {
      res.json({ success: true, data: suggestions });
 });
 
+exports.searchByTrain = asyncHandler(async (req, res) => {
+     const { q } = req.query;
+     const results = await searchService.searchByTrain(q || '');
+     res.json({ success: true, count: results.length, data: results });
+});
+
 exports.debugStations = asyncHandler(async (req, res) => {
      const data = await searchService.getAllStations();
      res.json({ success: true, count: data.length, data });

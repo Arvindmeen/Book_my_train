@@ -8,6 +8,9 @@ router.get('/trains', ctrl.searchTrains);
 // GET /search/autocomplete?q=del
 router.get('/autocomplete', ctrl.autocomplete);
 
+// GET /search/by-train?q=rajdhani
+router.get('/by-train', ctrl.searchByTrain);
+
 // Debug endpoints
 router.get('/debug/stations', ctrl.debugStations);
 router.get('/debug/trains', ctrl.debugTrains);
