@@ -52,6 +52,8 @@ const indexTrainRoute = async (routeEvent) => {
           trainId: train.id,
           trainNumber: train.trainNumber,
           trainName: train.trainName,
+          runsOn: train.runsOn || 'Daily Service',
+          runningDays: train.runningDays || [0, 1, 2, 3, 4, 5, 6],
           route: routeStations.map((rs) => ({
                stationId: rs.station.id,
                stationName: rs.station.name,
@@ -239,7 +241,20 @@ const searchTrains = async (from, to, date) => {
           size: 50,
      });
 
-     const normalize = (d) => new Date(d).toISOString().slice(0, 10);
+     const normalizeDateStr = (val) => {
+          if (!val) return '';
+          if (typeof val === 'string') {
+               const match = val.match(/^\d{4}-\d{2}-\d{2}/);
+               if (match) return match[0];
+          }
+          try {
+               return new Date(val).toISOString().slice(0, 10);
+          } catch {
+               return String(val).slice(0, 10);
+          }
+     };
+
+     const targetDate = date ? normalizeDateStr(date) : null;
 
      const trains = result.hits.hits
           .map((hit) => {
@@ -252,16 +267,30 @@ const searchTrains = async (from, to, date) => {
                }
 
                let scheduleInfo = null;
-               if (date && src.schedules && src.schedules.length > 0) {
-                    scheduleInfo = src.schedules.find(
-                         (s) => s.status === 'ACTIVE' && normalize(s.departureDate) === date
-                    ) || null;
+               if (src.schedules && src.schedules.length > 0) {
+                    if (targetDate) {
+                         scheduleInfo = src.schedules.find(
+                              (s) => s.status === 'ACTIVE' && normalizeDateStr(s.departureDate) === targetDate
+                         ) || null;
+                    } else {
+                         const todayStr = normalizeDateStr(new Date());
+                         scheduleInfo = src.schedules.find(
+                              (s) => s.status === 'ACTIVE' && normalizeDateStr(s.departureDate) >= todayStr
+                         ) || src.schedules[0] || null;
+                    }
+               }
+
+               // If a specific date was requested and the train does NOT run on that date, exclude it
+               if (targetDate && !scheduleInfo) {
+                    return null;
                }
 
                return {
                     trainId: src.trainId,
                     trainNumber: src.trainNumber,
                     trainName: src.trainName,
+                    runsOn: src.runsOn || 'Daily Service',
+                    runningDays: src.runningDays || [0, 1, 2, 3, 4, 5, 6],
                     // --- SEGMENT BOOKING: Added stationId and sequenceNumber to from/to for segment-aware booking ---
                     from: { name: fromHit.stationName, code: fromHit.stationCode, departure: fromHit.departureTime, stationId: fromHit.stationId, sequenceNumber: fromHit.sequenceNumber },
                     to: { name: toHit.stationName, code: toHit.stationCode, arrival: toHit.arrivalTime, stationId: toHit.stationId, sequenceNumber: toHit.sequenceNumber },

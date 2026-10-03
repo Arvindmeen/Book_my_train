@@ -2,70 +2,26 @@ import client from './client';
 
 const FALLBACK_STATIONS = [
   { stationId: '1', name: 'New Delhi', code: 'NDLS' },
-  { stationId: '2', name: 'Varanasi Jn', code: 'BSB' },
-  { stationId: '3', name: 'Howrah Jn', code: 'HWH' },
-  { stationId: '4', name: 'Mumbai Central', code: 'MMCT' },
-  { stationId: '5', name: 'KSR Bengaluru', code: 'SBC' },
-  { stationId: '6', name: 'Chennai Central', code: 'MAS' },
-  { stationId: '7', name: 'Bhopal Jn', code: 'BPL' },
-  { stationId: '8', name: 'Agra Cantt', code: 'AGC' },
-  { stationId: '9', name: 'Kanpur Central', code: 'CNB' },
-  { stationId: '10', name: 'Prayagraj Jn', code: 'PRYJ' },
-  { stationId: '11', name: 'Patna Jn', code: 'PNBE' },
-  { stationId: '12', name: 'Jaipur Jn', code: 'JP' },
-  { stationId: '13', name: 'Ahmedabad Jn', code: 'ADI' },
-  { stationId: '14', name: 'Pune Jn', code: 'PUNE' },
-  { stationId: '15', name: 'Lucknow Charbagh', code: 'LKO' },
+  { stationId: '2', name: 'Anand Vihar Terminal', code: 'ANVT' },
+  { stationId: '3', name: 'Hazrat Nizamuddin', code: 'NZM' },
+  { stationId: '4', name: 'Old Delhi Junction', code: 'DLI' },
+  { stationId: '5', name: 'Varanasi Jn', code: 'BSB' },
+  { stationId: '6', name: 'Howrah Jn', code: 'HWH' },
+  { stationId: '7', name: 'Mumbai Central', code: 'MMCT' },
+  { stationId: '8', name: 'KSR Bengaluru', code: 'SBC' },
+  { stationId: '9', name: 'Chennai Central', code: 'MAS' },
+  { stationId: '10', name: 'Bhopal Jn', code: 'BPL' },
+  { stationId: '11', name: 'Agra Cantt', code: 'AGC' },
+  { stationId: '12', name: 'Kanpur Central', code: 'CNB' },
+  { stationId: '13', name: 'Prayagraj Jn', code: 'PRYJ' },
+  { stationId: '14', name: 'Patna Jn', code: 'PNBE' },
+  { stationId: '15', name: 'Jaipur Jn', code: 'JP' },
+  { stationId: '16', name: 'Ahmedabad Jn', code: 'ADI' },
+  { stationId: '17', name: 'Pune Jn', code: 'PUNE' },
+  { stationId: '18', name: 'Lucknow Charbagh', code: 'LKO' },
+  { stationId: '19', name: 'Gorakhpur Jn', code: 'GKP' },
+  { stationId: '20', name: 'Amritsar Jn', code: 'ASR' },
 ];
-
-export const createFallbackTrains = (from, to, date) => {
-  const d = date || new Date().toISOString().split('T')[0];
-  const fromName = from || 'New Delhi (NDLS)';
-  const toName = to || 'Varanasi (BSB)';
-  return {
-    from: { resolved: fromName, name: fromName, code: fromName.slice(0, 4) },
-    to: { resolved: toName, name: toName, code: toName.slice(0, 4) },
-    date: d,
-    trains: [
-      {
-        trainId: 't-22436',
-        trainNumber: '22436',
-        trainName: 'Vande Bharat Express',
-        from: { departure: '06:00', name: fromName, code: 'ORIGIN', sequenceNumber: 1, stationId: 'st-from' },
-        to: { arrival: '14:00', name: toName, code: 'DEST', sequenceNumber: 8, stationId: 'st-to' },
-        schedule: { scheduleId: 'sch-22436-live', departureDate: d, status: 'SCHEDULED' },
-        seatSummary: { 'EC': 18, 'CC': 54, 'total': 72 }
-      },
-      {
-        trainId: 't-12301',
-        trainNumber: '12301',
-        trainName: 'Howrah Rajdhani Express',
-        from: { departure: '16:50', name: fromName, code: 'ORIGIN', sequenceNumber: 1, stationId: 'st-from' },
-        to: { arrival: '09:55', name: toName, code: 'DEST', sequenceNumber: 6, stationId: 'st-to' },
-        schedule: { scheduleId: 'sch-12301-live', departureDate: d, status: 'SCHEDULED' },
-        seatSummary: { '1A': 4, '2A': 16, '3A': 0, 'total': 20 }
-      },
-      {
-        trainId: 't-12002',
-        trainNumber: '12002',
-        trainName: 'Bhopal Shatabdi Express',
-        from: { departure: '06:15', name: fromName, code: 'ORIGIN', sequenceNumber: 1, stationId: 'st-from' },
-        to: { arrival: '14:40', name: toName, code: 'DEST', sequenceNumber: 7, stationId: 'st-to' },
-        schedule: { scheduleId: 'sch-12002-live', departureDate: d, status: 'SCHEDULED' },
-        seatSummary: { 'EC': 8, 'CC': 42, 'total': 50 }
-      },
-      {
-        trainId: 't-12951',
-        trainNumber: '12951',
-        trainName: 'Mumbai Tejas Rajdhani',
-        from: { departure: '17:00', name: fromName, code: 'ORIGIN', sequenceNumber: 1, stationId: 'st-from' },
-        to: { arrival: '08:35', name: toName, code: 'DEST', sequenceNumber: 5, stationId: 'st-to' },
-        schedule: { scheduleId: 'sch-12951-live', departureDate: d, status: 'SCHEDULED' },
-        seatSummary: { '1A': 0, '2A': 8, '3A': 32, 'total': 40 }
-      }
-    ]
-  };
-};
 
 export const searchApi = {
   search: async (from, to, date) => {
@@ -74,13 +30,28 @@ export const searchApi = {
     try {
       const res = await client.get(url);
       const data = res.data?.data || res.data;
-      if (data && data.trains && data.trains.length > 0) {
-        return data;
+      if (data) {
+        return {
+          from: data.from || { resolved: from },
+          to: data.to || { resolved: to },
+          date: data.date || date,
+          count: Array.isArray(data.trains) ? data.trains.length : 0,
+          trains: Array.isArray(data.trains) ? data.trains : [],
+          message: data.message || (data.trains?.length === 0 ? 'No trains found for this route on the selected date.' : null)
+        };
       }
-      return createFallbackTrains(from, to, date);
-    } catch {
-      // Graceful fallback to mock express routes
-      return createFallbackTrains(from, to, date);
+      return { trains: [], count: 0, from: { resolved: from }, to: { resolved: to }, date };
+    } catch (err) {
+      console.error('Search API error:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Search request failed';
+      return { 
+        trains: [], 
+        count: 0, 
+        from: { resolved: from }, 
+        to: { resolved: to }, 
+        date, 
+        error: errMsg 
+      };
     }
   },
 
@@ -92,13 +63,13 @@ export const searchApi = {
         return { data };
       }
     } catch {
-      // Fallback
+      // Fallback to local station list on network failure
     }
 
     const query = String(q || '').toLowerCase();
     const filtered = FALLBACK_STATIONS.filter(
       (s) => s.name.toLowerCase().includes(query) || s.code.toLowerCase().includes(query)
     );
-    return { data: filtered.length > 0 ? filtered : FALLBACK_STATIONS.slice(0, 5) };
+    return { data: filtered.length > 0 ? filtered : FALLBACK_STATIONS.slice(0, 8) };
   },
 };

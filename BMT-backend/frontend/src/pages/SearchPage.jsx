@@ -17,8 +17,9 @@ export default function SearchPage() {
   const { results, isSearching, setSearchParams, setResults, setSearching } = useSearchStore();
   const [filterType, setFilterType] = useState('ALL');
 
-  const error = results?.error || null;
   const trains = results?.trains || [];
+  const error = results?.error || (results?.message && trains.length === 0 && !results?.from?.resolved ? results.message : null);
+  const hasSearched = Boolean(results && (results.from?.resolved || results.to?.resolved || results.date));
   const filteredTrains = filterType === 'ALL'
     ? trains
     : trains.filter((t) => {
@@ -145,6 +146,34 @@ export default function SearchPage() {
 
             {/* Trains List */}
             <TrainList trains={filteredTrains} />
+          </div>
+        ) : hasSearched ? (
+          /* Search Performed but Zero Trains Found */
+          <div className="card p-8 md:p-12 text-center bg-white border border-slate-200 rounded-3xl shadow-card max-w-2xl mx-auto space-y-5">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-3xl">
+              🚉
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900">
+                No Trains Found on {results.date || 'Selected Date'}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                No scheduled trains were found between{' '}
+                <strong className="text-slate-900">{results.from?.resolved || results.from?.code || 'Origin'}</strong>{' '}
+                and{' '}
+                <strong className="text-slate-900">{results.to?.resolved || results.to?.code || 'Destination'}</strong>{' '}
+                on <strong>{results.date}</strong>.
+              </p>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs text-slate-600 space-y-2">
+              <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                <span>💡</span> Realistic Indian Railway Schedules:
+              </p>
+              <p>• <strong>Days of Operation:</strong> Many express trains run on specific days (e.g., Sun, Wed, Fri).</p>
+              <p>• <strong>Alternate Day Returns:</strong> Return trains operate in the opposite direction on alternating days (e.g., Mon, Thu, Sat).</p>
+              <p>• <strong>Daily Expresses:</strong> Daily passenger trains run 7 days a week.</p>
+              <p>• <strong>Tip:</strong> Try selecting <strong>Tomorrow</strong> in the search bar above or check alternate days.</p>
+            </div>
           </div>
         ) : (
           /* Empty / Default Initial State with 1-Click Popular Routes */

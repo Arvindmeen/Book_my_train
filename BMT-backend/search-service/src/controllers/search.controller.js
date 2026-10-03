@@ -25,3 +25,9 @@ exports.debugTrains = asyncHandler(async (req, res) => {
      const data = await searchService.getAllTrains();
      res.json({ success: true, count: data.length, data });
 });
+
+exports.recreateIndices = asyncHandler(async (req, res) => {
+     const { recreateIndices } = require('../config/elasticsearch');
+     await recreateIndices();
+     res.json({ success: true, message: 'Elasticsearch indices recreated successfully' });
+});

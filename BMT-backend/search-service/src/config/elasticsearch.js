@@ -68,6 +68,8 @@ const initIndices = async () => {
                          trainId: { type: 'keyword' },
                          trainNumber: { type: 'keyword' },
                          trainName: { type: 'text' },
+                         runsOn: { type: 'keyword' },
+                         runningDays: { type: 'integer' },
                          route: {
                               type: 'nested',
                               properties: {

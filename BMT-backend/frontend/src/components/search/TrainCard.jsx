@@ -161,8 +161,9 @@ export default function TrainCard({ train }) {
                 ⭐ Shatabdi Exp
               </span>
             )}
-            <span className="text-xs text-slate-400 font-medium ml-auto lg:ml-0">
-              Daily Service
+            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full ml-auto lg:ml-0 flex items-center gap-1 shadow-xs">
+              <span className="text-xs">📅</span>
+              <span>Runs: {train.runsOn || 'Daily Service'}</span>
             </span>
           </div>
 
