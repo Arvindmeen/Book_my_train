@@ -161,10 +161,17 @@ export default function TrainCard({ train }) {
                 ⭐ Shatabdi Exp
               </span>
             )}
-            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full ml-auto lg:ml-0 flex items-center gap-1 shadow-xs">
-              <span className="text-xs">📅</span>
-              <span>Runs: {train.runsOn || 'Daily Service'}</span>
-            </span>
+            {train.runsOnSelectedDate === false ? (
+              <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-full ml-auto lg:ml-0 flex items-center gap-1 shadow-xs">
+                <span>⚠️</span>
+                <span>Not running on selected date (Runs: {train.runsOn})</span>
+              </span>
+            ) : (
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full ml-auto lg:ml-0 flex items-center gap-1 shadow-xs">
+                <span className="text-xs">📅</span>
+                <span>Runs: {train.runsOn || 'Daily Service'}</span>
+              </span>
+            )}
           </div>
 
           {/* Route Departure / Arrival Timeline */}

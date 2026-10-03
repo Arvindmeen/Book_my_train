@@ -106,6 +106,62 @@ const createRoute = async (data) => {
      });
 
      await adminProducer.publishRouteCreated({ ...route, train: trainWithSeats });
+
+     // Auto-provision next 30 days of schedules for this route based on train's runningDays
+     try {
+          const runningDays = Array.isArray(trainWithSeats.runningDays) && trainWithSeats.runningDays.length > 0
+               ? trainWithSeats.runningDays
+               : [0, 1, 2, 3, 4, 5, 6];
+
+          const today = new Date();
+          for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
+               const schedDate = new Date(today);
+               schedDate.setDate(today.getDate() + dayOffset);
+               schedDate.setHours(0, 0, 0, 0);
+
+               if (!runningDays.includes(schedDate.getDay())) continue;
+
+               const dateStr = schedDate.toISOString().split('T')[0];
+
+               const schedule = await prisma.schedule.create({
+                    data: {
+                         trainId,
+                         departureDate: schedDate,
+                         status: 'ACTIVE',
+                    },
+               });
+
+               await adminProducer.publishScheduleCreated({
+                    scheduleId: schedule.id,
+                    trainId: trainWithSeats.id,
+                    trainNumber: trainWithSeats.trainNumber,
+                    trainName: trainWithSeats.trainName,
+                    coachName: trainWithSeats.coachName,
+                    totalSeats: trainWithSeats.totalSeats,
+                    departureDate: dateStr,
+                    status: schedule.status,
+                    seats: (trainWithSeats.seats || []).map((s) => ({
+                         seatId: s.id,
+                         seatNumber: s.seatNumber,
+                         seatType: s.seatType,
+                         price: s.price,
+                    })),
+                    route: route.routeStations.map((rs) => ({
+                         stationId: rs.station.id,
+                         stationName: rs.station.name,
+                         stationCode: rs.station.code,
+                         sequenceNumber: rs.sequenceNumber,
+                         arrivalTime: rs.arrivalTime,
+                         departureTime: rs.departureTime,
+                         distanceFromOrigin: rs.distanceFromOrigin,
+                    })),
+               });
+          }
+          logger.info(`Auto-provisioned 30-day schedules for train ${trainWithSeats.trainNumber}`);
+     } catch (schedErr) {
+          logger.warn(`Could not auto-provision schedules for route: ${schedErr.message}`);
+     }
+
      return route;
 };
 

@@ -33,6 +33,8 @@ const STATIONS = [
   { code: 'ALJN', name: 'Aligarh Junction', city: 'Aligarh', state: 'Uttar Pradesh' },
   { code: 'MTC', name: 'Meerut City', city: 'Meerut', state: 'Uttar Pradesh' },
   { code: 'MB', name: 'Moradabad Junction', city: 'Moradabad', state: 'Uttar Pradesh' },
+  { code: 'CH', name: 'Chandausi Junction', city: 'Chandausi', state: 'Uttar Pradesh' },
+  { code: '85645', name: 'chandousi', city: 'Chandausi', state: 'Uttar Pradesh' },
   { code: 'DDU', name: 'Pt. Deen Dayal Upadhyaya Junction', city: 'Mughalsarai', state: 'Uttar Pradesh' },
   { code: 'GZB', name: 'Ghaziabad Junction', city: 'Ghaziabad', state: 'Uttar Pradesh' },
 
@@ -745,6 +747,61 @@ const TRAINS = [
       { code: 'PRYJ', arrivalTime: '03:18', departureTime: '03:20', distance: 1799 },
       { code: 'CNB', arrivalTime: '05:30', departureTime: '05:35', distance: 1994 },
       { code: 'NDLS', arrivalTime: '10:30', departureTime: null, distance: 2434 },
+    ],
+  },
+
+  // ── CORRIDOR 16: Moradabad ⇄ Chandausi Junction Passenger (DAILY SERVICE) ──
+  {
+    trainNumber: '04376',
+    trainName: 'Moradabad - Chandausi Passenger Special',
+    coachName: '2S',
+    basePrice: 65,
+    seatsCount: 72,
+    runsOn: 'Daily Service',
+    runningDays: [0, 1, 2, 3, 4, 5, 6],
+    stops: [
+      { code: 'MB', arrivalTime: null, departureTime: '07:15', distance: 0 },
+      { code: 'CH', arrivalTime: '08:45', departureTime: null, distance: 44 },
+    ],
+  },
+  {
+    trainNumber: '04375',
+    trainName: 'Chandausi - Moradabad Passenger Special',
+    coachName: '2S',
+    basePrice: 65,
+    seatsCount: 72,
+    runsOn: 'Daily Service',
+    runningDays: [0, 1, 2, 3, 4, 5, 6],
+    stops: [
+      { code: 'CH', arrivalTime: null, departureTime: '17:45', distance: 0 },
+      { code: 'MB', arrivalTime: '19:15', departureTime: null, distance: 44 },
+    ],
+  },
+  // Dedicated route linking code 85645 (chandousi) for direct code search compatibility
+  {
+    trainNumber: '54376',
+    trainName: 'Moradabad - Chandousi Passenger Local',
+    coachName: '2S',
+    basePrice: 50,
+    seatsCount: 72,
+    runsOn: 'Daily Service',
+    runningDays: [0, 1, 2, 3, 4, 5, 6],
+    stops: [
+      { code: 'MB', arrivalTime: null, departureTime: '09:30', distance: 0 },
+      { code: '85645', arrivalTime: '11:00', departureTime: null, distance: 44 },
+    ],
+  },
+  {
+    trainNumber: '54375',
+    trainName: 'Chandousi - Moradabad Passenger Local',
+    coachName: '2S',
+    basePrice: 50,
+    seatsCount: 72,
+    runsOn: 'Daily Service',
+    runningDays: [0, 1, 2, 3, 4, 5, 6],
+    stops: [
+      { code: '85645', arrivalTime: null, departureTime: '14:20', distance: 0 },
+      { code: 'MB', arrivalTime: '15:50', departureTime: null, distance: 44 },
     ],
   },
 ];

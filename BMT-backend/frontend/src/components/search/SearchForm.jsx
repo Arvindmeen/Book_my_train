@@ -14,11 +14,18 @@ const QUOTA_OPTIONS = [
   { id: 'SS', label: 'Senior Citizen', icon: '🧓' },
 ];
 
+const getLocalDateString = (d = new Date()) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function SearchForm({ compact }) {
   const { from, to, date, quota, setQuota, setSearchParams, setResults, setSearching, isSearching } = useSearchStore();
   const [fromValue, setFromValue] = useState(from);
   const [toValue, setToValue] = useState(to);
-  const [travelDate, setTravelDate] = useState(date || new Date().toISOString().split('T')[0]);
+  const [travelDate, setTravelDate] = useState(date || getLocalDateString());
   const [selectedQuota, setSelectedQuota] = useState(quota || 'GN');
   const [swapRotated, setSwapRotated] = useState(false);
   const [autocompleteCloseSignal, setAutocompleteCloseSignal] = useState(0);
@@ -66,8 +73,10 @@ export default function SearchForm({ compact }) {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const today = getLocalDateString();
+  const tmrw = new Date();
+  tmrw.setDate(tmrw.getDate() + 1);
+  const tomorrow = getLocalDateString(tmrw);
 
   return (
     <form onSubmit={handleSearch} className="space-y-4">
