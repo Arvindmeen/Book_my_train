@@ -525,7 +525,7 @@ export default function TrainManager() {
                     </div>
                   </div>
 
-                  {/* Compact Journey Corridor Strip (Height reduced significantly) */}
+                  {/* Compact Journey Corridor Strip (Always station names, no code/numbers) */}
                   <div className="px-4 py-2.5 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/70 border-b border-slate-100">
                     {hasRoute ? (
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
@@ -537,9 +537,6 @@ export default function TrainManager() {
                           <span className="font-bold text-slate-900 truncate">
                             {firstStop.station?.name || 'Origin Station'}
                           </span>
-                          <span className="font-mono text-slate-500 font-bold shrink-0">
-                            ({firstStop.station?.code})
-                          </span>
                           <span className="font-mono font-bold text-emerald-950 bg-white px-2 py-0.5 rounded border border-emerald-300 shadow-2xs shrink-0">
                             🕒 {firstStop.departureTime || 'Starts'}
                           </span>
@@ -547,8 +544,8 @@ export default function TrainManager() {
 
                         {/* Mid Corridor Track Line */}
                         <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 shrink-0 justify-center">
-                          <span className="hidden lg:inline text-slate-400 font-mono">
-                            {firstStop.station?.code} ➔ {lastStop.station?.code}
+                          <span className="hidden lg:inline text-slate-700 font-semibold truncate max-w-sm">
+                            {firstStop.station?.name} ➔ {lastStop.station?.name}
                           </span>
                           <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-[10px]">
                             {routeStations.length} Stops &bull; {lastStop.distanceFromOrigin ? `${lastStop.distanceFromOrigin} km` : 'Direct'}
@@ -563,9 +560,6 @@ export default function TrainManager() {
                           </span>
                           <span className="font-bold text-slate-900 truncate">
                             {lastStop.station?.name || 'Destination Station'}
-                          </span>
-                          <span className="font-mono text-slate-500 font-bold shrink-0">
-                            ({lastStop.station?.code})
                           </span>
                           <span className="font-mono font-bold text-indigo-950 bg-white px-2 py-0.5 rounded border border-indigo-300 shadow-2xs shrink-0">
                             🏁 {lastStop.arrivalTime || 'Terminates'}
@@ -604,7 +598,7 @@ export default function TrainManager() {
                     <div className="p-5 bg-slate-50 border-t border-slate-200 animate-fade-in space-y-3">
                       <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                         <h5 className="font-serif font-black text-sm text-slate-900">
-                          Route Sequence &bull; #{train.trainNumber} {train.trainName}
+                          Route Stops Sequence &bull; {train.trainName}
                         </h5>
                         <span className="text-xs text-slate-500 font-medium">
                           Total Distance: {lastStop.distanceFromOrigin || 0} km
@@ -616,8 +610,7 @@ export default function TrainManager() {
                           <thead>
                             <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
                               <th className="py-2 text-left w-12">Seq</th>
-                              <th className="py-2 text-left">Station</th>
-                              <th className="py-2 text-left">Station Code</th>
+                              <th className="py-2 text-left">Station Name</th>
                               <th className="py-2 text-left">Arrival Time</th>
                               <th className="py-2 text-left">Departure Time</th>
                               <th className="py-2 text-right">Distance (km)</th>
@@ -642,13 +635,10 @@ export default function TrainManager() {
                                       {isOrigin && <span className="text-emerald-600">🟢</span>}
                                       {isTerminus && <span className="text-indigo-600">🏁</span>}
                                       {!isOrigin && !isTerminus && <span className="text-slate-400">⚪</span>}
-                                      <span>{rs.station?.name || 'Station'}</span>
+                                      <span className="font-bold">{rs.station?.name || 'Station'}</span>
                                       {isOrigin && <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded font-extrabold">ORIGIN</span>}
                                       {isTerminus && <span className="text-[10px] text-indigo-800 bg-indigo-100 px-1.5 py-0.2 rounded font-extrabold">TERMINUS</span>}
                                     </div>
-                                  </td>
-                                  <td className="py-2.5 font-mono font-bold text-slate-700">
-                                    {rs.station?.code || '—'}
                                   </td>
                                   <td className="py-2.5 font-mono text-slate-700">
                                     {rs.arrivalTime || (isOrigin ? 'Starts Here' : '—')}

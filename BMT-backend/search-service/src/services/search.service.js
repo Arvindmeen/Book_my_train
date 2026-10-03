@@ -367,23 +367,37 @@ const searchTrains = async (from, to, date) => {
  */
 const resolveStation = async (input) => {
      if (!input || typeof input !== 'string') return null;
-     const trimmed = input.trim();
+     let trimmed = input.trim();
 
-     // 1. Try exact code match
-     const exactResult = await esClient.search({
-          index: STATION_INDEX,
-          query: { term: { code: trimmed.toUpperCase() } },
-          size: 1,
-     });
-     if (exactResult.hits.hits.length > 0) return exactResult.hits.hits[0]._source;
+     // Strip any code in parenthesis if present, e.g. "Chandausi Junction (CH)" -> try code CH or name
+     const parenMatch = trimmed.match(/^(.+?)\s*\(([A-Z0-9]+)\)$/i);
+     if (parenMatch) {
+          const namePart = parenMatch[1].trim();
+          const codePart = parenMatch[2].trim().toUpperCase();
+          const codeRes = await esClient.search({
+               index: STATION_INDEX,
+               query: { term: { code: codePart } },
+               size: 1,
+          });
+          if (codeRes.hits.hits.length > 0) return codeRes.hits.hits[0]._source;
+          trimmed = namePart;
+     }
 
-     // 2. Try exact name match
+     // 1. Try exact name match first (always prioritize full station name)
      const exactNameResult = await esClient.search({
           index: STATION_INDEX,
           query: { match_phrase: { name: trimmed } },
           size: 1,
      });
      if (exactNameResult.hits.hits.length > 0) return exactNameResult.hits.hits[0]._source;
+
+     // 2. Try exact code match (if user entered code or number)
+     const exactResult = await esClient.search({
+          index: STATION_INDEX,
+          query: { term: { code: trimmed.toUpperCase() } },
+          size: 1,
+     });
+     if (exactResult.hits.hits.length > 0) return exactResult.hits.hits[0]._source;
 
      // 3. Try completion suggester (handles typos like "dehli" → "Delhi")
      try {
@@ -406,24 +420,22 @@ const resolveStation = async (input) => {
           logger.warn(`Suggest fallback failed: ${err.message}`);
      }
 
-     // 4. Fuzzy match on name (ONLY if NOT pure numbers)
-     if (!/^\d+$/.test(trimmed)) {
-          const fuzzyResult = await esClient.search({
-               index: STATION_INDEX,
-               query: {
-                    multi_match: {
-                         query: trimmed,
-                         fields: ['name^2', 'city'],
-                         fuzziness: 'AUTO',
-                         prefix_length: 1,
-                    },
+     // 4. Fuzzy match on name or city
+     const fuzzyResult = await esClient.search({
+          index: STATION_INDEX,
+          query: {
+               multi_match: {
+                    query: trimmed,
+                    fields: ['name^3', 'city^2'],
+                    fuzziness: 'AUTO',
+                    prefix_length: 1,
                },
-               size: 1,
-          });
+          },
+          size: 1,
+     });
 
-          if (fuzzyResult.hits.hits.length > 0 && fuzzyResult.hits.hits[0]._score >= 1.5) {
-               return fuzzyResult.hits.hits[0]._source;
-          }
+     if (fuzzyResult.hits.hits.length > 0) {
+          return fuzzyResult.hits.hits[0]._source;
      }
 
      return null;

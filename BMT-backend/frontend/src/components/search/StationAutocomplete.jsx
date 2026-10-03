@@ -61,9 +61,11 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
   }, [value]);
 
   const handleSelect = (station) => {
-    setQuery(`${station.name} (${station.code})`);
+    // ALWAYS write station NAME in the box, never station code or number
+    const cleanName = station.name || station.stationName || station;
+    setQuery(cleanName);
     setSelectedFromDropdown(true);
-    onChange(station.code);
+    onChange(cleanName);
     setOpen(false);
     setSuggestions([]);
   };
@@ -77,11 +79,32 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (suggestions.length > 0) {
+        e.preventDefault();
+        const match = suggestions.find(
+          (s) => s.code.toLowerCase() === query.trim().toLowerCase() ||
+                 s.name.toLowerCase() === query.trim().toLowerCase()
+        ) || suggestions[0];
+        handleSelect(match);
+      }
+    }
+  };
+
   const handleBlur = () => {
     setTimeout(() => {
       setOpen(false);
       if (!selectedFromDropdown && query.trim().length >= 2) {
-        onChange(query.trim());
+        if (suggestions.length > 0) {
+          const match = suggestions.find(
+            (s) => s.code.toLowerCase() === query.trim().toLowerCase() ||
+                   s.name.toLowerCase() === query.trim().toLowerCase()
+          ) || suggestions[0];
+          handleSelect(match);
+        } else {
+          onChange(query.trim());
+        }
       }
     }, 150);
   };
@@ -106,6 +129,7 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
           type="text"
           value={query}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
@@ -131,8 +155,8 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
                 <span className="text-slate-400 group-hover:text-emerald-600 transition-colors">🚉</span>
                 <span className="font-semibold text-slate-800 truncate group-hover:text-slate-900">{s.name}</span>
               </div>
-              <span className="text-emerald-800 bg-emerald-100 font-bold text-xs px-2 py-0.5 rounded-md ml-2 flex-shrink-0">
-                {s.code}
+              <span className="text-[11px] text-slate-400 font-semibold px-2 py-0.5 rounded-md ml-2 flex-shrink-0 bg-slate-50">
+                Station
               </span>
             </li>
           ))}
