@@ -53,7 +53,6 @@ access.log
 # VS Code
 .vscode/settings.json
 .vscode/launch.json
-.vscode/tasks.json
 .vscode/.ropeproject
 
 # WebStorm / IntelliJ IDEA
