@@ -165,7 +165,7 @@ export function predictPnr(pnr) {
       chartStatus: 'CHART PREPARED',
       platform: 'Platform #1 (Confirmed)',
       passengers: [
-        { name: 'Arvind Meena', status: 'CNF', coach: 'C4', seat: '14 (Window)', quota: 'General (GN)', bookingStatus: 'CNF / C4 / 14' },
+        { name: 'Amit Kumar', status: 'CNF', coach: 'C4', seat: '14 (Window)', quota: 'General (GN)', bookingStatus: 'CNF / C4 / 14' },
         { name: 'Rohan Sharma', status: 'CNF', coach: 'C4', seat: '16 (Aisle)', quota: 'General (GN)', bookingStatus: 'CNF / C4 / 16' }
       ],
       prediction: predictWaitlist('22436', 'EC', 'CNF')
@@ -185,7 +185,7 @@ export function predictPnr(pnr) {
       chartStatus: 'CHART NOT PREPARED',
       platform: 'Platform #8 (Expected)',
       passengers: [
-        { name: 'Arvind Meena', status: 'WL 6', coach: 'WL', seat: 'WL 6', quota: 'General (GN)', bookingStatus: 'WL 14 -> WL 6' },
+        { name: 'Amit Kumar', status: 'WL 6', coach: 'WL', seat: 'WL 6', quota: 'General (GN)', bookingStatus: 'WL 14 -> WL 6' },
         { name: 'Pooja Verma', status: 'WL 7', coach: 'WL', seat: 'WL 7', quota: 'General (GN)', bookingStatus: 'WL 15 -> WL 7' }
       ],
       prediction: predictWaitlist('12301', '3A', 'WL 6', 2)
@@ -205,7 +205,7 @@ export function predictPnr(pnr) {
       chartStatus: 'CHART NOT PREPARED',
       platform: 'Platform #3 (Expected)',
       passengers: [
-        { name: 'Arvind Meena', status: 'WL 68', coach: 'WL', seat: 'WL 68', quota: 'General (GN)', bookingStatus: 'WL 82 -> WL 68' }
+        { name: 'Amit Kumar', status: 'WL 68', coach: 'WL', seat: 'WL 68', quota: 'General (GN)', bookingStatus: 'WL 82 -> WL 68' }
       ],
       prediction: predictWaitlist('12002', 'CC', 'WL 68', 3)
     };

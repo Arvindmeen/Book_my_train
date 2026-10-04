@@ -29,7 +29,7 @@ export default function PassengerForm({ index, seat, register, errors }) {
         <div className="sm:col-span-1">
           <Input
             label="Full Name (As per Govt ID)"
-            placeholder="e.g. Arvind Meena"
+            placeholder="Enter full name"
             {...register(`passengers.${index}.name`, { required: 'Name is required' })}
             error={errors?.passengers?.[index]?.name?.message}
           />

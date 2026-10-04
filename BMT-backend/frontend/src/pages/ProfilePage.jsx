@@ -470,7 +470,7 @@ export default function ProfilePage() {
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      placeholder="e.g. Arvind"
+                      placeholder="First Name"
                       required
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-emerald-500 focus:outline-none text-xs"
                     />
@@ -482,7 +482,7 @@ export default function ProfilePage() {
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      placeholder="e.g. Meena"
+                      placeholder="Last Name"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-emerald-500 focus:outline-none text-xs"
                     />
                   </div>
@@ -545,7 +545,7 @@ export default function ProfilePage() {
                       type="text"
                       value={formData.irctcUsername}
                       onChange={(e) => setFormData({ ...formData, irctcUsername: e.target.value })}
-                      placeholder="e.g. arvind_bmt"
+                      placeholder="e.g. user_bmt"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-emerald-500 focus:outline-none text-xs"
                     />
                   </div>
