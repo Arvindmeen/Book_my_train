@@ -21,6 +21,24 @@ sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml exe
 echo "🚆 Seeding PostgreSQL & Syncing to Elasticsearch..."
 sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml exec -T admin-service node src/scripts/seed-india.js
 
+# 4. Sync booking-service database (PNRs are created only when users book tickets)
+echo "🎫 Syncing Booking Service database schema..."
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml exec -T booking-service npx prisma db push --accept-data-loss || true
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml exec -T booking-service npx prisma generate || true
+# Ensure no dummy/mock PNRs exist in database
+sudo docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml exec -T booking-service node -e "
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+prisma.booking.deleteMany({
+  where: {
+    OR: [
+      { idempotencyKey: { startsWith: 'seed-' } },
+      { pnr: { in: ['2418937104', '4429182371', '2243612345', '1230198765'] } }
+    ]
+  }
+}).then(r => console.log('Cleaned dummy PNRs:', r.count)).catch(() => {}).finally(() => prisma.\$disconnect());
+" || true
+
 echo "=============================================================="
 echo "✅ Realistic Database Seeding Successfully Completed!"
 echo "=============================================================="

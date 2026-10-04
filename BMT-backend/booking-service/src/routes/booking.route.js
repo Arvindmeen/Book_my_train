@@ -6,11 +6,15 @@ const {
      getUserBookings,
      cancelBooking,
      verifyPayment,
+     getPnrStatus,
 } = require('../controllers/booking.controller');
 
 const router = express.Router();
 
-// All booking routes require authentication (user context from gateway)
+// Public PNR verification & status tracking
+router.get('/bookings/pnr/:pnr', getPnrStatus);
+
+// All other booking routes require authentication (user context from gateway)
 router.post('/bookings', getUserContext, createBooking);
 router.get('/bookings', getUserContext, getUserBookings);
 router.get('/bookings/:bookingId', getUserContext, getBooking);

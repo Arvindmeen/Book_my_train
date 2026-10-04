@@ -33,11 +33,24 @@ function passengers(items = []) {
 
 function getBookingConfirmedTemplate(data = {}) {
   const train = [data.trainNumber, data.trainName].filter(Boolean).join(' — ') || 'To be confirmed';
-  return layout('Your booking is confirmed', `Booking ${data.bookingId || ''} is confirmed.`, `<p style="margin:0;font:15px/24px Arial,sans-serif;">Hello ${escapeHtml(data.firstName || 'Passenger')}, your train booking has been confirmed. Keep this email for your records.</p>${details([['Booking reference', data.bookingId], ['Train', train], ['From', data.fromStationName], ['To', data.toStationName], ['Journey date', formatDate(data.departureDate)], ['Amount paid', formatCurrency(data.totalAmount)]])}${passengers(data.passengers)}<p style="margin:24px 0 0;color:#64748b;font:13px/20px Arial,sans-serif;">Please carry a valid government-issued photo ID during your journey.</p>`);
+  const pnrBlock = data.pnr ? `<div style="margin:20px 0;padding:16px;background:#ecfdf5;border:2px dashed #059669;border-radius:10px;text-align:center;"><p style="margin:0;font-size:12px;font-weight:bold;color:#047857;text-transform:uppercase;letter-spacing:1px;">INDIAN RAILWAYS PASSENGER NAME RECORD (PNR)</p><p style="margin:6px 0 0;font-size:28px;font-weight:900;letter-spacing:6px;color:#065f46;font-family:monospace;">${escapeHtml(data.pnr)}</p></div>` : '';
+  return layout(
+    'Your booking is confirmed',
+    `PNR: ${data.pnr || data.bookingId || ''} - Booking Confirmed.`,
+    `<p style="margin:0;font:15px/24px Arial,sans-serif;">Hello ${escapeHtml(data.firstName || 'Passenger')}, your train booking has been confirmed. Keep this email and your PNR for your journey.</p>${pnrBlock}${details([
+      ['PNR Number', data.pnr || 'Issued on ticket'],
+      ['Booking reference', data.bookingId],
+      ['Train', train],
+      ['From', data.fromStationName],
+      ['To', data.toStationName],
+      ['Journey date', formatDate(data.departureDate)],
+      ['Amount paid', formatCurrency(data.totalAmount)]
+    ])}${passengers(data.passengers)}<p style="margin:24px 0 0;color:#64748b;font:13px/20px Arial,sans-serif;">Please carry a valid government-issued photo ID during your journey.</p>`
+  );
 }
 
 function getTicketConfirmationTemplate(data = {}) {
-  return getBookingConfirmedTemplate({ bookingId: data.bookingId || data.pnr, firstName: data.firstName, trainName: data.trainName, trainNumber: data.trainNumber, fromStationName: data.from, toStationName: data.to, departureDate: data.date, passengers: data.passengers, totalAmount: data.amount });
+  return getBookingConfirmedTemplate({ bookingId: data.bookingId, pnr: data.pnr, firstName: data.firstName, trainName: data.trainName, trainNumber: data.trainNumber, fromStationName: data.from, toStationName: data.to, departureDate: data.date, passengers: data.passengers, totalAmount: data.amount });
 }
 
 function getBookingFailedTemplate(data = {}) {
@@ -53,7 +66,7 @@ function getBookingCancelledTemplate(data = {}) {
 
 const getOtpText = (otp, ttl = 5) => `${BRAND}\n\nVerification code: ${otp}\nThis code expires in ${ttl} minutes. Do not share it with anyone.\n\nSupport: ${SUPPORT_EMAIL}`;
 const getWelcomeText = (name = 'Passenger') => `Hello ${name},\n\nYour ${BRAND} account is ready. Sign in at ${APP_URL}/login.\n\nSupport: ${SUPPORT_EMAIL}`;
-const getBookingConfirmedText = (data = {}) => `Hello ${data.firstName || 'Passenger'},\n\nYour booking is confirmed.\nBooking reference: ${data.bookingId || 'N/A'}\nTrain: ${[data.trainNumber, data.trainName].filter(Boolean).join(' — ') || 'N/A'}\nJourney date: ${formatDate(data.departureDate)}\nAmount paid: ${formatCurrency(data.totalAmount)}\n\nSupport: ${SUPPORT_EMAIL}`;
+const getBookingConfirmedText = (data = {}) => `Hello ${data.firstName || 'Passenger'},\n\nYour booking is confirmed.\nPNR Number: ${data.pnr || 'N/A'}\nBooking reference: ${data.bookingId || 'N/A'}\nTrain: ${[data.trainNumber, data.trainName].filter(Boolean).join(' — ') || 'N/A'}\nJourney date: ${formatDate(data.departureDate)}\nAmount paid: ${formatCurrency(data.totalAmount)}\n\nSupport: ${SUPPORT_EMAIL}`;
 const getBookingFailedText = (data = {}) => `Hello ${data.firstName || 'Passenger'},\n\nYour booking ${data.bookingId || ''} was not completed. If an amount was debited, it will be returned according to your payment provider's processing timeline.\n\nSupport: ${SUPPORT_EMAIL}`;
 const getBookingCancelledText = (data = {}) => `Hello ${data.firstName || 'Passenger'},\n\nYour booking ${data.bookingId || ''} has been cancelled.\nRefund: ${Number(data.refundAmount) > 0 ? `${formatCurrency(data.refundAmount)} has been initiated.` : 'No refund is applicable.'}\n\nSupport: ${SUPPORT_EMAIL}`;
 

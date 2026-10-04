@@ -78,10 +78,11 @@ class EmailService {
     }
 
     async sendBookingConfirmedEmail(email, bookingData) {
+        const pnrPrefix = bookingData.pnr ? `Ticket Confirmed | PNR: ${bookingData.pnr}` : 'Booking Confirmed';
         return this.sendWithRetry({
             from: this.from,
             to: email,
-            subject: `Booking Confirmed - ${bookingData.trainName || "Your Train Ticket"}`,
+            subject: `${pnrPrefix} - ${bookingData.trainName || "Your Train Ticket"}`,
             html: getBookingConfirmedTemplate(bookingData),
             text: getBookingConfirmedText(bookingData),
         });

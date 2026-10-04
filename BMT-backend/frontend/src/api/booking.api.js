@@ -16,4 +16,6 @@ export const bookingApi = {
   verifyPayment: (id, data) => client.post(`/bookings/bookings/${id}/verify-payment`, data).then((r) => r.data),
 
   cancel: (id) => client.post(`/bookings/bookings/${id}/cancel`).then((r) => r.data),
+
+  getPnrStatus: (pnr) => client.get(`/bookings/pnr/${pnr}`).then((r) => r.data),
 };

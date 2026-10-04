@@ -72,3 +72,10 @@ exports.cancelBooking = asyncHandler(async (req, res) => {
           data: result,
      });
 });
+
+exports.getPnrStatus = asyncHandler(async (req, res) => {
+     const { pnr } = req.params;
+     const result = await bookingService.getPnrStatus(pnr);
+     res.status(200).json({ success: true, data: result });
+});
+

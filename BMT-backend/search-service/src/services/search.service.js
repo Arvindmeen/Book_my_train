@@ -343,6 +343,7 @@ const searchTrains = async (from, to, date) => {
                     runsOn: src.runsOn || 'Daily Service',
                     runningDays,
                     runsOnSelectedDate: operatesOnTargetDay,
+                    route: src.route || [],
                     // --- SEGMENT BOOKING: Added stationId and sequenceNumber to from/to for segment-aware booking ---
                     from: { name: fromHit.stationName, code: fromHit.stationCode, departure: fromHit.departureTime, stationId: fromHit.stationId, sequenceNumber: fromHit.sequenceNumber },
                     to: { name: toHit.stationName, code: toHit.stationCode, arrival: toHit.arrivalTime, stationId: toHit.stationId, sequenceNumber: toHit.sequenceNumber },

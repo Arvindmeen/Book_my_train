@@ -222,6 +222,13 @@ router.get(
 // ===========================
 const bookingServiceProxy = createProxy('bookingService', config.SERVICES.BOOKING_SERVICE_URL);
 
+// Public PNR Status Tracking (no login required to track PNR)
+router.get(
+     '/bookings/pnr/:pnr',
+     combinedRateLimit(),
+     bookingServiceProxy
+);
+
 router.post(
      '/bookings/bookings',
      requireAuth,

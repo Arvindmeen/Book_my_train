@@ -75,6 +75,18 @@ const saveIdempotency = async (key, response) => {
      });
 };
 
+// ─── PNR Generator ──────────────────────────────────────────────────────────
+const generatePNR = () => {
+     // Authentic Indian Railways 10-digit PNR format (Zone prefix + 7 random digits)
+     const zonePrefixes = ['211', '224', '241', '258', '431', '442', '621', '638', '821', '842'];
+     const prefix = zonePrefixes[Math.floor(Math.random() * zonePrefixes.length)];
+     let suffix = '';
+     for (let i = 0; i < 7; i++) {
+          suffix += Math.floor(Math.random() * 10).toString();
+     }
+     return `${prefix}${suffix}`;
+};
+
 // ─── Create Booking ──────────────────────────────────────────────────────────
 
 // --- SEGMENT BOOKING: Added fromStationId, toStationId, fromSeq, toSeq params ---
@@ -163,9 +175,11 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
      try {
           // 6. Create booking record in DB
           const lockExpiresAt = new Date(Date.now() + config.BOOKING_TTL_SECONDS * 1000);
+          const pnr = generatePNR();
 
           booking = await prisma.booking.create({
                data: {
+                    pnr,
                     userId,
                     scheduleId,
                     trainId: availability.trainId,
@@ -216,6 +230,7 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
           // 9. Save idempotency
           const response = {
                bookingId: booking.id,
+               pnr: booking.pnr,
                status: booking.status,
                totalAmount: booking.totalAmount,
                lockExpiresAt: booking.lockExpiresAt,
@@ -317,6 +332,7 @@ const handlePaymentSuccess = async (paymentOrderId, gatewayPaymentId, amount) =>
 
                await bookingProducer.publishBookingConfirmed({
                     bookingId: booking.id,
+                    pnr: booking.pnr,
                     userId: booking.userId,
                     email: userInfo.email,
                     firstName: userInfo.firstName,
@@ -590,6 +606,7 @@ const getBooking = async (bookingId, userId) => {
 
      return {
           id: booking.id,
+          pnr: booking.pnr,
           status: booking.status,
           scheduleId: booking.scheduleId,
           trainId: booking.trainId,
@@ -634,6 +651,7 @@ const getUserBookings = async (userId, { status, page = 1, limit = 10, all = fal
           const q = search.trim();
           where.OR = [
                { id: { contains: q, mode: 'insensitive' } },
+               { pnr: { contains: q, mode: 'insensitive' } },
                { trainNumber: { contains: q, mode: 'insensitive' } },
                { trainName: { contains: q, mode: 'insensitive' } },
                { passengers: { some: { name: { contains: q, mode: 'insensitive' } } } },
@@ -657,6 +675,7 @@ const getUserBookings = async (userId, { status, page = 1, limit = 10, all = fal
      return {
           bookings: bookings.map(b => ({
                id: b.id,
+               pnr: b.pnr,
                status: b.status,
                scheduleId: b.scheduleId,
                trainNumber: b.trainNumber,
@@ -824,6 +843,77 @@ const handleScheduleCancelled = async (scheduleId) => {
      }
 };
 
+// ─── Get PNR Status (Public / Universal Ticket Tracking) ──────────────────────
+const getPnrStatus = async (pnr) => {
+     const cleanPnr = String(pnr || '').trim().replace(/\D/g, '');
+     if (!cleanPnr || cleanPnr.length !== 10) {
+          throw new BadRequestError('Invalid PNR number. Please enter a valid 10-digit numeric PNR.');
+     }
+
+     const booking = await prisma.booking.findFirst({
+          where: {
+               OR: [
+                    { pnr: cleanPnr },
+                    { id: cleanPnr },
+               ],
+          },
+          include: {
+               seats: { orderBy: { seatNumber: 'asc' } },
+               passengers: true,
+          },
+     });
+
+     if (!booking) {
+          throw new NotFoundError(`No ticket reservation record found for PNR: ${cleanPnr}`);
+     }
+
+     let fromStationName = null;
+     let toStationName = null;
+     try {
+          if (booking.fromStationId) fromStationName = await fetchStationName(booking.fromStationId);
+          if (booking.toStationId) toStationName = await fetchStationName(booking.toStationId);
+     } catch (_) {}
+
+     const depDate = new Date(booking.departureDate);
+     const now = new Date();
+     const isChartPrepared = depDate <= now || (depDate.getTime() - now.getTime()) < 4 * 3600 * 1000;
+
+     return {
+          pnr: booking.pnr || cleanPnr,
+          bookingId: booking.id,
+          trainNumber: booking.trainNumber,
+          trainName: booking.trainName,
+          departureDate: booking.departureDate,
+          status: booking.status,
+          chartStatus: isChartPrepared ? 'CHART PREPARED' : 'CHART NOT PREPARED',
+          from: fromStationName || 'Origin Station',
+          to: toStationName || 'Destination Station',
+          fromStationId: booking.fromStationId,
+          toStationId: booking.toStationId,
+          seatCount: booking.seatCount,
+          totalAmount: booking.totalAmount,
+          passengers: booking.passengers.map((p, idx) => {
+               const seat = booking.seats[idx] || booking.seats.find(s => s.seatId === p.seatId);
+               const coach = seat?.seatType?.startsWith('1A') ? 'H1' : seat?.seatType?.startsWith('2A') ? 'A1' : seat?.seatType?.startsWith('3A') ? 'B1' : 'S1';
+               return {
+                    name: p.name,
+                    age: p.age,
+                    gender: p.gender,
+                    status: booking.status === 'CONFIRMED' ? 'CNF (Confirmed)' : booking.status === 'CANCELLED' ? 'CAN (Cancelled)' : 'WL (Waitlist)',
+                    coach: coach,
+                    seat: seat ? `${seat.seatNumber} (${seat.seatType})` : 'To be assigned',
+                    berth: seat ? seat.seatType : 'Standard',
+               };
+          }),
+          seats: booking.seats.map(s => ({
+               seatNumber: s.seatNumber,
+               seatType: s.seatType,
+               price: s.price,
+          })),
+          createdAt: booking.createdAt,
+     };
+};
+
 module.exports = {
      createBooking,
      handlePaymentSuccess,
@@ -833,4 +923,5 @@ module.exports = {
      getBooking,
      getUserBookings,
      verifyPayment,
+     getPnrStatus,
 };
