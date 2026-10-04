@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const FAQS = [
   {
@@ -28,8 +29,14 @@ const FAQS = [
 ];
 
 export default function SupportChatbot() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFaq, setSelectedFaq] = useState(null);
+
+  // Hide chatbot on seat selection and booking checkout flow so it never blocks action buttons
+  const isBookingFlow = location.pathname.startsWith('/seats') || 
+                        location.pathname.startsWith('/booking');
+  if (isBookingFlow) return null;
 
   const handleClose = () => {
     setIsOpen(false);
@@ -37,9 +44,9 @@ export default function SupportChatbot() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[60] flex flex-col items-end gap-3">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
       <section
-        className={`w-[min(92vw,360px)] overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-2xl shadow-slate-900/20 origin-bottom transition-all duration-300 ease-out ${
+        className={`w-[min(92vw,360px)] pointer-events-auto overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-2xl shadow-slate-900/20 origin-bottom transition-all duration-300 ease-out ${
           isOpen
             ? 'max-h-[620px] translate-y-0 scale-100 opacity-100'
             : 'pointer-events-none max-h-0 translate-y-3 scale-95 opacity-0'
@@ -108,7 +115,7 @@ export default function SupportChatbot() {
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
-        className="group flex items-center gap-2 rounded-full bg-emerald-600 p-3 text-xs font-extrabold text-white shadow-lg shadow-emerald-600/30 transition-all hover:-translate-y-0.5 hover:bg-emerald-700 hover:px-4 hover:shadow-xl hover:shadow-emerald-600/35"
+        className="pointer-events-auto group flex items-center gap-2 rounded-full bg-emerald-600 p-3 text-xs font-extrabold text-white shadow-lg shadow-emerald-600/30 transition-all hover:-translate-y-0.5 hover:bg-emerald-700 hover:px-4 hover:shadow-xl hover:shadow-emerald-600/35"
         aria-expanded={isOpen}
         aria-label={isOpen ? 'Close support chat' : 'Open support chat'}
       >
