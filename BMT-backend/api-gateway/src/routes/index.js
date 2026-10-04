@@ -228,6 +228,16 @@ router.get(
      combinedRateLimit(),
      bookingServiceProxy
 );
+router.get(
+     '/bookings/bookings/pnr/:pnr',
+     combinedRateLimit(),
+     bookingServiceProxy
+);
+router.get(
+     '/pnr/:pnr',
+     combinedRateLimit(),
+     bookingServiceProxy
+);
 
 router.post(
      '/bookings/bookings',

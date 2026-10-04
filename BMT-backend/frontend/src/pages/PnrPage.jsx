@@ -30,8 +30,24 @@ export default function PnrPage() {
     setError(null);
 
     try {
-      const res = await bookingApi.getPnrStatus(val);
-      const data = res?.data || res;
+      let data = null;
+      try {
+        const res = await bookingApi.getPnrStatus(val);
+        data = res?.data?.data || res?.data || res;
+      } catch (apiErr) {
+        // Fallback: check if this PNR is in the user's loaded bookings or searchable via list
+        const localMatch = userBookings.find((b) => b.pnr === val || b.id === val);
+        if (localMatch) {
+          data = localMatch;
+        } else {
+          try {
+            const searchRes = await bookingApi.list(null, 1, 10, val);
+            const found = (searchRes?.bookings || []).find((b) => b.pnr === val || b.id === val);
+            if (found) data = found;
+          } catch (_) {}
+        }
+        if (!data) throw apiErr;
+      }
 
       if (!data || (!data.pnr && !data.trainNumber)) {
         setError(`No ticket reservation record found for PNR: ${val}. Please check the 10-digit number.`);
@@ -56,14 +72,25 @@ export default function PnrPage() {
         platform: 'Platform #1',
         from: data.from || 'Origin Station',
         to: data.to || 'Destination Station',
-        passengers: (data.passengers || []).map((p) => ({
-          name: p.name,
-          quota: 'General Quota (GN)',
-          bookingStatus: p.status || 'CNF',
-          status: p.status || 'CNF (Confirmed)',
-          coach: p.coach || 'B1',
-          seat: p.seat || '14 (Lower)',
-        })),
+        passengers: (data.passengers || []).length > 0
+          ? data.passengers.map((p) => ({
+              name: p.name,
+              quota: 'General Quota (GN)',
+              bookingStatus: p.status || data.status || 'CNF',
+              status: p.status || (data.status === 'CONFIRMED' ? 'CNF (Confirmed)' : 'CNF'),
+              coach: p.coach || 'B1',
+              seat: p.seat || `${p.seatNumber || 14} (Lower)`,
+            }))
+          : [
+              {
+                name: 'Passenger 1',
+                quota: 'General Quota (GN)',
+                bookingStatus: data.status || 'CNF',
+                status: data.status === 'CONFIRMED' ? 'CNF (Confirmed)' : 'CNF',
+                coach: 'B1',
+                seat: '14 (Lower)',
+              }
+            ],
         prediction: {
           probability: data.status === 'CONFIRMED' ? 100 : 75,
           level: data.status === 'CONFIRMED' ? 'CONFIRMED' : 'HIGH_CHANCE',

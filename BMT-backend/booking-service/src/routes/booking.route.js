@@ -11,7 +11,8 @@ const {
 
 const router = express.Router();
 
-// Public PNR verification & status tracking
+// Public PNR verification & status tracking (handles both proxy rewrite /pnr and direct /bookings/pnr)
+router.get('/pnr/:pnr', getPnrStatus);
 router.get('/bookings/pnr/:pnr', getPnrStatus);
 
 // All other booking routes require authentication (user context from gateway)

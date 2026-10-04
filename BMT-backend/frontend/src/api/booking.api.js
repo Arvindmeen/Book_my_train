@@ -3,11 +3,12 @@ import client from './client';
 export const bookingApi = {
   create: (data) => client.post('/bookings/bookings', data).then((r) => r.data),
 
-  list: (status, page = 1, limit = 10) => {
+  list: (status, page = 1, limit = 10, search = '') => {
     const qs = new URLSearchParams();
     if (status) qs.set('status', status);
     qs.set('page', page);
     qs.set('limit', limit);
+    if (search) qs.set('search', search);
     return client.get(`/bookings/bookings?${qs.toString()}`).then((r) => r.data);
   },
 
@@ -17,5 +18,19 @@ export const bookingApi = {
 
   cancel: (id) => client.post(`/bookings/bookings/${id}/cancel`).then((r) => r.data),
 
-  getPnrStatus: (pnr) => client.get(`/bookings/pnr/${pnr}`).then((r) => r.data),
+  getPnrStatus: async (pnr) => {
+    const cleanPnr = String(pnr || '').trim().replace(/\D/g, '');
+    try {
+      const res = await client.get(`/bookings/pnr/${cleanPnr}`);
+      return res.data;
+    } catch (err) {
+      if (err.response?.status === 404 || err.status === 404) {
+        try {
+          const res2 = await client.get(`/bookings/bookings/pnr/${cleanPnr}`);
+          return res2.data;
+        } catch (_) {}
+      }
+      throw err;
+    }
+  },
 };
