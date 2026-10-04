@@ -604,6 +604,15 @@ const getBooking = async (bookingId, userId) => {
           throw new NotFoundError('Booking not found');
      }
 
+     if (!booking.pnr) {
+          const generatedPnr = generatePNR();
+          await prisma.booking.update({
+               where: { id: booking.id },
+               data: { pnr: generatedPnr },
+          }).catch(() => {});
+          booking.pnr = generatedPnr;
+     }
+
      return {
           id: booking.id,
           pnr: booking.pnr,
@@ -671,6 +680,17 @@ const getUserBookings = async (userId, { status, page = 1, limit = 10, all = fal
           }),
           prisma.booking.count({ where }),
      ]);
+
+     for (const b of bookings) {
+          if (!b.pnr) {
+               const generatedPnr = generatePNR();
+               await prisma.booking.update({
+                    where: { id: b.id },
+                    data: { pnr: generatedPnr },
+               }).catch(() => {});
+               b.pnr = generatedPnr;
+          }
+     }
 
      return {
           bookings: bookings.map(b => ({

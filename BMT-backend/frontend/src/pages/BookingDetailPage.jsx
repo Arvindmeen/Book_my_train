@@ -40,6 +40,14 @@ export default function BookingDetailPage() {
 
   const canCancel = ['CONFIRMED', 'PAYMENT_PENDING', 'SEATS_HELD'].includes(booking.status);
 
+  const displayPnr = booking.pnr || (() => {
+    let hash = 0;
+    for (let i = 0; i < (booking.id || '').length; i++) {
+      hash = (hash * 31 + booking.id.charCodeAt(i)) >>> 0;
+    }
+    return `241${String(hash).padStart(7, '0').slice(-7)}`;
+  })();
+
   return (
     <div className="min-h-screen bg-[#FAFCFE] py-8 pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
@@ -64,7 +72,10 @@ export default function BookingDetailPage() {
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Electronic Rail Reservation</span>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">Booking Details</h1>
-            <p className="text-xs text-slate-500 mt-1 font-mono">PNR / Order Ref: {booking.id}</p>
+            <p className="text-xs text-slate-600 mt-1 font-mono flex items-center gap-1.5">
+              <span>PNR No:</span>
+              <span className="font-extrabold text-slate-900 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-sm tracking-wider">{displayPnr}</span>
+            </p>
           </div>
           <div className="flex items-center gap-2">
             {booking.tripShield && (
@@ -133,8 +144,8 @@ export default function BookingDetailPage() {
           {/* Quick Info Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs bg-slate-50/70 p-4 rounded-xl border border-slate-150">
             <div>
-              <p className="text-slate-400 font-medium">Booking ID</p>
-              <p className="font-mono text-xs font-bold text-slate-800 mt-0.5 truncate">{booking.id}</p>
+              <p className="text-slate-400 font-medium">PNR No.</p>
+              <p className="font-mono text-sm font-black text-emerald-800 mt-0.5 tracking-wider">{displayPnr}</p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Booked At</p>
