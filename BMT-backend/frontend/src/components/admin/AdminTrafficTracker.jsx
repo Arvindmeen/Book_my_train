@@ -22,16 +22,29 @@ export default function AdminTrafficTracker() {
       ]);
 
       if (trainsRes.status === 'fulfilled') {
-        setTrains(trainsRes.value?.data || []);
+        const val = trainsRes.value;
+        const list = Array.isArray(val?.data) ? val.data : Array.isArray(val) ? val : [];
+        setTrains(list);
       }
       if (bookingsRes.status === 'fulfilled') {
-        setBookings(bookingsRes.value?.data || []);
+        const val = bookingsRes.value;
+        const raw = val?.data !== undefined ? val.data : val;
+        const list = Array.isArray(raw?.bookings)
+          ? raw.bookings
+          : Array.isArray(raw)
+          ? raw
+          : [];
+        setBookings(list);
       }
       if (schedulesRes.status === 'fulfilled') {
-        setSchedules(schedulesRes.value?.data || []);
+        const val = schedulesRes.value;
+        const list = Array.isArray(val?.data) ? val.data : Array.isArray(val) ? val : [];
+        setSchedules(list);
       }
       if (stationsRes.status === 'fulfilled') {
-        setStations(stationsRes.value?.data || []);
+        const val = stationsRes.value;
+        const list = Array.isArray(val?.data) ? val.data : Array.isArray(val) ? val : [];
+        setStations(list);
       }
       setLastRefreshed(new Date().toLocaleTimeString());
     } catch (err) {
@@ -52,6 +65,15 @@ export default function AdminTrafficTracker() {
 
   // Derive real corridors, station footfall & network overview from actual database records
   const { corridors, stationFootfall, networkStats, availableZones } = useMemo(() => {
+    const safeTrains = Array.isArray(trains) ? trains : [];
+    const safeBookings = Array.isArray(bookings)
+      ? bookings
+      : Array.isArray(bookings?.bookings)
+      ? bookings.bookings
+      : [];
+    const safeSchedules = Array.isArray(schedules) ? schedules : [];
+    const safeStations = Array.isArray(stations) ? stations : [];
+
     const corridorMap = new Map();
 
     const getClusterName = (code) => {
@@ -76,11 +98,11 @@ export default function AdminTrafficTracker() {
       return 'Central';
     };
 
-    trains.forEach((t) => {
-      const stops = t.route?.routeStations || [];
+    safeTrains.forEach((t) => {
+      const stops = t?.route?.routeStations || [];
       if (stops.length < 2) return;
-      const origin = stops[0].station;
-      const dest = stops[stops.length - 1].station;
+      const origin = stops[0]?.station;
+      const dest = stops[stops.length - 1]?.station;
       if (!origin || !dest) return;
 
       const cluster1 = getClusterName(origin.code);
@@ -104,7 +126,7 @@ export default function AdminTrafficTracker() {
 
       const corridor = corridorMap.get(corridorKey);
       corridor.trains.push(t);
-      const dist = stops[stops.length - 1].distanceFromOrigin || 0;
+      const dist = stops[stops.length - 1]?.distanceFromOrigin || 0;
       if (dist > corridor.maxDistance) corridor.maxDistance = dist;
       corridor.totalSeatsDaily += (t.totalSeats || 64);
     });
@@ -112,7 +134,7 @@ export default function AdminTrafficTracker() {
     // Convert map to list of corridors with real metrics
     const corridorList = Array.from(corridorMap.values()).map((c, idx) => {
       const trainNumbers = new Set(c.trains.map((t) => t.trainNumber));
-      const corridorBookings = bookings.filter((b) => trainNumbers.has(b.trainNumber));
+      const corridorBookings = safeBookings.filter((b) => b && trainNumbers.has(b.trainNumber));
       const bookedPax = corridorBookings.reduce((sum, b) => sum + (b.seatCount || 1), 0);
       const waitlistPax = corridorBookings.filter((b) => b.status === 'PENDING' || b.status === 'SEATS_HELD').length;
 
@@ -151,9 +173,9 @@ export default function AdminTrafficTracker() {
 
     // Station Footfall computed dynamically from real train route halts
     const stationHaltCount = new Map();
-    trains.forEach((t) => {
+    safeTrains.forEach((t) => {
       (t.route?.routeStations || []).forEach((rs) => {
-        const st = rs.station;
+        const st = rs?.station;
         if (!st) return;
         const count = stationHaltCount.get(st.code) || { station: st, halts: 0 };
         count.halts += 1;
@@ -186,9 +208,9 @@ export default function AdminTrafficTracker() {
       });
 
     // Network Overview Stats
-    const totalFleet = trains.length;
-    const totalSchedules = schedules.length || 760;
-    const totalConfirmedBookings = bookings.filter((b) => b.status === 'CONFIRMED').length;
+    const totalFleet = safeTrains.length;
+    const totalSchedules = safeSchedules.length || 760;
+    const totalConfirmedBookings = safeBookings.filter((b) => b && b.status === 'CONFIRMED').length;
     const totalPax = totalFleet > 0 ? (totalFleet * 4750 + totalConfirmedBookings * 10) : 0;
 
     const zones = ['ALL', ...new Set(corridorList.map((c) => c.zone))];
@@ -205,11 +227,11 @@ export default function AdminTrafficTracker() {
       },
       availableZones: zones,
     };
-  }, [trains, bookings, schedules]);
+  }, [trains, bookings, schedules, stations]);
 
   const filteredCorridors = filterZone === 'ALL'
-    ? corridors
-    : corridors.filter((c) => c.zone.toLowerCase().includes(filterZone.toLowerCase()));
+    ? (corridors || [])
+    : (corridors || []).filter((c) => c?.zone?.toLowerCase().includes(filterZone.toLowerCase()));
 
   return (
     <div className="space-y-6 animate-fade-in">
