@@ -16,7 +16,12 @@ function layout(title, preheader, content) {
 }
 
 function details(rows) {
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;border-collapse:separate;">${rows.filter(([, value]) => value !== undefined && value !== null && value !== '').map(([label, value], i) => `<tr><td style="padding:12px 16px;color:#64748b;font:13px Arial,sans-serif;${i ? 'border-top:1px solid #e2e8f0;' : ''}">${escapeHtml(label)}</td><td align="right" style="padding:12px 16px;color:#0f172a;font:600 13px Arial,sans-serif;${i ? 'border-top:1px solid #e2e8f0;' : ''}">${escapeHtml(value)}</td></tr>`).join('')}</table>`;
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;border-collapse:separate;">${rows.filter(([, value]) => value !== undefined && value !== null && value !== '').map(([label, value, isHtml], i) => `<tr><td style="padding:12px 16px;color:#64748b;font:13px Arial,sans-serif;vertical-align:top;${i ? 'border-top:1px solid #e2e8f0;' : ''}">${escapeHtml(label)}</td><td align="right" style="padding:12px 16px;color:#0f172a;font:600 13px Arial,sans-serif;vertical-align:top;${i ? 'border-top:1px solid #e2e8f0;' : ''}">${isHtml ? value : escapeHtml(value)}</td></tr>`).join('')}</table>`;
+}
+
+function passengerTable(items = []) {
+  if (!items || items.length === 0) return 'Passenger details on e-ticket';
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-left:auto;">${items.map((p) => `<tr><td style="text-align:right;color:#0f172a;font:600 13px Arial,sans-serif;padding:2px 0;">${escapeHtml(p.name || 'Passenger')}${p.age ? ` <span style="color:#64748b;font-weight:normal;">(${escapeHtml(p.age)}y${p.gender ? `, ${escapeHtml(p.gender)}` : ''})</span>` : ''}${p.seatNumber || p.seat ? ` &bull; <strong style="color:#047857;">${escapeHtml(p.seatNumber || p.seat)}</strong>` : ''}</td></tr>`).join('')}</table>`;
 }
 
 function getOtpTemplate(otp, ttlMinutes = 5) {
@@ -25,10 +30,6 @@ function getOtpTemplate(otp, ttlMinutes = 5) {
 
 function getWelcomeTemplate(firstName = 'Passenger') {
   return layout('Your account is ready', 'Your Book My Train account is ready to use.', `<p style="margin:0 0 16px;font:15px/24px Arial,sans-serif;">Hello ${escapeHtml(firstName)},</p><p style="margin:0 0 24px;font:15px/24px Arial,sans-serif;">Your email address has been verified. You can now search trains, manage passengers, and track bookings in one place.</p><a href="${escapeHtml(`${APP_URL}/login`)}" style="display:inline-block;padding:12px 20px;background:#047857;border-radius:6px;color:#fff;font:700 14px Arial,sans-serif;text-decoration:none;">Sign in to your account</a><p style="margin:24px 0 0;color:#64748b;font:13px/20px Arial,sans-serif;">If you did not create this account, please contact us immediately.</p>`);
-}
-
-function passengers(items = []) {
-  return items.length ? `<p style="margin:24px 0 8px;color:#0f172a;font:700 15px Arial,sans-serif;">Passengers</p><ul style="margin:0;padding-left:20px;color:#475569;font:14px/22px Arial,sans-serif;">${items.map((p) => `<li>${escapeHtml(p.name || 'Passenger')}${p.age ? `, ${escapeHtml(p.age)} years` : ''}${p.gender ? `, ${escapeHtml(p.gender)}` : ''}</li>`).join('')}</ul>` : '';
 }
 
 function getBookingConfirmedTemplate(data = {}) {
@@ -44,8 +45,9 @@ function getBookingConfirmedTemplate(data = {}) {
       ['From', data.fromStationName],
       ['To', data.toStationName],
       ['Journey date', formatDate(data.departureDate)],
+      ['Passenger details', passengerTable(data.passengers), true],
       ['Amount paid', formatCurrency(data.totalAmount)]
-    ])}${passengers(data.passengers)}<p style="margin:24px 0 0;color:#64748b;font:13px/20px Arial,sans-serif;">Please carry a valid government-issued photo ID during your journey.</p>`
+    ])}<p style="margin:24px 0 0;color:#64748b;font:13px/20px Arial,sans-serif;">Please carry a valid government-issued photo ID during your journey.</p>`
   );
 }
 
