@@ -90,22 +90,7 @@ export default function PnrPage() {
                 coach: 'B1',
                 seat: '14 (Lower)',
               }
-            ],
-        prediction: {
-          probability: data.status === 'CONFIRMED' ? 100 : 75,
-          level: data.status === 'CONFIRMED' ? 'CONFIRMED' : 'HIGH_CHANCE',
-          clearanceTrend: data.status === 'CONFIRMED'
-            ? 'Confirmed ticket registered in Indian Railways database.'
-            : 'Waitlist position is in safe threshold for chart allotment.',
-          factors: [
-            'Verified CRIS PNR status in live database',
-            'Confirmed seat allocation recorded in passenger chart',
-            'Authentic coach berth number generated'
-          ],
-          recommendation: data.status === 'CONFIRMED'
-            ? 'Your berths are confirmed! Please carry a valid government-issued photo ID during journey.'
-            : 'Seat is currently waitlisted; chart preparation will assign coach number.'
-        }
+            ]
       });
     } catch (err) {
       const msg = err.response?.data?.message || err.message || `No ticket reservation found for PNR: ${val}`;
@@ -136,23 +121,20 @@ export default function PnrPage() {
             <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
               ⚡ CRIS Live Gateway Sync
             </span>
-            <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200 hidden sm:inline-block">
-              ✨ AI Predictor v2.4
-            </span>
           </div>
         </div>
 
         {/* Title & Input Box */}
         <div className="card p-6 md:p-8 bg-white border border-slate-150 shadow-card">
           <div className="text-center max-w-xl mx-auto mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200/80 p-1 mx-auto mb-3 shadow-xs flex items-center justify-center overflow-hidden">
-              <img src="/ai_predictor.jpg" alt="AI Predictor" className="w-full h-full object-cover rounded-xl" />
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200/80 mx-auto mb-3 shadow-xs flex items-center justify-center text-2xl">
+              🎫
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Live PNR Status &amp; AI Confirmation Prediction
+              Live PNR Status Enquiry
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Enter any 10-digit PNR to inspect real-time chart status and deep neural probability of waitlist clearance.
+              Enter your 10-digit PNR to inspect real-time chart status and passenger berth allotments.
             </p>
           </div>
 
@@ -180,11 +162,11 @@ export default function PnrPage() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Computing...</span>
+                  <span>Checking...</span>
                 </>
               ) : (
                 <>
-                  <span>🔮</span> Check &amp; Predict
+                  <span>🔍</span> Check PNR Status
                 </>
               )}
             </button>
@@ -283,100 +265,7 @@ export default function PnrPage() {
               </div>
             </div>
 
-            {/* AI Confirmation Prediction Meter (REAL MATHEMATICAL MODEL!) */}
-            {result.prediction && (
-              <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-slate-700/60 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                      <img src="/ai_predictor.jpg" alt="AI Engine" className="w-full h-full object-cover rounded-xl" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                          AI Neural Waitlist Predictor
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-semibold">96.4% Historical Accuracy</span>
-                      </div>
-                      <h3 className="font-extrabold text-xl text-white mt-1">
-                        Confirmation Probability Forecast
-                      </h3>
-                      <p className="text-xs text-slate-300 mt-0.5 font-medium">
-                        {result.prediction.clearanceTrend}
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Percentage Gauge */}
-                  <div className="flex items-baseline gap-2 bg-white/5 border border-white/10 px-5 py-3 rounded-2xl">
-                    <span className={`text-4xl font-black ${
-                      result.prediction.probability >= 80 ? 'text-emerald-400' :
-                      result.prediction.probability >= 55 ? 'text-amber-400' : 'text-rose-400'
-                    }`}>
-                      {result.prediction.probability}%
-                    </span>
-                    <span className="text-xs uppercase font-extrabold text-slate-300 tracking-wider">
-                      {result.prediction.level.replace('_', ' ')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress Visualizer */}
-                <div className="mt-5 space-y-2">
-                  <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden p-0.5">
-                    <div
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        result.prediction.probability >= 80 ? 'bg-gradient-to-r from-emerald-500 to-teal-300' :
-                        result.prediction.probability >= 55 ? 'bg-gradient-to-r from-amber-500 to-yellow-300' :
-                        'bg-gradient-to-r from-rose-500 to-orange-400'
-                      }`}
-                      style={{ width: `${result.prediction.probability}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-[11px] font-semibold text-slate-400">
-                    <span>Low Probability (&lt;50%)</span>
-                    <span>Moderate (50-75%)</span>
-                    <span className="text-emerald-400">High Confirmation (&gt;80%)</span>
-                  </div>
-                </div>
-
-                {/* Predictive Breakdown & Advice */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5 pt-5 border-t border-white/10 text-xs">
-                  <div className="space-y-1.5">
-                    <p className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">Key Predictive Indicators:</p>
-                    <ul className="space-y-1 text-slate-300">
-                      {result.prediction.factors.map((f, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5">
-                          <span className="text-emerald-400 mt-0.5">&bull;</span>
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3.5 space-y-1.5 flex flex-col justify-between">
-                    <div>
-                      <p className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">AI Traveler Advisory:</p>
-                      <p className="text-slate-200 mt-1 leading-relaxed">
-                        {result.prediction.recommendation}
-                      </p>
-                    </div>
-
-                    {result.prediction.probability < 65 && (
-                      <Link
-                        to="/search"
-                        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg transition-all mt-2"
-                      >
-                        ⚡ Search Alternate Trains with CNF Seats &rarr;
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-            )}
 
             {/* Passenger Berth Allotments */}
             <div>
