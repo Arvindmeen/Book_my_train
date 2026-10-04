@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useBookingStore } from '../../store/booking.store';
 import { useSearchStore } from '../../store/search.store';
 import { useAuthStore } from '../../store/auth.store';
-import { formatSeatType } from '../../utils/format';
+import { formatSeatType, formatTrainName } from '../../utils/format';
 import { predictWaitlist } from '../../utils/aiPrediction';
+import { getTrainSegmentRoute } from '../../utils/trainRoutes';
 import Button from '../ui/Button';
 
 export default function TrainCard({ train }) {
@@ -14,6 +15,12 @@ export default function TrainCard({ train }) {
   const quota = useSearchStore((s) => s.quota);
 
   const [activePrediction, setActivePrediction] = useState(null);
+  const [showRoute, setShowRoute] = useState(false);
+
+  const cleanName = formatTrainName(train.trainName);
+  const segmentRoute = getTrainSegmentRoute(train);
+  const intermediateStops = segmentRoute.intermediateStops || [];
+  const stopCount = intermediateStops.length;
 
   const schedule = train.schedule;
   const seatSummary = train.seatSummary || {};
@@ -131,9 +138,19 @@ export default function TrainCard({ train }) {
           
           {/* Train Title & Category Badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors">
-              {train.trainName}
-            </h3>
+            <button
+              type="button"
+              onClick={() => setShowRoute(!showRoute)}
+              className="text-left text-lg font-extrabold text-slate-900 hover:text-emerald-700 transition-colors flex items-center gap-2 cursor-pointer group/title"
+              title="Click to view intermediate stops where train stops"
+            >
+              <span>{cleanName}</span>
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 group-hover/title:bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-xs">
+                <span>📍</span>
+                <span>{showRoute ? 'Hide Route' : `${stopCount} Stops`}</span>
+                <span>{showRoute ? '▲' : '▼'}</span>
+              </span>
+            </button>
             <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
               #{train.trainNumber}
             </span>
@@ -189,19 +206,34 @@ export default function TrainCard({ train }) {
 
             {/* Visual Route Track */}
             <div className="flex-1 flex flex-col items-center px-2">
-              <span className="text-[10px] font-bold text-slate-500 mb-1">
-                Direct Express
-              </span>
-              <div className="w-full flex items-center">
-                <div className="h-1 bg-slate-200 rounded-full flex-1" />
-                <span className="px-2 animate-pulse">
+              <button
+                type="button"
+                onClick={() => setShowRoute(!showRoute)}
+                className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full mb-1 transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                title="Click to view intermediate stopping stations"
+              >
+                <span>📍</span>
+                <span>{stopCount > 0 ? `${stopCount} Intermediate Stops` : 'Direct Service'}</span>
+                <span>{showRoute ? '▲' : '▼'}</span>
+              </button>
+              <div
+                onClick={() => setShowRoute(!showRoute)}
+                className="w-full flex items-center cursor-pointer group/track py-1"
+                title="Click to view intermediate stations"
+              >
+                <div className="h-1 bg-slate-200 group-hover/track:bg-emerald-400 rounded-full flex-1 transition-colors" />
+                <span className="px-2 transform group-hover/track:scale-110 transition-transform">
                   <img src="/navbar-logo.jpg" alt="Train route" className="w-5 h-5 rounded-md object-contain" />
                 </span>
-                <div className="h-1 bg-slate-200 rounded-full flex-1" />
+                <div className="h-1 bg-slate-200 group-hover/track:bg-emerald-400 rounded-full flex-1 transition-colors" />
               </div>
-              <span className="text-[10px] text-emerald-700 font-bold mt-1">
-                On-Time Track
-              </span>
+              <button
+                type="button"
+                onClick={() => setShowRoute(!showRoute)}
+                className="text-[10px] text-emerald-700 hover:text-emerald-800 font-bold mt-0.5 cursor-pointer underline decoration-dotted"
+              >
+                {showRoute ? 'Hide Intermediate Stops ▲' : 'View Intermediate Stops ▼'}
+              </button>
             </div>
 
             {/* Destination */}
@@ -295,6 +327,141 @@ export default function TrainCard({ train }) {
         </div>
 
       </div>
+
+      {/* Expanded Intermediate Stations & Route Halts */}
+      {showRoute && (
+        <div className="mt-5 pt-5 border-t border-slate-200/90 space-y-4 animate-scale-in">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-gradient-to-r from-emerald-50/80 via-slate-50 to-teal-50/80 border border-emerald-200/80 p-4 rounded-2xl">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-700 text-white px-2.5 py-0.5 rounded-full">
+                  Intermediate Halts &amp; Stops
+                </span>
+                <span className="text-sm font-black text-slate-900">
+                  {segmentRoute.origin?.stationName} &rarr; {segmentRoute.destination?.stationName}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Train #{train.trainNumber} stops at <strong>{stopCount} intermediate station{stopCount !== 1 ? 's' : ''}</strong> between origin and destination.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowRoute(false)}
+              className="self-end sm:self-center text-xs font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>✕</span>
+              <span>Hide Stops</span>
+            </button>
+          </div>
+
+          {/* Route Halts Table */}
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-xs">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  <th className="py-2.5 px-4 text-center w-12">#</th>
+                  <th className="py-2.5 px-4">Station &amp; Code</th>
+                  <th className="py-2.5 px-4">Arrival</th>
+                  <th className="py-2.5 px-4">Departure</th>
+                  <th className="py-2.5 px-4">Halt Duration</th>
+                  <th className="py-2.5 px-4">Distance</th>
+                  <th className="py-2.5 px-4 text-center">Platform</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {/* Starting Station */}
+                <tr className="bg-emerald-50/60 hover:bg-emerald-50 transition-colors">
+                  <td className="py-3 px-4 text-center">
+                    <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs inline-flex items-center justify-center">
+                      S
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <p className="font-extrabold text-slate-900 text-sm">{segmentRoute.origin?.stationName}</p>
+                      <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
+                        {segmentRoute.origin?.stationCode}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                      Starting Station (Origin)
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-slate-400 font-semibold">— (Source)</td>
+                  <td className="py-3 px-4 font-black text-emerald-800 text-sm">{segmentRoute.origin?.departureTime}</td>
+                  <td className="py-3 px-4 text-slate-400 font-semibold">—</td>
+                  <td className="py-3 px-4 text-slate-600 font-semibold">0 km</td>
+                  <td className="py-3 px-4 text-center font-bold text-slate-700">{segmentRoute.origin?.platform || 'PF 1'}</td>
+                </tr>
+
+                {/* Intermediate Stations where train stops */}
+                {intermediateStops.length > 0 ? (
+                  intermediateStops.map((stop, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4 text-center">
+                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] inline-flex items-center justify-center border border-slate-200">
+                          {i + 1}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-slate-900">{stop.stationName}</p>
+                          <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                            {stop.stationCode}
+                          </span>
+                        </div>
+                        {stop.city && <p className="text-[10px] text-slate-400">{stop.city}</p>}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-slate-800">{stop.arrivalTime}</td>
+                      <td className="py-3 px-4 font-bold text-slate-800">{stop.departureTime}</td>
+                      <td className="py-3 px-4">
+                        <span className="bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                          <span>⏱</span>
+                          <span>{stop.halt || '2 mins'}</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600">{stop.distance} km</td>
+                      <td className="py-3 px-4 text-center font-bold text-slate-600">{stop.platform}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-slate-500 font-medium">
+                      Direct non-stop service between {segmentRoute.origin?.stationName} and {segmentRoute.destination?.stationName}.
+                    </td>
+                  </tr>
+                )}
+
+                {/* Destination Station */}
+                <tr className="bg-teal-50/60 hover:bg-teal-50 transition-colors">
+                  <td className="py-3 px-4 text-center">
+                    <span className="w-6 h-6 rounded-full bg-teal-600 text-white font-bold text-xs inline-flex items-center justify-center">
+                      D
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <p className="font-extrabold text-slate-900 text-sm">{segmentRoute.destination?.stationName}</p>
+                      <span className="font-mono text-[10px] font-bold text-teal-800 bg-teal-100 px-1.5 py-0.5 rounded border border-teal-200">
+                        {segmentRoute.destination?.stationCode}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wide">
+                      Destination Station (Terminus)
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 font-black text-teal-800 text-sm">{segmentRoute.destination?.arrivalTime}</td>
+                  <td className="py-3 px-4 text-slate-400 font-semibold">— (Terminates)</td>
+                  <td className="py-3 px-4 text-slate-400 font-semibold">—</td>
+                  <td className="py-3 px-4 text-slate-600 font-semibold">{segmentRoute.destination?.distance} km</td>
+                  <td className="py-3 px-4 text-center font-bold text-slate-700">{segmentRoute.destination?.platform || 'PF 5'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

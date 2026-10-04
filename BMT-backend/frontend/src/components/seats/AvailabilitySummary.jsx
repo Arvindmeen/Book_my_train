@@ -1,4 +1,4 @@
-import { formatDate } from '../../utils/format';
+import { formatDate, formatTrainName } from '../../utils/format';
 
 export default function AvailabilitySummary({ availability, train }) {
   if (!availability) return null;
@@ -14,7 +14,7 @@ export default function AvailabilitySummary({ availability, train }) {
             <span className="text-xs text-slate-400 font-medium">#{train?.trainNumber || availability.trainNumber}</span>
           </div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-            {train?.trainName || availability.trainName}
+            {formatTrainName(train?.trainName || availability.trainName)}
           </h2>
           {train?.from && (
             <p className="text-xs font-semibold text-slate-600 mt-1 flex items-center gap-1.5">

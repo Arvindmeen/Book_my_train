@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatCurrency, formatDate } from '../../utils/format';
+import { formatCurrency, formatDate, formatTrainName } from '../../utils/format';
 import { bookingApi } from '../../api/booking.api';
 import { useToast } from '../ui/Toast';
 
@@ -133,7 +133,7 @@ export default function CancellationModal({ booking, onClose, onSuccess }) {
             {/* Ticket Info Card */}
             <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Itinerary Details</p>
-              <p className="font-extrabold text-slate-900 text-sm">{booking.trainName} (#{booking.trainNumber})</p>
+              <p className="font-extrabold text-slate-900 text-sm">{formatTrainName(booking.trainName)} (#{booking.trainNumber})</p>
               <p className="text-slate-600">
                 Journey: {formatDate(booking.departureDate)} &middot; {booking.seatCount} Seat{booking.seatCount !== 1 ? 's' : ''}
               </p>

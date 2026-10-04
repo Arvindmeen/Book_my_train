@@ -1,6 +1,8 @@
 const { esClient, TRAIN_INDEX, STATION_INDEX } = require('../config/elasticsearch');
 const logger = require('../config/logger');
 
+const cleanTrainName = (name) => String(name || '').replace(/\s*\(Return(?:\s+via\s+[^)]+)?\)/gi, '').replace(/\s*\((?:Return|RETURN)\)/gi, '').trim();
+
 // ═══════════════════════════════════════════════════
 //  INDEX OPERATIONS (called by Kafka consumer)
 // ═══════════════════════════════════════════════════
@@ -52,7 +54,7 @@ const indexTrainRoute = async (routeEvent) => {
      const doc = {
           trainId: train.id,
           trainNumber: train.trainNumber,
-          trainName: train.trainName,
+          trainName: cleanTrainName(train.trainName || train.name),
           runsOn: train.runsOn || 'Daily Service',
           runningDays: train.runningDays || [0, 1, 2, 3, 4, 5, 6],
           route: (routeStations || []).map((rs) => {
@@ -339,7 +341,7 @@ const searchTrains = async (from, to, date) => {
                return {
                     trainId: src.trainId,
                     trainNumber: src.trainNumber,
-                    trainName: src.trainName,
+                    trainName: cleanTrainName(src.trainName),
                     runsOn: src.runsOn || 'Daily Service',
                     runningDays,
                     runsOnSelectedDate: operatesOnTargetDay,
@@ -576,7 +578,7 @@ const formatTrainSchedule = (source) => {
      return {
           trainId: source.trainId,
           trainNumber: source.trainNumber,
-          trainName: source.trainName,
+          trainName: cleanTrainName(source.trainName),
           runsOn: source.runsOn || 'Daily Service',
           runningDays: source.runningDays || [0, 1, 2, 3, 4, 5, 6],
           totalStops: rawRoute.length,

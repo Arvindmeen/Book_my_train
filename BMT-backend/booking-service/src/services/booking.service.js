@@ -1,5 +1,7 @@
 const prisma = require('../config/prisma');
 const logger = require('../config/logger');
+
+const cleanTrainName = (name) => String(name || '').replace(/\s*\(Return(?:\s+via\s+[^)]+)?\)/gi, '').replace(/\s*\((?:Return|RETURN)\)/gi, '').trim();
 const { config } = require('../config');
 const { inventoryClient, extractError: extractInventoryError } = require('./inventoryClient');
 const { paymentClient, extractError: extractPaymentError } = require('./paymentClient');
@@ -184,7 +186,7 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                     scheduleId,
                     trainId: availability.trainId,
                     trainNumber: availability.trainNumber,
-                    trainName: availability.trainName,
+                    trainName: cleanTrainName(availability.trainName),
                     departureDate: new Date(availability.departureDate),
                     status: 'PENDING',
                     totalAmount,
@@ -338,7 +340,7 @@ const handlePaymentSuccess = async (paymentOrderId, gatewayPaymentId, amount) =>
                     firstName: userInfo.firstName,
                     scheduleId: booking.scheduleId,
                     trainNumber: booking.trainNumber,
-                    trainName: booking.trainName,
+                    trainName: cleanTrainName(booking.trainName),
                     fromStationName,
                     toStationName,
                     departureDate: booking.departureDate,
@@ -620,7 +622,7 @@ const getBooking = async (bookingId, userId) => {
           scheduleId: booking.scheduleId,
           trainId: booking.trainId,
           trainNumber: booking.trainNumber,
-          trainName: booking.trainName,
+          trainName: cleanTrainName(booking.trainName),
           departureDate: booking.departureDate,
           totalAmount: booking.totalAmount,
           seatCount: booking.seatCount,
@@ -699,7 +701,7 @@ const getUserBookings = async (userId, { status, page = 1, limit = 10, all = fal
                status: b.status,
                scheduleId: b.scheduleId,
                trainNumber: b.trainNumber,
-               trainName: b.trainName,
+               trainName: cleanTrainName(b.trainName),
                departureDate: b.departureDate,
                totalAmount: b.totalAmount,
                seatCount: b.seatCount,
@@ -902,7 +904,7 @@ const getPnrStatus = async (pnr) => {
           pnr: booking.pnr || cleanPnr,
           bookingId: booking.id,
           trainNumber: booking.trainNumber,
-          trainName: booking.trainName,
+          trainName: cleanTrainName(booking.trainName),
           departureDate: booking.departureDate,
           status: booking.status,
           chartStatus: isChartPrepared ? 'CHART PREPARED' : 'CHART NOT PREPARED',

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { bookingApi } from '../api/booking.api';
 import { useAuthStore } from '../store/auth.store';
+import { formatTrainName } from '../utils/format';
 
 export default function PnrPage() {
   const [searchParams] = useSearchParams();
@@ -65,7 +66,7 @@ export default function PnrPage() {
 
       setResult({
         pnr: data.pnr || val,
-        trainName: `${data.trainNumber} - ${data.trainName}`,
+        trainName: `${data.trainNumber} - ${formatTrainName(data.trainName)}`,
         date: depDate,
         className: 'AC Chair Car / Sleeper',
         chartStatus: data.chartStatus || 'CHART PREPARED',

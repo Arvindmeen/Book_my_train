@@ -38,3 +38,11 @@ export function formatTime(timeStr) {
   if (!timeStr) return '—';
   return timeStr;
 }
+
+export function formatTrainName(name) {
+  if (!name) return 'Train';
+  return String(name)
+    .replace(/\s*\(Return(?:\s+via\s+[^)]+)?\)/gi, '')
+    .replace(/\s*\((?:Return|RETURN)\)/gi, '')
+    .trim();
+}

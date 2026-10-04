@@ -6,7 +6,7 @@ import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
 import BookingStatusPoller from '../components/booking/BookingStatusPoller';
 import CancellationModal from '../components/bookings/CancellationModal';
-import { formatDate, formatDateTime, formatCurrency, formatSeatType } from '../utils/format';
+import { formatDate, formatDateTime, formatCurrency, formatSeatType, formatTrainName } from '../utils/format';
 
 export default function BookingDetailPage() {
   const { bookingId } = useParams();
@@ -132,7 +132,7 @@ export default function BookingDetailPage() {
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Authorized BooK my Train Express Ticket
               </span>
-              <h3 className="text-xl font-black text-slate-900 mt-1.5">{booking.trainName}</h3>
+              <h3 className="text-xl font-black text-slate-900 mt-1.5">{formatTrainName(booking.trainName)}</h3>
               <p className="text-xs text-slate-500 mt-0.5">Train #{booking.trainNumber} &middot; Departure: {formatDate(booking.departureDate)}</p>
             </div>
             <div className="text-right">

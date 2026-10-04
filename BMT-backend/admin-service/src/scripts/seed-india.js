@@ -186,7 +186,7 @@ const TRAINS = [
   // Reciprocal return: 22811 BBS Tejas Rajdhani Express (via Adra)
   {
     trainNumber: '22811',
-    trainName: 'BBS Tejas Rajdhani Express (Return via Adra)',
+    trainName: 'BBS Tejas Rajdhani Express (via Adra)',
     coachName: '3A',
     trainType: 'RAJDHANI',
     basePrice: 2450,
@@ -231,7 +231,7 @@ const TRAINS = [
   // Reciprocal return: 22823 BBS Tejas Rajdhani Express (via Tatanagar)
   {
     trainNumber: '22823',
-    trainName: 'BBS Tejas Rajdhani Express (Return via Tatanagar)',
+    trainName: 'BBS Tejas Rajdhani Express (via Tatanagar)',
     coachName: '3A',
     trainType: 'RAJDHANI',
     basePrice: 2480,
@@ -279,7 +279,7 @@ const TRAINS = [
   // Reciprocal return: 12801 Purushottam Express
   {
     trainNumber: '12801',
-    trainName: 'Purushottam Express (Return)',
+    trainName: 'Purushottam Express',
     coachName: 'SL',
     trainType: 'EXPRESS',
     basePrice: 680,
@@ -621,7 +621,7 @@ const TRAINS = [
   // Reciprocal return: 12311 Netaji Express (Daily)
   {
     trainNumber: '12311',
-    trainName: 'Netaji Express (Return)',
+    trainName: 'Netaji Express',
     coachName: 'SL',
     trainType: 'EXPRESS',
     basePrice: 610,

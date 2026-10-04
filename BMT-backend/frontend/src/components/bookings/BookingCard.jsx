@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
-import { formatDate, formatCurrency } from '../../utils/format';
+import { formatDate, formatCurrency, formatTrainName } from '../../utils/format';
 
 export default function BookingCard({ booking, onCancel }) {
   const canCancel = ['CONFIRMED', 'SEATS_HELD', 'PAYMENT_PENDING'].includes(booking.status);
@@ -22,7 +22,7 @@ export default function BookingCard({ booking, onCancel }) {
         <Link to={`/bookings/${booking.id}`} className="space-y-1.5 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-extrabold text-base text-slate-900 group-hover:text-emerald-700 transition-colors">
-              {booking.trainName}
+              {formatTrainName(booking.trainName)}
             </h3>
             <Badge status={booking.status} />
 

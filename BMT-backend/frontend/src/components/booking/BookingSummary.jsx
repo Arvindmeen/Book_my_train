@@ -1,4 +1,4 @@
-import { formatCurrency, formatSeatType, formatDate } from '../../utils/format';
+import { formatCurrency, formatSeatType, formatDate, formatTrainName } from '../../utils/format';
 
 export default function BookingSummary({ train, seats, totalPrice, departureDate, tripShield = false, tripShieldFee = 0, onTripShieldChange }) {
   const finalPayable = totalPrice + (tripShield ? tripShieldFee : 0);
@@ -10,7 +10,7 @@ export default function BookingSummary({ train, seats, totalPrice, departureDate
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
             Selected Train
           </span>
-          <h3 className="text-xl font-black text-slate-900 mt-1">{train?.trainName}</h3>
+          <h3 className="text-xl font-black text-slate-900 mt-1">{formatTrainName(train?.trainName)}</h3>
           <p className="text-xs text-slate-500">#{train?.trainNumber}</p>
         </div>
         {departureDate && (
