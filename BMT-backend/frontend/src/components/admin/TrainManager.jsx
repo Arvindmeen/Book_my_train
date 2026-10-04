@@ -172,24 +172,24 @@ export default function TrainManager() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner / Explorer Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Top Banner / Explorer Header (System Color) */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-card p-6 sm:p-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-emerald-100/40 via-teal-50/20 to-transparent rounded-full -mr-20 -mt-20 pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
                 Network Fleet Intelligence
               </span>
-              <span className="text-xs text-slate-300 font-mono">
+              <span className="text-xs text-slate-500 font-mono font-bold">
                 {trains.length} Trains Registered
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-              <span>Rail Services &amp; Route Inspector</span>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+              <span>Create Train &amp; Route Inspector</span>
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl font-medium">
               Search by train name or number to inspect where and when each train starts, where it goes, operational days, and full intermediate stop timelines.
             </p>
           </div>
@@ -197,10 +197,10 @@ export default function TrainManager() {
           <button
             type="button"
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
               showCreateForm
-                ? 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600'
-                : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 font-black'
+                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
+                : 'bg-emerald-600 text-white hover:bg-emerald-700 font-black shadow-emerald-600/20'
             }`}
           >
             <span>{showCreateForm ? '✕ Close Form' : '+ Add New Train'}</span>
@@ -220,20 +220,20 @@ export default function TrainManager() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search train by Name (e.g. Rajdhani), Number (e.g. 12431), or Station (e.g. NDLS)..."
-              className="w-full pl-11 pr-24 py-3 rounded-xl bg-slate-800/90 border border-slate-700 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all shadow-inner"
+              className="w-full pl-11 pr-24 py-3 rounded-xl bg-slate-50/90 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all shadow-inner"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute inset-y-0 right-20 my-auto h-7 px-2 text-xs font-semibold text-slate-400 hover:text-white"
+                className="absolute inset-y-0 right-20 my-auto h-7 px-2 text-xs font-semibold text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 Clear
               </button>
             )}
             <button
               type="submit"
-              className="absolute inset-y-1.5 right-1.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-all flex items-center gap-1.5"
+              className="absolute inset-y-1.5 right-1.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <span>Search</span>
             </button>
@@ -241,8 +241,8 @@ export default function TrainManager() {
         </form>
 
         {/* Quick Filter Badges */}
-        <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-slate-700/60 text-xs">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Filter:</span>
+        <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/80 text-xs">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Filter:</span>
           {[
             { id: 'ALL', label: `All Trains (${trains.length})` },
             { id: 'WITH_ROUTE', label: `With Route (${trains.filter((t) => t.route?.routeStations?.length >= 2).length})` },
@@ -253,10 +253,10 @@ export default function TrainManager() {
               key={tab.id}
               type="button"
               onClick={() => setFilterType(tab.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 filterType === tab.id
-                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:text-emerald-800 hover:bg-emerald-50 border border-slate-200/70'
               }`}
             >
               {tab.label}
@@ -439,7 +439,7 @@ export default function TrainManager() {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h3 className="font-serif font-black text-slate-900 text-lg">Active Railway Services</h3>
+            <h3 className="font-serif font-black text-slate-900 text-lg">Active Trains &amp; Fleet</h3>
             <span className="text-xs font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
               {filteredTrains.length} {filteredTrains.length === 1 ? 'train' : 'trains'}
             </span>

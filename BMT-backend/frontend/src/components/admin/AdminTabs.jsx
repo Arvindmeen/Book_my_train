@@ -10,7 +10,7 @@ const TABS = [
   },
   {
     id: 'Trains',
-    label: 'Rail Services',
+    label: 'Create Train',
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <rect x="4" y="3" width="16" height="15" rx="3" strokeWidth="2" />
@@ -40,7 +40,7 @@ const TABS = [
   },
   {
     id: 'Schedules',
-    label: 'Timetables',
+    label: 'Train Schedule',
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
