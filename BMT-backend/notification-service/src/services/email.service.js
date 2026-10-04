@@ -1,3 +1,5 @@
+const path = require("path");
+const fs = require("fs");
 const nodemailer = require("nodemailer");
 const logger = require("../config/logger");
 const { config } = require("../config");
@@ -14,17 +16,33 @@ const {
     getBookingCancelledText,
 } = require("../templates");
 
+const cleanEmailPass = (config.EMAIL_PASS || "").replace(/\s+/g, "");
+
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
         user: config.EMAIL_USER,
-        pass: config.EMAIL_PASS,
+        pass: cleanEmailPass,
     },
 });
 
+const LOGO_PATHS = [
+    path.join(__dirname, "../assets/navbar-logo.jpg"),
+    path.join(__dirname, "../../../frontend/public/navbar-logo.jpg"),
+    path.resolve("src/assets/navbar-logo.jpg")
+];
+
+function getLogoPath() {
+    for (const p of LOGO_PATHS) {
+        if (fs.existsSync(p)) return p;
+    }
+    return null;
+}
+
 class EmailService {
     constructor() {
-        this.from = config.EMAIL_USER || "no-reply@bookmytrain.local";
+        const sender = config.EMAIL_USER || "teambookmytrain@gmail.com";
+        this.from = `"Book My Train" <${sender}>`;
         this.maxRetries = 3;
     }
 
@@ -32,6 +50,17 @@ class EmailService {
         if (!config.EMAIL_USER || !config.EMAIL_PASS) {
             logger.warn(`Email sending simulated (EMAIL_USER or EMAIL_PASS not configured): to=${msg.to}, subject=${msg.subject}`);
             return { success: true, simulated: true };
+        }
+
+        // Attach brand train logo via CID for Gmail & all email clients
+        if (!msg.attachments) msg.attachments = [];
+        const logoPath = getLogoPath();
+        if (logoPath && !msg.attachments.some(a => a.cid === "bmt-logo")) {
+            msg.attachments.push({
+                filename: "navbar-logo.jpg",
+                path: logoPath,
+                cid: "bmt-logo"
+            });
         }
 
         try {

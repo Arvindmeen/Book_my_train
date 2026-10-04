@@ -64,8 +64,8 @@ ADMIN_EMAIL=arvindmeena8171@gmail.com
 KAFKA_CLIENT_ID=bmt-production
 
 # Email Provider
-EMAIL_USER=arvindmeena8171@gmail.com
-EMAIL_PASS=jhyewtzmafswmyfn
+EMAIL_USER=teambookmytrain@gmail.com
+EMAIL_PASS=whpioxleqxmrbjqo
 SUPPORT_EMAIL=arvindmeena8171@gmail.com
 
 # Payment Gateway
