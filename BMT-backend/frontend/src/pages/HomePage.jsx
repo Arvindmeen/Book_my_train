@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SearchForm from '../components/search/SearchForm';
 import StationAutocomplete from '../components/search/StationAutocomplete';
@@ -253,7 +253,7 @@ const MOCK_FOOD_ITEMS = [
 ];
 
 const PROMOTION_OFFERS = [
-  { code: 'BMTGROWW', desc: 'Flat 10% off up to ₹150 on your first booking with BooK my Train.', gradient: 'from-emerald-600 to-teal-700' },
+  { code: 'BMTGROWW', desc: 'Flat 10% off up to ₹150 on your first booking with Book My Train.', gradient: 'from-emerald-600 to-teal-700' },
   { code: 'ZEROFEE', desc: 'Pay via UPI and enjoy flat ₹0 payment gateway convenience fees.', gradient: 'from-blue-600 to-indigo-800' },
   { code: 'BMTSAFE', desc: 'Free travel insurance coverage of up to ₹10 Lakhs on every ticket.', gradient: 'from-amber-500 to-orange-700' }
 ];
@@ -738,7 +738,7 @@ export default function HomePage() {
                 }`}
               >
                 {/* Train Vector SVG */}
-                <img src="/navbar-logo.jpg" alt="BooK my Train logo" className="w-4 h-4 rounded object-contain" />
+                <img src="/navbar-logo.jpg" alt="Book My Train logo" className="w-4 h-4 rounded object-contain" />
                 <span>Book Tickets</span>
               </button>
 
@@ -2077,7 +2077,7 @@ export default function HomePage() {
                   <button onClick={() => setPopupMsg({ title: 'Download Ticket PDF', text: 'Preparing high-resolution e-ticket invoice. PDF document is downloading...' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
                     🎫 E-Ticket
                   </button>
-                  <button onClick={() => setPopupMsg({ title: 'TDR Filing Center', text: 'TDR applications are accepted up to 4 hours post departure time. Connecting to BooK my Train TDR portal...' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
+                  <button onClick={() => setPopupMsg({ title: 'TDR Filing Center', text: 'TDR applications are accepted up to 4 hours post departure time. Connecting to Book My Train TDR portal...' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
                     📝 File TDR
                   </button>
                   <button onClick={() => setPopupMsg({ title: 'Instant Refund Status', text: 'Zero pending refunds. Last transaction was settled back to original UPI payment source.' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
@@ -2152,7 +2152,7 @@ export default function HomePage() {
                   Unlock Flat 15% Off Your First Train Booking
                 </h3>
                 <p className="text-slate-300 text-xs md:text-sm leading-relaxed max-w-lg">
-                  Join BooK my Train today. Save companion passenger details for lightning checkouts, predict confirmation odds on waitlist tickets, and enjoy instant refunds.
+                  Join Book My Train today. Save companion passenger details for lightning checkouts, predict confirmation odds on waitlist tickets, and enjoy instant refunds.
                 </p>
               </div>
 
@@ -2215,7 +2215,7 @@ export default function HomePage() {
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-xs">
             ⚡ Engineered For Speed · 99.98% Gateway Uptime
           </span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-3">Why Travel with BooK my Train?</h2>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-3">Why Travel with Book My Train?</h2>
           <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">High-throughput Indian Railway architecture designed to be blisteringly fast, transparent, and passenger-first.</p>
         </div>
 
@@ -2777,7 +2777,7 @@ export default function HomePage() {
 
               {/* Fast Tatkal Advantages */}
               <div className="space-y-2 text-xs text-slate-600">
-                <p className="font-bold text-slate-900 text-sm">Tatkal Advantage with BooK my Train:</p>
+                <p className="font-bold text-slate-900 text-sm">Tatkal Advantage with Book My Train:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
                     <p className="font-bold text-slate-900">⚡ 1-Tap Passenger Autofill</p>
@@ -2955,7 +2955,7 @@ export default function HomePage() {
               ✦ NEXT-GEN RAIL TICKETING APP
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-[32px] font-bold leading-tight text-slate-900 tracking-tight">
-              Experience BooK my Train <span className="text-emerald-600">Anywhere, on Any Device</span>
+              Experience Book My Train <span className="text-emerald-600">Anywhere, on Any Device</span>
             </h2>
             <p className="text-slate-600 text-xs sm:text-sm leading-relaxed font-medium">
               Skip the browser queues and enjoy lightning-fast bookings with our dedicated high-performance app. Designed for sub-second Tatkal checkouts, instant 100% UPI refunds, offline ticket access during poor network coverage, and real-time live platform announcements directly on your home screen.
@@ -2991,13 +2991,13 @@ export default function HomePage() {
                 <div className="w-11 h-11 rounded-2xl bg-white border border-emerald-200 flex items-center justify-center p-1 shadow-md shadow-emerald-500/25">
                   <img
                     src="/navbar-logo.jpg"
-                    alt="BooK my Train logo"
+                    alt="Book My Train logo"
                     className="h-full w-full rounded-xl object-contain"
                   />
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="font-extrabold text-slate-900 text-base leading-tight">BooK my Train</h3>
+                    <h3 className="font-extrabold text-slate-900 text-base leading-tight">Book My Train</h3>
                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">v2.4</span>
                   </div>
                   <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">

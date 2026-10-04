@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { formatCurrency, formatDate, formatTrainName } from '../../utils/format';
 import { bookingApi } from '../../api/booking.api';
 import { useToast } from '../ui/Toast';
@@ -113,7 +113,7 @@ export default function CancellationModal({ booking, onClose, onSuccess }) {
                 {formatCurrency(netRefund)} Refunded Successfully!
               </h4>
               <p className="text-xs text-slate-600 font-medium mt-1">
-                Amount settled straight to your original UPI account via BooK my Train Instant Rollback.
+                Amount settled straight to your original UPI account via Book My Train Instant Rollback.
               </p>
               <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono text-slate-700">
                 Transaction Reference: <strong>{refundRef}</strong>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useBookingPolling } from '../hooks/useBookingPolling';
 import Badge from '../components/ui/Badge';
@@ -130,7 +130,7 @@ export default function BookingDetailPage() {
           <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-150 pb-5 gap-4">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Authorized BooK my Train Express Ticket
+                Authorized Book My Train Express Ticket
               </span>
               <h3 className="text-xl font-black text-slate-900 mt-1.5">{formatTrainName(booking.trainName)}</h3>
               <p className="text-xs text-slate-500 mt-0.5">Train #{booking.trainNumber} &middot; Departure: {formatDate(booking.departureDate)}</p>

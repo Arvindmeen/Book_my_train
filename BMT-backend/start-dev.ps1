@@ -1,5 +1,5 @@
-# ==========================================
-# BooK My Train - Local Development Launcher
+﻿# ==========================================
+# Book My Train - Local Development Launcher
 # Starts all 8 backend microservices in separate PowerShell windows
 # ==========================================
 
@@ -16,7 +16,7 @@ $services = @(
 )
 
 Write-Host "==========================================" -ForegroundColor Yellow
-Write-Host "Starting BooK My Train Microservices & Frontend..." -ForegroundColor Yellow
+Write-Host "Starting Book My Train Microservices & Frontend..." -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor Yellow
 
 foreach ($service in $services) {

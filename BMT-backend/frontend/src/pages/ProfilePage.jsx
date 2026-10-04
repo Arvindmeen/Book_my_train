@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { useToast } from '../components/ui/Toast';
@@ -92,7 +92,7 @@ export default function ProfilePage() {
       { key: 'gender', label: 'Gender', isFilled: Boolean(user?.gender?.trim()) },
       { key: 'dateOfBirth', label: 'Date of Birth', isFilled: Boolean(user?.dateOfBirth) },
       { key: 'location', label: 'City & State', isFilled: Boolean(user?.city?.trim() || user?.state?.trim()) },
-      { key: 'irctcUsername', label: 'BooK my Train User ID', isFilled: Boolean(user?.irctcUsername?.trim()) },
+      { key: 'irctcUsername', label: 'Book My Train User ID', isFilled: Boolean(user?.irctcUsername?.trim()) },
       { key: 'preferences', label: 'Berth / Food Preference', isFilled: Boolean(user?.berthPreference && user?.berthPreference !== 'No Preference') },
       { key: 'emergency', label: 'Emergency Contact', isFilled: Boolean(user?.emergencyContactPhone?.trim()) },
     ];
@@ -365,7 +365,7 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-                  Provide your missing contact, address, and BooK my Train preferences below. Having a 100% complete profile enables <strong>sub-50ms Tatkal passenger auto-fill</strong> and automated instant UPI refunds without confirmation delays.
+                  Provide your missing contact, address, and Book My Train preferences below. Having a 100% complete profile enables <strong>sub-50ms Tatkal passenger auto-fill</strong> and automated instant UPI refunds without confirmation delays.
                 </p>
               </div>
 
@@ -420,7 +420,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="font-extrabold text-slate-900 text-sm">{isAdmin ? 'Admin Profile 100% Complete & Active' : 'User Profile 100% Complete & Active'}</p>
-                <p className="text-slate-600 text-[11px]">All personal details, FastPass attributes &amp; BooK my Train linkages are active.</p>
+                <p className="text-slate-600 text-[11px]">All personal details, FastPass attributes &amp; Book My Train linkages are active.</p>
               </div>
             </div>
             <button
@@ -540,7 +540,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">BooK my Train User ID (FastPass Sync)</label>
+                    <label className="block text-slate-700 font-bold mb-1">Book My Train User ID (FastPass Sync)</label>
                     <input
                       type="text"
                       value={formData.irctcUsername}
@@ -850,7 +850,7 @@ export default function ProfilePage() {
             {/* Right Card: BMT FastPass Integration */}
             <div className="bg-white rounded-3xl border border-slate-200/90 shadow-card p-6 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="font-serif font-bold text-base text-slate-900">BMT FastPass &amp; BooK my Train</h3>
+                <h3 className="font-serif font-bold text-base text-slate-900">BMT FastPass &amp; Book My Train</h3>
                 <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                   Authorized Link
                 </span>
@@ -863,7 +863,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-600 font-medium">BooK my Train User ID:</span>
+                  <span className="text-slate-600 font-medium">Book My Train User ID:</span>
                   {user?.irctcUsername ? (
                     <span className="font-bold text-slate-900">{user.irctcUsername} (Linked ✓)</span>
                   ) : (
@@ -871,7 +871,7 @@ export default function ProfilePage() {
                       onClick={() => setIsEditing(true)}
                       className="text-amber-600 font-bold hover:underline"
                     >
-                      + Link BooK my Train User ID
+                      + Link Book My Train User ID
                     </button>
                   )}
                 </div>
@@ -1023,7 +1023,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="font-serif font-bold text-lg text-slate-900">Update Account Password</h3>
-                <p className="text-xs text-slate-500">Keep your BooK my Train account safe with a strong password.</p>
+                <p className="text-xs text-slate-500">Keep your Book My Train account safe with a strong password.</p>
               </div>
               <span className="text-[10px] font-mono text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
                 Security Hub
@@ -1147,7 +1147,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200/80 text-[11px] text-emerald-800 leading-relaxed font-medium">
-                ⚡ All BooK my Train cancellations are processed via automated instant UPI rollback within 60 seconds with zero manual intervention.
+                ⚡ All Book My Train cancellations are processed via automated instant UPI rollback within 60 seconds with zero manual intervention.
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-// BooK my Train - PWA Service Worker
+﻿// Book My Train - PWA Service Worker
 const CACHE_NAME = 'bmt-app-v3';
 const ASSETS_TO_CACHE = [
   '/',

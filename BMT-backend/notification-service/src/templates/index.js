@@ -1,6 +1,6 @@
-const { config } = require('../config');
+﻿const { config } = require('../config');
 
-const BRAND = 'BooK my Train';
+const BRAND = 'Book My Train';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || config.EMAIL_USER || 'support@bookmytrain.in';
 const APP_URL = (config.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
 
@@ -20,11 +20,11 @@ function details(rows) {
 }
 
 function getOtpTemplate(otp, ttlMinutes = 5) {
-  return layout('Verify your email address', `Your verification code expires in ${ttlMinutes} minutes.`, `<p style="margin:0;font:15px/24px Arial,sans-serif;">Use this verification code to complete your BooK my Train registration.</p><div style="margin:24px 0;padding:20px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;text-align:center;"><span style="color:#065f46;font:700 30px/36px 'Courier New',monospace;letter-spacing:8px;">${escapeHtml(otp)}</span></div><p style="margin:0;color:#475569;font:14px/22px Arial,sans-serif;">This code expires in <strong>${escapeHtml(ttlMinutes)} minutes</strong>. Do not share it with anyone. We will never ask for this code by phone or email.</p>`);
+  return layout('Verify your email address', `Your verification code expires in ${ttlMinutes} minutes.`, `<p style="margin:0;font:15px/24px Arial,sans-serif;">Use this verification code to complete your Book My Train registration.</p><div style="margin:24px 0;padding:20px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;text-align:center;"><span style="color:#065f46;font:700 30px/36px 'Courier New',monospace;letter-spacing:8px;">${escapeHtml(otp)}</span></div><p style="margin:0;color:#475569;font:14px/22px Arial,sans-serif;">This code expires in <strong>${escapeHtml(ttlMinutes)} minutes</strong>. Do not share it with anyone. We will never ask for this code by phone or email.</p>`);
 }
 
 function getWelcomeTemplate(firstName = 'Passenger') {
-  return layout('Your account is ready', 'Your BooK my Train account is ready to use.', `<p style="margin:0 0 16px;font:15px/24px Arial,sans-serif;">Hello ${escapeHtml(firstName)},</p><p style="margin:0 0 24px;font:15px/24px Arial,sans-serif;">Your email address has been verified. You can now search trains, manage passengers, and track bookings in one place.</p><a href="${escapeHtml(`${APP_URL}/login`)}" style="display:inline-block;padding:12px 20px;background:#047857;border-radius:6px;color:#fff;font:700 14px Arial,sans-serif;text-decoration:none;">Sign in to your account</a><p style="margin:24px 0 0;color:#64748b;font:13px/20px Arial,sans-serif;">If you did not create this account, please contact us immediately.</p>`);
+  return layout('Your account is ready', 'Your Book My Train account is ready to use.', `<p style="margin:0 0 16px;font:15px/24px Arial,sans-serif;">Hello ${escapeHtml(firstName)},</p><p style="margin:0 0 24px;font:15px/24px Arial,sans-serif;">Your email address has been verified. You can now search trains, manage passengers, and track bookings in one place.</p><a href="${escapeHtml(`${APP_URL}/login`)}" style="display:inline-block;padding:12px 20px;background:#047857;border-radius:6px;color:#fff;font:700 14px Arial,sans-serif;text-decoration:none;">Sign in to your account</a><p style="margin:24px 0 0;color:#64748b;font:13px/20px Arial,sans-serif;">If you did not create this account, please contact us immediately.</p>`);
 }
 
 function passengers(items = []) {

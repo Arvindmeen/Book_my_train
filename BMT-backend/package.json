@@ -1,8 +1,8 @@
-{
+﻿{
   "name": "book-my-train-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "BooK My Train - Microservices Monorepo",
+  "description": "Book My Train - Microservices Monorepo",
   "scripts": {
     "dev": "concurrently -k --prefix \"[{name}]\" -n \"gateway,user,search,admin,notif,booking,payment,inventory\" -c \"blue.bold,green.bold,magenta.bold,yellow.bold,cyan.bold,red.bold,white.bold,gray.bold\" \"npm run dev --prefix api-gateway\" \"npm run dev --prefix user-service\" \"npm run dev --prefix search-service\" \"npm run dev --prefix admin-service\" \"npm run dev --prefix notification-service\" \"npm run dev --prefix booking-service\" \"npm run dev --prefix payment-service\" \"npm run dev --prefix inventory-service\""
   },

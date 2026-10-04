@@ -1,10 +1,10 @@
-# ==========================================
-# BooK My Train - Local Development Stopper
+﻿# ==========================================
+# Book My Train - Local Development Stopper
 # Stops all 8 backend microservices
 # ==========================================
 
 Write-Host "==========================================" -ForegroundColor Yellow
-Write-Host "Stopping BooK My Train Microservices..." -ForegroundColor Yellow
+Write-Host "Stopping Book My Train Microservices..." -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor Yellow
 
 # 1. Stop all services listening on port 3000 (frontend) and ports 4000 to 4007 (backend)

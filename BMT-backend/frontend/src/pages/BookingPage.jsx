@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useBookingStore } from '../store/booking.store';
@@ -144,7 +144,7 @@ export default function BookingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
               <span className="text-base">🔒</span>
-              <span>256-Bit Encrypted Payment with BooK my Train Direct Gateway</span>
+              <span>256-Bit Encrypted Payment with Book My Train Direct Gateway</span>
             </div>
             <span className="text-xs font-bold text-emerald-600">Instant Refund Eligible</span>
           </div>

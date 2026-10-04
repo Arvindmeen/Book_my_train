@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -87,11 +87,11 @@ export default function ProfileModal({
         <div className="flex-shrink-0 flex items-center justify-between pb-3.5 border-b border-emerald-100">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-white border border-emerald-200 p-1 flex items-center justify-center shadow-sm">
-              <img src="/navbar-logo.jpg" alt="BooK my Train logo" className="w-full h-full rounded-lg object-contain" />
+              <img src="/navbar-logo.jpg" alt="Book My Train logo" className="w-full h-full rounded-lg object-contain" />
             </div>
             <div>
               <h3 className="font-display font-extrabold text-sm text-slate-900 leading-tight">
-                BooK my <span className="text-emerald-600">Train</span>
+                Book My <span className="text-emerald-600">Train</span>
               </h3>
               <p className="text-[10px] font-semibold text-emerald-700 leading-tight">
                 Smart Rail Navigation

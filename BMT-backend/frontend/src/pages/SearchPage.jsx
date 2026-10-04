@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import SearchForm from '../components/search/SearchForm';
 import TrainList from '../components/search/TrainList';
 import { useSearchStore } from '../store/search.store';
@@ -180,7 +180,7 @@ export default function SearchPage() {
           <div className="space-y-6">
             <div className="text-center py-12 bg-white rounded-3xl border border-slate-150 p-8 shadow-card">
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white border border-emerald-200 p-2 flex items-center justify-center shadow-sm">
-                <img src="/navbar-logo.jpg" alt="BooK my Train logo" className="w-full h-full rounded-xl object-contain" />
+                <img src="/navbar-logo.jpg" alt="Book My Train logo" className="w-full h-full rounded-xl object-contain" />
               </div>
               <h3 className="text-xl font-black text-slate-900">Explore Trains Across India</h3>
               <p className="text-xs text-slate-500 mt-1.5 max-w-md mx-auto leading-relaxed">

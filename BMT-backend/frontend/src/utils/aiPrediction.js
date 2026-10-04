@@ -1,5 +1,5 @@
-/**
- * BooK my Train - AI Waitlist Confirmation Prediction Engine
+﻿/**
+ * Book My Train - AI Waitlist Confirmation Prediction Engine
  * Mathematical model based on Indian Railway historical cancellation curves,
  * quota releases (Tatkal/HO/Defence/VIP), seat pool sizes, and charting clearance velocity.
  */

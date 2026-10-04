@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const FAQS = [
@@ -51,7 +51,7 @@ export default function SupportChatbot() {
             ? 'max-h-[620px] translate-y-0 scale-100 opacity-100'
             : 'pointer-events-none max-h-0 translate-y-3 scale-95 opacity-0'
         }`}
-        aria-label="BooK my Train support"
+        aria-label="Book My Train support"
         aria-hidden={!isOpen}
       >
           <header className="flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 text-white">
@@ -60,7 +60,7 @@ export default function SupportChatbot() {
                 <img src="/navbar-logo.jpg" alt="" className="h-full w-full rounded-lg object-contain" />
               </div>
               <div>
-                <h2 className="text-sm font-extrabold leading-tight">BooK my Train Support</h2>
+                <h2 className="text-sm font-extrabold leading-tight">Book My Train Support</h2>
                 <p className="text-[10px] font-medium text-emerald-50">Quick answers for common questions</p>
               </div>
             </div>

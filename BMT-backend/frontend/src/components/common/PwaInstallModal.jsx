@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useToast } from '../ui/Toast';
 
@@ -12,7 +12,7 @@ export default function PwaInstallModal({ isOpen, onClose }) {
     const handlePwaInstalled = () => {
       setIsInstalled(true);
       setCanPrompt(false);
-      showToast('BooK my Train app installed successfully on your device!', 'success');
+      showToast('Book My Train app installed successfully on your device!', 'success');
       onClose();
     };
 
@@ -37,7 +37,7 @@ export default function PwaInstallModal({ isOpen, onClose }) {
         window.deferredPrompt.prompt();
         const { outcome } = await window.deferredPrompt.userChoice;
         if (outcome === 'accepted') {
-          showToast('Installing BooK my Train app...', 'success');
+          showToast('Installing Book My Train app...', 'success');
           window.deferredPrompt = null;
           setCanPrompt(false);
           onClose();
@@ -65,7 +65,7 @@ export default function PwaInstallModal({ isOpen, onClose }) {
       >
         {/* Top Gradient Banner */}
         <div className="w-16 h-16 rounded-2xl bg-white border border-emerald-200 p-1.5 flex items-center justify-center mx-auto shadow-md shadow-emerald-500/25">
-          <img src="/navbar-logo.jpg" alt="BooK my Train logo" className="w-full h-full rounded-xl object-contain" />
+          <img src="/navbar-logo.jpg" alt="Book My Train logo" className="w-full h-full rounded-xl object-contain" />
         </div>
 
         <div>
@@ -73,7 +73,7 @@ export default function PwaInstallModal({ isOpen, onClose }) {
             📲 Native Web App · Chrome &amp; Edge
           </span>
           <h3 className="font-extrabold text-xl text-slate-900 mt-2">
-            Download BooK my Train App
+            Download Book My Train App
           </h3>
           <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1.5 max-w-sm mx-auto">
             Convert this website into a standalone native application on your PC, Android, or iPhone with zero download wait.

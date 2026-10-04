@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+﻿import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { useState, useEffect, useRef } from 'react';
 import ProfileModal from '../profile/ProfileModal';
@@ -71,14 +71,14 @@ export default function Navbar() {
             <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-1 shadow-md shadow-emerald-500/25 transition-all duration-300 group-hover:scale-105">
               <img
                 src="/navbar-logo.jpg"
-                alt="Book my Train"
+                alt="Book My Train"
                 className="h-full w-full rounded-xl object-contain"
               />
             </div>
 
             <div className="flex flex-col">
               <span className="font-display font-bold text-xl sm:text-2xl tracking-tight leading-none text-slate-900 group-hover:text-emerald-700 transition-colors">
-                BooK my <span className="text-emerald-600">Train</span>
+                Book My <span className="text-emerald-600">Train</span>
               </span>
               <span className="text-[10px] font-semibold text-emerald-700 tracking-wide mt-0.5">
                 Smart Rail Ticketing Portal

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { authApi } from '../api/auth.api';
@@ -55,7 +55,7 @@ export default function LoginPage() {
       let user = res.loggedInUser || res.data?.user || res.data;
 
       setUser(user);
-      showToast('Welcome back to BooK my Train!', 'success');
+      showToast('Welcome back to Book My Train!', 'success');
       navigate(redirect, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
@@ -177,7 +177,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <span className="font-black text-2xl text-slate-900 tracking-tight">
-              BooK my <span className="text-emerald-600">Train</span>
+              Book My <span className="text-emerald-600">Train</span>
             </span>
           </Link>
           <h2 className="text-xl font-bold text-slate-800">

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -94,11 +94,11 @@ export default function Footer() {
             <div className="flex items-center gap-3 group">
               <img
                 src="/navbar-logo.jpg"
-                alt="BooK my Train logo"
+                alt="Book My Train logo"
                 className="w-12 h-12 rounded-2xl border-2 border-emerald-500 bg-white object-cover shadow-md shadow-emerald-500/20 group-hover:scale-105 group-hover:shadow-emerald-500/35 transition-all duration-300"
               />
               <span className="font-display font-black text-2xl text-slate-900 tracking-tight">
-                BooK my <span className="text-emerald-600 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Train</span>
+                Book My <span className="text-emerald-600 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Train</span>
               </span>
             </div>
 
@@ -109,7 +109,7 @@ export default function Footer() {
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-[10px] text-emerald-800 px-3 py-1.5 rounded-xl font-bold border border-emerald-200/80 shadow-xs">
                 <img src="/navbar-logo.jpg" alt="BMT" className="w-3.5 h-3.5 rounded-sm object-contain" />
-                <span>BooK my Train POWERED</span>
+                <span>Book My Train POWERED</span>
               </span>
 
               <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-[10px] text-emerald-800 px-3 py-1.5 rounded-xl font-bold border border-emerald-200/80 shadow-xs">
@@ -344,7 +344,7 @@ export default function Footer() {
         {/* Footer Bottom Line */}
         <div className="mt-6 pt-3 sm:mt-8 sm:pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 text-[11px] sm:text-xs text-slate-500 font-medium">
           <p>
-            &copy; {new Date().getFullYear()} BooK my Train. All rights reserved. Designed and developed by{' '}
+            &copy; {new Date().getFullYear()} Book My Train. All rights reserved. Designed and developed by{' '}
             <a
               href="https://arvindmeena.vercel.app/"
               target="_blank"

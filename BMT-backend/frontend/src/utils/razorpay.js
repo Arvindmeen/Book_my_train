@@ -1,4 +1,4 @@
-let scriptLoaded = false;
+﻿let scriptLoaded = false;
 
 export function loadRazorpayScript() {
   if (scriptLoaded && window.Razorpay) return Promise.resolve();
@@ -26,7 +26,7 @@ export function openRazorpayCheckout({ keyId, orderId, amount, currency, booking
     amount,
     currency: currency || 'INR',
     order_id: orderId,
-    name: 'BooK my Train Booking',
+    name: 'Book My Train Booking',
     description: bookingDescription || 'Train Ticket Booking',
     prefill: {
       name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '',

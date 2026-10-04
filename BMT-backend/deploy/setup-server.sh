@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "=========================================================="
-echo "🚀 BooK My Train - Automatic Production Server Setup"
+echo "🚀 Book My Train - Automatic Production Server Setup"
 echo "=========================================================="
 
 echo "=== 1/7: Configuring Firewall (Opening ports 80 & 443) ==="
