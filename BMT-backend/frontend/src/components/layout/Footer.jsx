@@ -107,11 +107,9 @@ export default function Footer() {
             </p>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="inline-flex items-center gap-1.5 bg-slate-100/90 text-[10px] text-slate-700 px-3 py-1.5 rounded-xl font-bold border border-slate-200/90 shadow-xs">
-                <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <span>256-BIT SSL SECURE</span>
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-[10px] text-emerald-800 px-3 py-1.5 rounded-xl font-bold border border-emerald-200/80 shadow-xs">
+                <img src="/navbar-logo.jpg" alt="BMT" className="w-3.5 h-3.5 rounded-sm object-contain" />
+                <span>BooK my Train POWERED</span>
               </span>
 
               <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-[10px] text-emerald-800 px-3 py-1.5 rounded-xl font-bold border border-emerald-200/80 shadow-xs">
@@ -226,7 +224,7 @@ export default function Footer() {
                     />
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">
-                        Lead Developer &amp; Creator
+                        Founder &amp; Developer
                       </p>
                       <p className="font-black text-sm text-slate-900 group-hover:text-emerald-700 transition-colors">
                         Arvind Meena
@@ -234,8 +232,7 @@ export default function Footer() {
                     </div>
                   </div>
 
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-800 bg-white px-2 py-1 rounded-lg border border-emerald-200 shadow-xs group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                    <span>Portfolio</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-800 bg-white w-8 h-8 justify-center rounded-lg border border-emerald-200 shadow-xs group-hover:bg-emerald-600 group-hover:text-white transition-all">
                     <span className="group-hover:translate-x-0.5 transition-transform">↗</span>
                   </span>
                 </a>

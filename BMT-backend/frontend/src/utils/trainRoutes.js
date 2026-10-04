@@ -292,11 +292,17 @@ export function getTrainSegmentRoute(train) {
   const destination = segmentStops[segmentStops.length - 1];
   const intermediateStops = segmentStops.slice(1, -1);
 
+  // Compute the km covered between origin and destination in this segment
+  const originDistRaw = Number(origin?.distance ?? 0);
+  const destDistRaw = Number(destination?.distance ?? 0);
+  const segmentDistanceKm = Math.abs(destDistRaw - originDistRaw) || null;
+
   return {
     allStops: segmentStops,
     origin,
     destination,
     intermediateStops,
     count: intermediateStops.length,
+    segmentDistanceKm,
   };
 }
