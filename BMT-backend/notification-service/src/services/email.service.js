@@ -90,9 +90,15 @@ class EmailService {
         return this.sendWithRetry({
             from: this.from,
             to: email,
-            subject: "Your Book My Train Verification Code",
+            subject: `${otp} is your Book My Train verification code`,
             html: getOtpTemplate(otp, ttlMinutes),
-            text: getOtpText(otp, ttlMinutes),
+            text: `Your Book My Train verification code is: ${otp}\n\nThis code expires in ${ttlMinutes} minutes. Do not share this code with anyone.\n\nSupport: teambookmytrain@gmail.com\nBook My Train Technologies, India`,
+            headers: {
+                'X-Priority': '1',
+                'Importance': 'High',
+                'Auto-Submitted': 'auto-generated',
+                'X-Auto-Response-Suppress': 'All',
+            }
         });
     }
 
