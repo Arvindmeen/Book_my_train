@@ -24,18 +24,18 @@ const createSchedule = async (data) => {
      if (!train.route) throw new BadRequestError('Train has no route defined. Create a route first.');
      if (train.seats.length === 0) throw new BadRequestError('Train has no seats defined.');
 
-     const parsedDate = new Date(departureDate);
+     const cleanDateStr = departureDate.split('T')[0];
+     const parsedDate = new Date(`${cleanDateStr}T00:00:00.000Z`);
      if (isNaN(parsedDate.getTime())) {
           throw new BadRequestError('Invalid departure date format. Use YYYY-MM-DD');
      }
 
-     // Check for duplicate schedule
+     // Check if schedule already exists (e.g. from 30-day auto-provisioning)
      const existing = await prisma.schedule.findUnique({
           where: { trainId_departureDate: { trainId, departureDate: parsedDate } },
      });
-     if (existing) throw new ConflictError('Schedule already exists for this train on this date');
 
-     const schedule = await prisma.schedule.create({
+     const schedule = existing || await prisma.schedule.create({
           data: { trainId, departureDate: parsedDate },
      });
 
@@ -47,7 +47,7 @@ const createSchedule = async (data) => {
           trainName: train.trainName,
           coachName: train.coachName,
           totalSeats: train.totalSeats,
-          departureDate: departureDate,
+          departureDate: cleanDateStr,
           status: schedule.status,
           seats: train.seats.map((s) => ({
                seatId: s.id,
@@ -70,19 +70,22 @@ const createSchedule = async (data) => {
      // This event goes to both inventory-service and search-service via Kafka
      try {
           await adminProducer.publishScheduleCreated(eventPayload);
-          logger.info(`Schedule created and event published for train ${train.trainNumber} on ${departureDate}`);
+          logger.info(`Schedule ${schedule.id} event published for train ${train.trainNumber} on ${cleanDateStr}`);
      } catch (kafkaError) {
-          logger.error(`Failed to publish ScheduleCreated event for schedule ${schedule.id}, rolling back database record`, {
+          logger.error(`Failed to publish ScheduleCreated event for schedule ${schedule.id}`, {
                error: kafkaError.message,
           });
-          // Roll back database record so retrying doesn't encounter duplicate schedule conflict
-          await prisma.schedule.delete({ where: { id: schedule.id } }).catch((delErr) => {
-               logger.error(`Failed to rollback schedule ${schedule.id}`, { error: delErr.message });
-          });
+          if (!existing) {
+               await prisma.schedule.delete({ where: { id: schedule.id } }).catch(() => {});
+          }
           throw kafkaError;
      }
 
-     return schedule;
+     return {
+          ...schedule,
+          isExisting: Boolean(existing),
+          message: existing ? 'Schedule synchronized with inventory and search' : 'Schedule created successfully',
+     };
 }
 
 

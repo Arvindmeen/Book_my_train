@@ -108,6 +108,7 @@ const createRoute = async (data) => {
      await adminProducer.publishRouteCreated({ ...route, train: trainWithSeats });
 
      // Auto-provision next 30 days of schedules for this route based on train's runningDays
+     const provisionedSchedules = [];
      try {
           const runningDays = Array.isArray(trainWithSeats.runningDays) && trainWithSeats.runningDays.length > 0
                ? trainWithSeats.runningDays
@@ -115,20 +116,37 @@ const createRoute = async (data) => {
 
           const today = new Date();
           for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
-               const schedDate = new Date(today);
-               schedDate.setDate(today.getDate() + dayOffset);
-               schedDate.setHours(0, 0, 0, 0);
-
+               const schedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + dayOffset);
                if (!runningDays.includes(schedDate.getDay())) continue;
 
-               const dateStr = schedDate.toISOString().split('T')[0];
+               const year = schedDate.getFullYear();
+               const month = String(schedDate.getMonth() + 1).padStart(2, '0');
+               const day = String(schedDate.getDate()).padStart(2, '0');
+               const dateStr = `${year}-${month}-${day}`;
+               const departureDateUtc = new Date(`${dateStr}T00:00:00.000Z`);
 
-               const schedule = await prisma.schedule.create({
-                    data: {
-                         trainId,
-                         departureDate: schedDate,
-                         status: 'ACTIVE',
-                    },
+               // Find or create schedule
+               let schedule = await prisma.schedule.findUnique({
+                    where: { trainId_departureDate: { trainId, departureDate: departureDateUtc } },
+               });
+
+               if (!schedule) {
+                    schedule = await prisma.schedule.create({
+                         data: {
+                              trainId,
+                              departureDate: departureDateUtc,
+                              status: 'ACTIVE',
+                         },
+                    });
+               }
+
+               provisionedSchedules.push({
+                    scheduleId: schedule.id,
+                    departureDate: dateStr,
+                    status: schedule.status,
+                    available: (trainWithSeats.seats || []).length,
+                    locked: 0,
+                    booked: 0,
                });
 
                await adminProducer.publishScheduleCreated({
@@ -149,7 +167,8 @@ const createRoute = async (data) => {
                     route: route.routeStations.map((rs) => ({
                          stationId: rs.station.id,
                          stationName: rs.station.name,
-                         stationCode: rs.station.code,
+                         stationCode: (rs.station.code || '').toUpperCase(),
+                         city: rs.station.city || '',
                          sequenceNumber: rs.sequenceNumber,
                          arrivalTime: rs.arrivalTime,
                          departureTime: rs.departureTime,
@@ -190,7 +209,7 @@ const createRoute = async (data) => {
                     departureTime: rs.departureTime,
                     distanceFromOrigin: rs.distanceFromOrigin,
                })),
-               schedules: [],
+               schedules: provisionedSchedules,
                seatSummary,
           };
 

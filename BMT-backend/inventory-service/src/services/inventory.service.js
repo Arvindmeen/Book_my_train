@@ -17,56 +17,80 @@ const initializeInventory = async (eventData) => {
 
      const eventKey = `SCHEDULE_CREATED:${scheduleId}`;
 
-     const existing = await prisma.idempotencyRecord.findUnique({ where: { eventKey } });
-     if (existing) {
-          logger.info(`Duplicate event skipped: ${eventKey}`);
+     const existingRecord = await prisma.idempotencyRecord.findUnique({ where: { eventKey } });
+     const existingSchedule = await prisma.scheduleInventory.findUnique({
+          where: { scheduleId },
+          include: { _count: { select: { seats: true } } },
+     });
+
+     if (existingRecord && existingSchedule && existingSchedule._count.seats > 0) {
+          logger.info(`Schedule ${scheduleId} already fully initialized in inventory. Skipping.`);
           return;
+     }
+
+     // If idempotency record exists but schedule was never created or corrupted, remove orphan idempotency record
+     if (existingRecord && !existingSchedule) {
+          await prisma.idempotencyRecord.delete({ where: { eventKey } }).catch(() => {});
      }
 
      const totalSeats = seats.length;
 
      await prisma.$transaction(async (tx) => {
-          const schedule = await tx.scheduleInventory.create({
-               data: {
+          let schedule = existingSchedule;
+          if (!schedule) {
+               schedule = await tx.scheduleInventory.create({
+                    data: {
+                         scheduleId,
+                         trainId,
+                         trainNumber,
+                         trainName,
+                         departureDate: new Date(departureDate),
+                         totalSeats,
+                         available: totalSeats,
+                         locked: 0,
+                         booked: 0,
+                         status: 'ACTIVE',
+                    },
+               });
+          }
+
+          // Check if seats already exist
+          const existingSeatsCount = await tx.seatInventory.count({ where: { scheduleId } });
+          if (existingSeatsCount === 0) {
+               const seatData = seats.map(seat => ({
+                    scheduleInventoryId: schedule.id,
                     scheduleId,
-                    trainId,
-                    trainNumber,
-                    trainName,
-                    departureDate: new Date(departureDate),
-                    totalSeats,
-                    available: totalSeats,
-                    locked: 0,
-                    booked: 0,
-                    status: 'ACTIVE',
-               },
-          });
+                    seatId: seat.seatId,
+                    seatNumber: seat.seatNumber,
+                    seatType: seat.seatType,
+                    price: seat.price,
+                    status: 'AVAILABLE',
+               }));
 
-          const seatData = seats.map(seat => ({
-               scheduleInventoryId: schedule.id,
-               scheduleId,
-               seatId: seat.seatId,
-               seatNumber: seat.seatNumber,
-               seatType: seat.seatType,
-               price: seat.price,
-               status: 'AVAILABLE',
-          }));
-
-          await tx.seatInventory.createMany({ data: seatData });
+               await tx.seatInventory.createMany({ data: seatData });
+          }
 
           // --- SEGMENT BOOKING: Persist route topology for segment overlap checks ---
           if (eventData.route && eventData.route.length > 0) {
-               const routeStopData = eventData.route.map(rs => ({
-                    scheduleId,
-                    stationId: rs.stationId,
-                    stationName: rs.stationName,
-                    stationCode: rs.stationCode,
-                    sequenceNumber: rs.sequenceNumber,
-               }));
-               await tx.routeStop.createMany({ data: routeStopData });
-               logger.info(`Persisted ${routeStopData.length} route stops for schedule ${scheduleId}`);
+               const existingRouteStops = await tx.routeStop.count({ where: { scheduleId } });
+               if (existingRouteStops === 0) {
+                    const routeStopData = eventData.route.map(rs => ({
+                         scheduleId,
+                         stationId: rs.stationId,
+                         stationName: rs.stationName,
+                         stationCode: rs.stationCode,
+                         sequenceNumber: rs.sequenceNumber,
+                    }));
+                    await tx.routeStop.createMany({ data: routeStopData });
+                    logger.info(`Persisted ${routeStopData.length} route stops for schedule ${scheduleId}`);
+               }
           }
 
-          await tx.idempotencyRecord.create({ data: { eventKey } });
+          await tx.idempotencyRecord.upsert({
+               where: { eventKey },
+               update: {},
+               create: { eventKey },
+          });
      });
 
      logger.info(`Inventory initialized for schedule ${scheduleId} with ${totalSeats} seats`);
