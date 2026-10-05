@@ -688,7 +688,7 @@ export default function HomePage() {
 
             {/* 2. Main Heading: Clean normal font like Claude (Inter), smaller refined size, and using "and" */}
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-bold tracking-tight leading-snug text-slate-900 text-center">
-              Next-Gen Express Rail and <span className="text-emerald-600">Smart Tikat</span> Portal
+              Next-Gen Express Rail and <span className="text-emerald-600">Smart Ticket</span> Portal
             </h1>
 
             {/* 3. Interactive Typewriter Line (Borderless chip, Explore: static in place, content moves forward) */}
@@ -727,12 +727,13 @@ export default function HomePage() {
           <div className="glass-card rounded-3xl shadow-card p-3 md:p-5 max-w-4xl mx-auto border border-slate-150 animate-fade-in-up">
             
             {/* Horizontal Service Tab Switcher with Real Icons & High-Contrast Active Styling */}
-            <div className="flex items-center justify-start md:justify-center border-b border-slate-150 overflow-x-auto scrollbar-none pb-2.5 gap-2 md:gap-3 px-1">
+            <div className="min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none border-b border-slate-150 pb-2.5">
+              <div className="flex w-max min-w-full items-center justify-start md:justify-center gap-2 md:gap-3 px-1">
               
               {/* Tab 1: Book Tickets */}
               <button
                 onClick={() => setActiveTab('search')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   activeTab === 'search'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -751,7 +752,7 @@ export default function HomePage() {
               {/* Tab 2: Check PNR */}
               <button
                 onClick={() => setActiveTab('pnr')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'pnr'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -768,7 +769,7 @@ export default function HomePage() {
               {/* Tab 3: Live Running Status */}
               <button
                 onClick={() => setActiveTab('live')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'live'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -784,7 +785,7 @@ export default function HomePage() {
               {/* Tab 4: Food on Track */}
               <button
                 onClick={() => setActiveTab('food')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'food'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -801,7 +802,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('hotels')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'hotels'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -818,7 +819,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('flights')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'flights'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -830,6 +831,7 @@ export default function HomePage() {
                 </svg>
                 <span>Flights</span>
               </button>
+              </div>
             </div>
 
             {/* Tab Contents */}
