@@ -34,7 +34,7 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
     try {
       const [trainsRes, bookingsRes, schedulesRes, healthRes] = await Promise.allSettled([
         adminApi.getTrains(),
-        adminApi.getBookings('ALL', 1, 100),
+        adminApi.getBookings('ALL', 1, 200),
         adminApi.getSchedules(),
         adminApi.getSystemHealth(),
       ]);
@@ -118,76 +118,49 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
     };
   }, [systemHealth]);
 
-  // Derive real KPIs from actual database records
+  // Derive 100% REAL KPIs directly from database (No synthetic formula multipliers!)
   const kpis = useMemo(() => {
-    const totalFleet = trains.length > 0 ? trains.length : 28;
+    const totalFleet = trains.length;
     const confirmedBookings = bookings.filter((b) => b && b.status === 'CONFIRMED');
     const confirmedCount = confirmedBookings.length;
-    const waitlistCount = bookings.filter((b) => b && (b.status === 'PENDING' || b.status === 'SEATS_HELD')).length;
+    const waitlistCount = bookings.filter((b) => b && (b.status === 'PENDING' || b.status === 'SEATS_HELD' || b.status === 'WAITLIST')).length;
 
     // Real sum of confirmed booking revenue from database
     const rawRevenue = confirmedBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
-    
-    // If database has bookings, calculate gross turnover; otherwise realistic calculated throughput
-    let turnoverDisplay = '₹2.48 Cr';
-    let turnoverNumber = 2.48;
-    let turnoverUnit = 'Cr';
 
-    if (rawRevenue > 10000000) {
-      turnoverNumber = +(rawRevenue / 10000000).toFixed(2);
-      turnoverUnit = 'Cr';
-      turnoverDisplay = `₹${turnoverNumber} Cr`;
-    } else if (rawRevenue > 100000) {
-      turnoverNumber = +(rawRevenue / 100000).toFixed(2);
-      turnoverUnit = 'Lakh';
-      turnoverDisplay = `₹${turnoverNumber} L`;
-    } else if (rawRevenue > 0) {
-      turnoverNumber = rawRevenue;
-      turnoverUnit = '';
-      turnoverDisplay = `₹${rawRevenue.toLocaleString('en-IN')}`;
-    } else {
-      // Projected based on fleet capacity
-      turnoverNumber = 2.48;
-      turnoverUnit = 'Cr';
-      turnoverDisplay = '₹2.48 Cr';
-    }
+    // Total actual passengers booked across the system from database
+    const totalBookedPassengers = bookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0);
+    const confirmedPassengers = confirmedBookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0);
 
-    // Daily passenger load derived from fleet provisioned capacity + actual bookings
-    const confirmedPax = confirmedBookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 1), 0);
-    const dailyPassengerLoad = (totalFleet * 4850) + (confirmedPax * 14) + (bookings.length > 0 ? 1200 : 8450);
+    // Real fleet capacity & occupancy calculation
+    const totalFleetCapacity = trains.reduce((sum, t) => sum + (t.totalSeats || 64), 0);
+    const totalBookedSeats = confirmedBookings.reduce((sum, b) => sum + (b.seats?.length || b.seatCount || b.passengers?.length || 0), 0);
+    const realOccupancy = totalFleetCapacity > 0 ? +((totalBookedSeats / totalFleetCapacity) * 100).toFixed(1) : 0;
 
-    // Network seat occupancy percentage
-    let occupancyPct = 92.4;
-    if (trains.length > 0 && bookings.length > 0) {
-      const bookedPax = bookings.reduce((sum, b) => sum + (b.seatCount || 1), 0);
-      const totalCapacity = trains.reduce((sum, t) => sum + (t.totalSeats || 64), 0);
-      if (totalCapacity > 0) {
-        occupancyPct = +(Math.min(99.4, Math.max(86.5, 88.5 + (bookedPax / totalCapacity) * 10))).toFixed(1);
-      }
-    }
+    // Active schedule rate
+    const totalSchedules = schedules.length;
+    const activeSchedules = schedules.filter((s) => s.status !== 'CANCELLED').length;
+    const punctualityRate = totalSchedules > 0 ? `${((activeSchedules / totalSchedules) * 100).toFixed(1)}%` : '100.0%';
 
     return {
       totalFleet,
-      dailyPassengerLoad,
-      occupancyPct,
-      turnoverDisplay,
-      turnoverNumber,
-      turnoverUnit,
+      totalFleetCapacity,
+      totalBookedPassengers,
+      confirmedPassengers,
+      totalBookedSeats,
+      realOccupancy,
+      rawRevenue,
       confirmedCount,
       waitlistCount,
-      punctualityRate: '96.8%',
+      totalBookings: bookings.length,
+      punctualityRate,
     };
-  }, [trains, bookings]);
+  }, [trains, bookings, schedules]);
 
-  // Compute real high-density corridors from actual trains & routes in database
+  // Compute 100% REAL high-density corridors from actual trains & bookings in database
   const corridors = useMemo(() => {
     if (!Array.isArray(trains) || trains.length === 0) {
-      return [
-        { route: 'New Delhi (NDLS) ⇄ Mumbai Central (MMCT)', capacity: 98, status: 'Critical Rush', waitlist: 384, badge: 'bg-rose-50 text-rose-700 border-rose-200' },
-        { route: 'New Delhi (NDLS) ⇄ Varanasi Jn (BSB)', capacity: 100, status: '100% Full', waitlist: 460, badge: 'bg-rose-50 text-rose-700 border-rose-200' },
-        { route: 'Howrah Jn (HWH) ⇄ New Delhi (NDLS)', capacity: 94, status: 'Heavy Rush', waitlist: 215, badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-        { route: 'Ahmedabad Jn (ADI) ⇄ Mumbai Central (MMCT)', capacity: 91, status: 'High Volume', waitlist: 140, badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-      ];
+      return [];
     }
 
     const map = new Map();
@@ -204,7 +177,8 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
       if (['PRYJ'].includes(c)) return 'Prayagraj Jn (PRYJ)';
       if (['HIJ', 'KGP'].includes(c)) return 'Kharagpur / Hijli';
       if (['MB'].includes(c)) return 'Moradabad (MB)';
-      return code;
+      if (['CH'].includes(c)) return 'Chandausi (CH)';
+      return code || 'Station';
     };
 
     trains.forEach((t) => {
@@ -227,35 +201,49 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
       map.get(key).trains.push(t);
     });
 
-    const list = Array.from(map.values()).slice(0, 4).map((c, i) => {
+    const list = Array.from(map.values()).slice(0, 4).map((c) => {
       const trainNums = new Set(c.trains.map((t) => t.trainNumber));
       const corridorBookings = bookings.filter((b) => b && trainNums.has(b.trainNumber));
-      const bookedCount = corridorBookings.length;
+      const bookedPax = corridorBookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0);
+      const waitlistPax = corridorBookings.filter((b) => b.status === 'PENDING' || b.status === 'SEATS_HELD' || b.status === 'WAITLIST').length;
       
-      const capacity = Math.min(100, Math.max(88, 90 + (bookedCount % 9) + (i === 1 ? 8 : i === 0 ? 6 : 2)));
-      const isCritical = capacity >= 96;
-      const status = capacity >= 100 ? '100% Full' : isCritical ? 'Critical Rush' : capacity >= 92 ? 'Heavy Rush' : 'High Volume';
-      const badge = isCritical ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200';
-      const waitlist = (bookedCount * 12) + (c.trains.length * 48) + 110;
+      const corridorTotalSeats = c.trains.reduce((sum, t) => sum + (t.totalSeats || 64), 0);
+      const capacity = corridorTotalSeats > 0 ? Math.min(100, Math.round((bookedPax / corridorTotalSeats) * 100)) : 0;
+      
+      const isCritical = capacity >= 90;
+      const isHigh = capacity >= 50 && capacity < 90;
+      const status = capacity >= 100
+        ? '100% Full'
+        : isCritical
+        ? 'High Volume'
+        : isHigh
+        ? 'Moderate Rush'
+        : capacity > 0
+        ? `${capacity}% Booked`
+        : 'Available (0 Booked)';
+
+      const badge = isCritical
+        ? 'bg-rose-50 text-rose-700 border-rose-200'
+        : isHigh
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
+        : 'bg-emerald-50 text-emerald-700 border-emerald-200';
 
       return {
         route: c.route,
         capacity,
+        bookedPax,
+        corridorTotalSeats,
+        trainCount: c.trains.length,
         status,
-        waitlist,
+        waitlist: waitlistPax,
         badge,
       };
     });
 
-    return list.length >= 2 ? list : [
-      { route: 'New Delhi (NDLS) ⇄ Mumbai Central (MMCT)', capacity: 98, status: 'Critical Rush', waitlist: 384, badge: 'bg-rose-50 text-rose-700 border-rose-200' },
-      { route: 'New Delhi (NDLS) ⇄ Varanasi Jn (BSB)', capacity: 100, status: '100% Full', waitlist: 460, badge: 'bg-rose-50 text-rose-700 border-rose-200' },
-      { route: 'Howrah Jn (HWH) ⇄ New Delhi (NDLS)', capacity: 94, status: 'Heavy Rush', waitlist: 215, badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-      { route: 'Ahmedabad Jn (ADI) ⇄ Mumbai Central (MMCT)', capacity: 91, status: 'High Volume', waitlist: 140, badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-    ];
+    return list;
   }, [trains, bookings]);
 
-  // Real Live Ticketing Stream from actual bookings
+  // Real Live Ticketing Stream directly from actual database bookings
   const liveStream = useMemo(() => {
     const formatRelativeTime = (dateStr) => {
       if (!dateStr) return 'Just now';
@@ -269,40 +257,29 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
       return `${diffHours} hours ago`;
     };
 
-    if (bookings.length > 0) {
-      return bookings.slice(0, 5).map((b) => {
-        const isConfirmed = b.status === 'CONFIRMED';
-        const isWl = b.status === 'PENDING' || b.status === 'SEATS_HELD';
-        const type = isConfirmed ? 'confirm' : isWl ? 'wl' : 'refund';
+    return bookings.slice(0, 5).map((b) => {
+      const isConfirmed = b.status === 'CONFIRMED';
+      const isWl = b.status === 'PENDING' || b.status === 'SEATS_HELD' || b.status === 'WAITLIST';
+      const type = isConfirmed ? 'confirm' : isWl ? 'wl' : 'refund';
 
-        const pnr = b.pnr || (b.id ? b.id.replace(/\D/g, '').padStart(10, '8').slice(0, 10) : '248-918-2301');
-        const formattedPnr = pnr.length === 10 ? `${pnr.slice(0, 3)}-${pnr.slice(3, 6)}-${pnr.slice(6)}` : pnr;
-        const trainTitle = b.trainNumber ? `${b.trainNumber} ${b.trainName || 'Express'}` : '12301 Howrah Rajdhani';
-        const passengerInfo = b.passengers && b.passengers.length > 0 ? `(${b.passengers[0].name})` : '';
+      const pnr = b.pnr || (b.id ? b.id.replace(/\D/g, '').padEnd(10, '8').slice(0, 10) : '2489182301');
+      const formattedPnr = pnr.length === 10 ? `${pnr.slice(0, 3)}-${pnr.slice(3, 6)}-${pnr.slice(6)}` : pnr;
+      const trainTitle = b.trainNumber ? `${b.trainNumber} ${b.trainName || 'Express'}` : 'Express Service';
+      const passengerInfo = b.passengers && b.passengers.length > 0 ? `(${b.passengers[0].name})` : '';
 
-        const text = isConfirmed
-          ? `Confirmed • ${trainTitle} ${passengerInfo}`
-          : isWl
-          ? `Waitlist Assigned • WL-14 (${b.trainNumber || 'Express'})`
-          : `Refund Processed • ₹${b.totalAmount || '680'}`;
+      const text = isConfirmed
+        ? `Confirmed • ${trainTitle} ${passengerInfo}`
+        : isWl
+        ? `Waitlist Assigned • ${b.trainNumber || 'Express'}`
+        : `Refund Processed • ₹${b.totalAmount || '0'}`;
 
-        return {
-          pnr: formattedPnr,
-          text,
-          time: formatRelativeTime(b.createdAt),
-          type,
-        };
-      });
-    }
-
-    // Authentic fallback live events if system is freshly seeded
-    return [
-      { pnr: '248-918-2301', text: 'Confirmed • 12301 Howrah Rajdhani', time: 'Just now', type: 'confirm' },
-      { pnr: '652-301-9842', text: 'Confirmed • 22436 Vande Bharat', time: '2 mins ago', type: 'confirm' },
-      { pnr: '810-459-2019', text: 'Waitlist Assigned • WL-14 (12952)', time: '5 mins ago', type: 'wl' },
-      { pnr: '391-048-2910', text: 'Refund Processed • ₹680', time: '8 mins ago', type: 'refund' },
-      { pnr: '492-817-2039', text: 'Confirmed • 12002 Bhopal Shatabdi', time: '12 mins ago', type: 'confirm' },
-    ];
+      return {
+        pnr: formattedPnr,
+        text,
+        time: formatRelativeTime(b.createdAt),
+        type,
+      };
+    });
   }, [bookings]);
 
   return (
@@ -310,10 +287,9 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* ========================================================================= */}
-        {/* 1. EXECUTIVE OPERATIONS HEADER (Light, Modern, Clean & High-Contrast)      */}
+        {/* 1. EXECUTIVE OPERATIONS HEADER                                            */}
         {/* ========================================================================= */}
         <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 transition-all">
-          {/* Subtle ambient gradient mesh for depth */}
           <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 right-1/4 -mb-20 h-48 w-48 rounded-full bg-teal-500/5 blur-3xl pointer-events-none" />
 
@@ -334,7 +310,7 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
                   <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-ping" />
-                  Real Data Connected
+                  Real DB Telemetry
                 </span>
               </div>
 
@@ -351,7 +327,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
 
             {/* Right: Live Clock & Quick Navigation Actions */}
             <div className="flex flex-wrap items-center gap-3">
-              {/* Digital Timepiece Card with IST */}
               <div className="bg-slate-50/90 border border-slate-200/90 rounded-xl px-4 py-2 text-right hidden sm:block shadow-xs">
                 <div className="flex items-center justify-end gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -365,15 +340,14 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
                 onClick={() => fetchDashboardData(true)}
                 disabled={isRefreshing}
                 className="px-3 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 shadow-xs hover:border-slate-300 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
-                title="Sync Live Telemetry"
+                title="Sync Live Database Records"
               >
                 <svg className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span className="hidden md:inline">{isRefreshing ? 'Syncing...' : 'Sync'}</span>
+                <span className="hidden md:inline">{isRefreshing ? 'Syncing...' : 'Sync DB'}</span>
               </button>
 
-              {/* Switch to Passenger Experience */}
               {onSwitchToPassenger && (
                 <button
                   onClick={onSwitchToPassenger}
@@ -388,7 +362,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
                 </button>
               )}
 
-              {/* Primary Admin Action */}
               <Link
                 to="/admin?tab=Trains"
                 className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95"
@@ -403,7 +376,7 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
         </div>
 
         {/* ========================================================================= */}
-        {/* 2. DOCKER & MICROSERVICES ARCHITECTURE HEALTH STRIP (Real Live Status)     */}
+        {/* 2. DOCKER & MICROSERVICES ARCHITECTURE HEALTH STRIP                        */}
         {/* ========================================================================= */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs flex items-center gap-3 transition-all hover:border-emerald-300">
@@ -468,11 +441,11 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. CORE ADMINISTRATIVE KPI METRIC CARDS (Animated & Grounded in Real Data) */}
+        {/* 3. CORE ADMINISTRATIVE KPI METRIC CARDS (100% Real Database Data)         */}
         {/* ========================================================================= */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          {/* KPI 1: Active Express Trains */}
+          {/* KPI 1: Active Express Trains in DB */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all group">
             <div className="flex items-center justify-between text-slate-400 mb-2">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Active Express Trains</span>
@@ -490,7 +463,7 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
             </div>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-xs text-emerald-700 font-semibold">{kpis.punctualityRate} On-Time Performance</p>
+              <p className="text-xs text-emerald-700 font-semibold">{kpis.punctualityRate} Active Schedules</p>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-1 mt-3 overflow-hidden">
               <div
@@ -500,10 +473,10 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
             </div>
           </div>
 
-          {/* KPI 2: Daily Passenger Load */}
+          {/* KPI 2: Real Passenger Manifest Count */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all group">
             <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Daily Passenger Load</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Booked Passengers</span>
               <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -511,20 +484,23 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900">
-              <AnimatedCounter value={kpis.dailyPassengerLoad} />
+              <AnimatedCounter value={kpis.totalBookedPassengers} suffix=" Travellers" />
             </div>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                &uarr; 9.4%
+                {kpis.confirmedCount} Confirmed
               </span>
-              <p className="text-xs text-slate-500 font-medium">Higher than last week</p>
+              <p className="text-xs text-slate-500 font-medium">{kpis.waitlistCount} Waitlist</p>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-1 mt-3 overflow-hidden">
-              <div className="bg-blue-500 h-1 rounded-full transition-all duration-1000 ease-out" style={{ width: '84%' }} />
+              <div
+                className="bg-blue-500 h-1 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${Math.min(100, Math.max(kpis.totalBookedPassengers * 5, 10))}%` }}
+              />
             </div>
           </div>
 
-          {/* KPI 3: Average Network Occupancy */}
+          {/* KPI 3: Real Network Seat Occupancy */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all group">
             <div className="flex items-center justify-between text-slate-400 mb-2">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Network Seat Occupancy</span>
@@ -535,24 +511,26 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900">
-              <AnimatedCounter value={kpis.occupancyPct} decimals={1} suffix="%" />
+              <AnimatedCounter value={kpis.realOccupancy} decimals={1} suffix="%" />
             </div>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <p className="text-xs text-amber-700 font-semibold truncate">High demand on Delhi &amp; Mumbai</p>
+              <p className="text-xs text-amber-700 font-semibold truncate">
+                {kpis.totalBookedSeats} of {kpis.totalFleetCapacity.toLocaleString('en-IN')} Seats Booked
+              </p>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-1 mt-3 overflow-hidden">
               <div
                 className="bg-amber-500 h-1 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${Math.min(100, kpis.occupancyPct)}%` }}
+                style={{ width: `${Math.min(100, Math.max(kpis.realOccupancy, 5))}%` }}
               />
             </div>
           </div>
 
-          {/* KPI 4: Gross Turnover */}
+          {/* KPI 4: Real Gross Turnover from Confirmed Bookings */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all group">
             <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Today's Gross Turnover</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Booking Turnover</span>
               <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -560,29 +538,23 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-emerald-700">
-              {kpis.turnoverUnit ? (
-                <>
-                  ₹<AnimatedCounter value={kpis.turnoverNumber} decimals={2} /> {kpis.turnoverUnit}
-                </>
-              ) : (
-                <>
-                  ₹<AnimatedCounter value={kpis.turnoverNumber} />
-                </>
-              )}
+              ₹<AnimatedCounter value={kpis.rawRevenue} />
             </div>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-xs text-slate-600 font-semibold">99.8% Gateway Success Rate</p>
+              <p className="text-xs text-slate-600 font-semibold">
+                From {kpis.confirmedCount} Confirmed Booking(s)
+              </p>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-1 mt-3 overflow-hidden">
-              <div className="bg-emerald-600 h-1 rounded-full transition-all duration-1000 ease-out" style={{ width: '99.8%' }} />
+              <div className="bg-emerald-600 h-1 rounded-full transition-all duration-1000 ease-out" style={{ width: '100%' }} />
             </div>
           </div>
 
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. ONE-CLICK OPERATIONS HUB (Clean, Uniform & Professional SVGs)          */}
+        {/* 4. ONE-CLICK OPERATIONS HUB                                               */}
         {/* ========================================================================= */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
@@ -601,7 +573,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             
-            {/* 1. Rail Services */}
             <button
               onClick={() => navigate('/admin?tab=Trains')}
               className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer"
@@ -618,7 +589,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               <span className="text-[11px] text-slate-500 block mt-0.5">Coaches &amp; timetables</span>
             </button>
 
-            {/* 2. Live Traffic */}
             <button
               onClick={() => navigate('/admin?tab=Traffic')}
               className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer"
@@ -632,7 +602,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               <span className="text-[11px] text-slate-500 block mt-0.5">Corridor density radar</span>
             </button>
 
-            {/* 3. Railway Stations */}
             <button
               onClick={() => navigate('/admin?tab=Stations')}
               className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer"
@@ -646,7 +615,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               <span className="text-[11px] text-slate-500 block mt-0.5">Platforms &amp; junctions</span>
             </button>
 
-            {/* 4. Train Routes */}
             <button
               onClick={() => navigate('/admin?tab=Routes')}
               className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer"
@@ -660,7 +628,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               <span className="text-[11px] text-slate-500 block mt-0.5">Stops &amp; distances</span>
             </button>
 
-            {/* 5. Search PNR Audit */}
             <button
               onClick={() => navigate('/admin?tab=Audit')}
               className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer"
@@ -674,7 +641,6 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               <span className="text-[11px] text-slate-500 block mt-0.5">Global PNR lookup</span>
             </button>
 
-            {/* 6. System Status */}
             <button
               onClick={() => navigate('/admin?tab=System')}
               className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer"
@@ -692,7 +658,7 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
         </div>
 
         {/* ========================================================================= */}
-        {/* 5. LIVE CORRIDORS RADAR & TICKETING STREAM (Real Telemetry Split Grid)     */}
+        {/* 5. LIVE CORRIDORS RADAR & TICKETING STREAM (100% Real DB Bookings)         */}
         {/* ========================================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
@@ -704,13 +670,13 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
                   <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <span>High-Density Corridors Live Telemetry</span>
+                  <span>Active Rail Corridors Telemetry</span>
                   <span className="flex h-2 w-2 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500">Real-time seat occupancy and passenger surge monitoring from database</p>
+                <p className="text-xs text-slate-500">Real seat bookings &amp; waitlists across routes in database</p>
               </div>
               <Link
                 to="/admin?tab=Traffic"
@@ -721,35 +687,43 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               </Link>
             </div>
 
-            <div className="space-y-3">
-              {corridors.map((c) => (
-                <div key={c.route} className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/70 space-y-2 hover:border-emerald-200 transition-all">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-900 truncate pr-2">{c.route}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap shrink-0 ${c.badge}`}>
-                      {c.status} ({c.capacity}%)
-                    </span>
+            {corridors.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200/70 text-slate-500 text-xs font-medium">
+                No active routes found in database. Create routes in Route Manager to monitor telemetry.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {corridors.map((c) => (
+                  <div key={c.route} className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/70 space-y-2 hover:border-emerald-200 transition-all">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-900 truncate pr-2">{c.route}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap shrink-0 ${c.badge}`}>
+                        {c.status} ({c.capacity}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className={`h-1.5 rounded-full transition-all duration-1000 ease-out ${
+                          c.capacity >= 90 ? 'bg-rose-500' : c.capacity >= 50 ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${Math.max(c.capacity, c.bookedPax > 0 ? 5 : 0)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                      <span>
+                        Real Bookings: <strong className="text-slate-800">{c.bookedPax} seats booked</strong> ({c.corridorTotalSeats} total seats)
+                      </span>
+                      <span className="text-slate-600 font-semibold">
+                        Waitlist: <strong className="text-rose-600">{c.waitlist} passengers</strong>
+                      </span>
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className={`h-1.5 rounded-full transition-all duration-1000 ease-out ${
-                        c.capacity >= 95 ? 'bg-rose-500' : 'bg-amber-500'
-                      }`}
-                      style={{ width: `${c.capacity}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                    <span>
-                      Waitlist Backlog: <strong className="text-slate-800"><AnimatedCounter value={c.waitlist} /> passengers</strong>
-                    </span>
-                    <span className="text-emerald-700 font-semibold">Priority Corridor Telemetry</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Right: Live Ticketing Stream (Connected to Database Bookings) */}
+          {/* Right: Real Live Ticketing Stream */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -760,35 +734,43 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               </h3>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Feed
+                Live DB Feed
               </span>
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              {liveStream.map((ev, i) => (
-                <div
-                  key={`${ev.pnr}-${i}`}
-                  className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:border-slate-300 transition-all"
-                >
-                  <div className="mt-0.5">
-                    {ev.type === 'confirm' ? (
-                      <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-bold">✓</span>
-                    ) : ev.type === 'wl' ? (
-                      <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold">⏱</span>
-                    ) : (
-                      <span className="w-4 h-4 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">↩</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono font-bold text-slate-800 text-[11px]">{ev.pnr}</span>
-                      <span className="text-[10px] text-slate-400">{ev.time}</span>
+            {liveStream.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 space-y-1">
+                <span className="text-3xl block">🎫</span>
+                <p className="font-bold text-slate-700 text-xs">No ticket bookings yet</p>
+                <p className="text-[11px] text-slate-500">Bookings placed in the portal will appear here live.</p>
+              </div>
+            ) : (
+              <div className="space-y-2.5 text-xs">
+                {liveStream.map((ev, i) => (
+                  <div
+                    key={`${ev.pnr}-${i}`}
+                    className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:border-slate-300 transition-all"
+                  >
+                    <div className="mt-0.5">
+                      {ev.type === 'confirm' ? (
+                        <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-bold">✓</span>
+                      ) : ev.type === 'wl' ? (
+                        <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold">⏱</span>
+                      ) : (
+                        <span className="w-4 h-4 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">↩</span>
+                      )}
                     </div>
-                    <p className="text-slate-600 text-[11px] font-medium leading-tight truncate">{ev.text}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-slate-800 text-[11px]">{ev.pnr}</span>
+                        <span className="text-[10px] text-slate-400">{ev.time}</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px] font-medium leading-tight truncate">{ev.text}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <Link
               to="/admin?tab=Audit"
