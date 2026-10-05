@@ -122,13 +122,13 @@ export default function SearchForm({ compact }) {
 
   return (
     <div className="space-y-4">
-      {/* Top Search Mode Selector: Route vs Train Explorer */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-slate-100">
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+      {/* Top Search Mode Selector: Route vs Train Explorer & Quota Selector */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-3 border-b border-slate-150">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0">
           <button
             type="button"
             onClick={() => setSearchMode('route')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               searchMode === 'route'
                 ? 'bg-white text-emerald-800 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -140,7 +140,7 @@ export default function SearchForm({ compact }) {
           <button
             type="button"
             onClick={() => setSearchMode('train')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               searchMode === 'train'
                 ? 'bg-white text-emerald-800 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -151,50 +151,50 @@ export default function SearchForm({ compact }) {
           </button>
         </div>
 
-        {searchMode === 'route' && (
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">Quota:</span>
-            {QUOTA_OPTIONS.map((q) => (
-              <button
-                key={q.id}
-                type="button"
-                onClick={() => {
-                  setSelectedQuota(q.id);
-                  setQuota(q.id);
-                }}
-                className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 whitespace-nowrap shrink-0 ${
-                  selectedQuota === q.id
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                <span>{q.icon}</span>
-                <span>{q.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Quota Selector (Visible in Both Station-to-Station & By Train Search Modes!) */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">Quota:</span>
+          {QUOTA_OPTIONS.map((q) => (
+            <button
+              key={q.id}
+              type="button"
+              onClick={() => {
+                setSelectedQuota(q.id);
+                setQuota(q.id);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer ${
+                selectedQuota === q.id
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span>{q.icon}</span>
+              <span>{q.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Tatkal Quota Live Notice Banner (Shown in both modes whenever Tatkal is active) */}
+      {(selectedQuota === 'TQ' || selectedQuota === 'PT') && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-emerald-500/10 border border-amber-300/80 rounded-xl p-2.5 flex items-center justify-between text-xs text-amber-950 font-semibold animate-scale-in">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🚀</span>
+            <span>
+              <strong>Tatkal Quota Active:</strong> AC Tatkal opens at <strong>10:00 AM</strong> &middot; Non-AC Tatkal opens at <strong>11:00 AM</strong> daily.
+            </span>
+          </div>
+          <span className="text-[10px] uppercase font-black bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md hidden sm:inline-block">
+            Tatkal Mode
+          </span>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* MODE 1: STATION TO STATION ROUTE SEARCH                                    */}
       {/* ========================================================================= */}
       {searchMode === 'route' && (
         <form onSubmit={handleSearch} className="space-y-4 animate-fade-in">
-          {/* Tatkal Quota Live Notice Banner */}
-          {(selectedQuota === 'TQ' || selectedQuota === 'PT') && (
-            <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-emerald-500/10 border border-amber-300/80 rounded-xl p-2.5 flex items-center justify-between text-xs text-amber-950 font-semibold animate-scale-in">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🚀</span>
-                <span>
-                  <strong>Fast Tatkal Engine Armed:</strong> AC Tatkal opens at <strong>10:00 AM</strong> &middot; Non-AC Tatkal opens at <strong>11:00 AM</strong>.
-                </span>
-              </div>
-              <span className="text-[10px] uppercase font-black bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md hidden sm:inline-block">
-                Sub-50ms Rush Mode
-              </span>
-            </div>
-          )}
 
           <div className={`grid grid-cols-1 ${compact ? 'sm:grid-cols-2 lg:grid-cols-12' : 'md:grid-cols-12'} gap-3 items-end`}>
             {/* From Station */}
