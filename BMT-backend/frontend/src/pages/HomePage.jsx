@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SearchForm from '../components/search/SearchForm';
 import StationAutocomplete from '../components/search/StationAutocomplete';
@@ -2209,104 +2209,113 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* 5. Core Value Propositions ("Why Book With BMT - Engineered For Speed") */}
+      {/* 5. Core Passenger Services & Journey Tools */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-xs">
-            ⚡ Engineered For Speed · 99.98% Gateway Uptime
+            🇮🇳 Official Indian Railways Passenger Services &amp; Tools
           </span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-3">Why Travel with Book My Train?</h2>
-          <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">High-throughput Indian Railway architecture designed to be blisteringly fast, transparent, and passenger-first.</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-3">Essential Services &amp; Journey Tools</h2>
+          <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Practical booking tools, live PNR tracking, IRCTC-compliant refund guidelines, and Tatkal timing assistants.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {/* Card 1: AI Waitlist Predictor */}
+          {/* Card 1: Waitlist & RAC Confirmation Predictor */}
           <div
             onClick={() => setActiveSpeedModal('predictor')}
             className="card group hover:-translate-y-2 hover:scale-[1.02] transition-all duration-300 border border-slate-200/90 hover:border-emerald-400 hover:shadow-xl p-5 cursor-pointer flex flex-col justify-between relative overflow-hidden bg-white"
           >
             <div>
-              <div className="w-16 h-16 mb-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 p-1 flex items-center justify-center group-hover:scale-110 group-hover:rotate-1 transition-all duration-300 shadow-sm overflow-hidden">
-                <img src="/ai_predictor.jpg" alt="AI Waitlist Predictor" className="w-full h-full object-cover rounded-xl" />
+              {/* Real Vector Emblem 1: Berth Radar */}
+              <div className="w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 p-3 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 group-hover:scale-110 transition-transform">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    96.4% ACCURACY
+                    CHART TRENDS
                   </span>
-                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
-                    ✨ Neural AI
+                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded">
+                    Live Forecast
                   </span>
                 </div>
                 <h3 className="font-extrabold text-slate-900 text-base group-hover:text-emerald-700 transition-colors">
-                  AI Waitlist Predictor
+                  Waitlist Predictor
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Know real mathematical probability of your RAC or waitlisted ticket getting confirmed before paying a single rupee.
+                  Check confirmation probability for RAC and waitlisted tickets based on route vacancy and historical chart preparation trends.
                 </p>
               </div>
             </div>
             <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-              <span>Launch Live Predictor</span>
+              <span>Check Confirmation Chances</span>
               <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
             </div>
           </div>
 
-          {/* Card 2: Instant Refunds */}
+          {/* Card 2: Instant Auto-Refunds */}
           <div
             onClick={() => setActiveSpeedModal('refund')}
             className="card group hover:-translate-y-2 hover:scale-[1.02] transition-all duration-300 border border-slate-200/90 hover:border-emerald-400 hover:shadow-xl p-5 cursor-pointer flex flex-col justify-between relative overflow-hidden bg-white"
           >
             <div>
-              <div className="w-16 h-16 mb-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 p-1 flex items-center justify-center group-hover:scale-110 group-hover:rotate-1 transition-all duration-300 shadow-sm overflow-hidden">
-                <img src="/instant_refund.jpg" alt="Instant Refunds" className="w-full h-full object-cover rounded-xl" />
+              {/* Real Vector Emblem 2: Rupee Auto-Reversal */}
+              <div className="w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-700 p-3 flex items-center justify-center text-white shadow-md shadow-teal-600/20 group-hover:scale-110 transition-transform">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    &lt; 60s UPI ROLLBACK
+                    DIRECT REVERSAL
                   </span>
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    ⚡ NPCI Switch
+                    UPI &amp; Bank
                   </span>
                 </div>
                 <h3 className="font-extrabold text-slate-900 text-base group-hover:text-emerald-700 transition-colors">
-                  Instant Refunds
+                  Instant Auto-Refunds
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Cancel anytime prior to chart preparation and receive an instant 100% automated refund settled straight to your UPI ID.
+                  Cancel anytime before chart preparation and receive automated refunds credited directly back to your source bank or UPI account.
                 </p>
               </div>
             </div>
             <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-              <span>Refund Portal &amp; Cancel</span>
+              <span>View Refund Policy &amp; Slabs</span>
               <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
             </div>
           </div>
 
-          {/* Card 3: Free Cancellation Pass */}
+          {/* Card 3: Free Cancellation Guarantee */}
           <div
             onClick={() => setActiveSpeedModal('cancellation')}
             className="card group hover:-translate-y-2 hover:scale-[1.02] transition-all duration-300 border border-slate-200/90 hover:border-emerald-400 hover:shadow-xl p-5 cursor-pointer flex flex-col justify-between relative overflow-hidden bg-white"
           >
             <div>
-              <div className="w-16 h-16 mb-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 p-1 flex items-center justify-center group-hover:scale-110 group-hover:rotate-1 transition-all duration-300 shadow-sm overflow-hidden">
-                <img src="/free_cancellation.jpg" alt="Free Cancellation Pass" className="w-full h-full object-cover rounded-xl" />
+              {/* Real Vector Emblem 3: Protection Shield */}
+              <div className="w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-700 p-3 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 group-hover:scale-110 transition-transform">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    ZERO DEDUCTION
+                  <span className="text-[10px] font-extrabold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full">
+                    ZERO CLERKAGE
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    🛡️ Trip Shield
+                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                    100% Fare
                   </span>
                 </div>
                 <h3 className="font-extrabold text-slate-900 text-base group-hover:text-emerald-700 transition-colors">
                   Free Cancellation Pass
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Opt for BMT Trip Shield at checkout to eliminate all clerkage and railway cancellation deductions completely.
+                  Protect your journey with complete zero-cancellation fee protection. Receive 100% refund with no railway deductions.
                 </p>
               </div>
             </div>
@@ -2316,40 +2325,43 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Card 4: Fast Tatkal Engine */}
+          {/* Card 4: Tatkal Booking Guide & Assistant */}
           <div
             onClick={() => setActiveSpeedModal('tatkal')}
             className="card group hover:-translate-y-2 hover:scale-[1.02] transition-all duration-300 border border-slate-200/90 hover:border-emerald-400 hover:shadow-xl p-5 cursor-pointer flex flex-col justify-between relative overflow-hidden bg-white"
           >
             <div>
-              <div className="w-16 h-16 mb-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 p-1 flex items-center justify-center group-hover:scale-110 group-hover:rotate-1 transition-all duration-300 shadow-sm overflow-hidden">
-                <img src="/fast_tatkal.jpg" alt="Fast Tatkal Engine" className="w-full h-full object-cover rounded-xl" />
+              {/* Real Vector Emblem 4: Tatkal Express Clock */}
+              <div className="w-14 h-14 mb-4 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 p-3 flex items-center justify-center text-white shadow-md shadow-amber-600/20 group-hover:scale-110 transition-transform">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full">
-                    SUB-50ms SYNC
+                    10 &amp; 11 AM OPENING
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    🚀 10 &amp; 11 AM Rush
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded">
+                    Tatkal Quota
                   </span>
                 </div>
                 <h3 className="font-extrabold text-slate-900 text-base group-hover:text-emerald-700 transition-colors">
-                  Fast Tatkal Engine
+                  Tatkal Assistant
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Pre-filled master passenger list with one-tap checkout engine built specifically for the 10:00 AM &amp; 11:00 AM rush.
+                  Live countdown clocks for 10:00 AM (AC) &amp; 11:00 AM (Non-AC) Tatkal opening with pre-filled master passenger profiles.
                 </p>
               </div>
             </div>
             <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-              <span>Launch Tatkal Rush</span>
+              <span>Open Tatkal Assistant</span>
               <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
             </div>
           </div>
         </div>
 
-        {/* ─── MODAL 1: AI WAITLIST PREDICTOR TOOL ─── */}
+        {/* ─── MODAL 1: WAITLIST PREDICTOR TOOL ─── */}
         {activeSpeedModal === 'predictor' && (
           <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in-up"
@@ -2361,22 +2373,24 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between border-b border-slate-150 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 p-1 flex items-center justify-center shadow-xs overflow-hidden">
-                    <img src="/ai_predictor.jpg" alt="AI Predictor" className="w-full h-full object-cover rounded-xl" />
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 p-2.5 flex items-center justify-center text-white shadow-sm">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
                   </div>
                   <div>
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      ✨ Mathematical Confirmation Model
+                      📊 Historical Chart Preparation Trends
                     </span>
                     <h3 className="font-extrabold text-xl text-slate-900 mt-1">
-                      AI Waitlist Predictor
+                      Waitlist Confirmation Forecast
                     </h3>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveSpeedModal(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm cursor-pointer"
                 >
                   &times;
                 </button>
@@ -2467,7 +2481,7 @@ export default function HomePage() {
                               </span>
                             </h4>
                           </div>
-                          <span className="text-3xl">🔮</span>
+                          <span className="text-3xl">🎯</span>
                         </div>
 
                         <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
@@ -2486,9 +2500,9 @@ export default function HomePage() {
                         </p>
 
                         <div className="pt-2 border-t border-white/10 text-[11px] text-slate-400 space-y-1">
-                          {forecast.factors.map((f, i) => (
-                            <p key={i}>&bull; {f}</p>
-                          ))}
+                          <p>&bull; <strong>1st Chart:</strong> Prepared 4 hours before train departure from source station.</p>
+                          <p>&bull; <strong>2nd Chart:</strong> Prepared 30 minutes before departure for current booking vacancies.</p>
+                          <p>&bull; <strong>RAC Status:</strong> Assured seating accommodation with upgrade to full berth upon cancellations.</p>
                         </div>
                       </div>
                     );
@@ -2515,13 +2529,13 @@ export default function HomePage() {
                           navigate(`/pnr?pnr=${predictorPnrInput}`);
                         }
                       }}
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-50 whitespace-nowrap"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer"
                     >
                       Check Live Status &rarr;
                     </button>
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    💡 Real-time PNR confirmation analysis directly checks official database charts and berth allocations.
+                    💡 Directly queries official reservation charts and current berth allocation status.
                   </p>
                 </div>
               )}
@@ -2533,7 +2547,7 @@ export default function HomePage() {
                     setActiveSpeedModal(null);
                     navigate('/pnr');
                   }}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
                 >
                   Go to Live PNR Portal &rarr;
                 </button>
@@ -2543,7 +2557,7 @@ export default function HomePage() {
                     setActiveSpeedModal(null);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors"
+                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
                 >
                   Search Available Trains &uarr;
                 </button>
@@ -2564,49 +2578,54 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between border-b border-slate-150 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 p-1 flex items-center justify-center shadow-xs overflow-hidden">
-                    <img src="/instant_refund.jpg" alt="Instant Refunds" className="w-full h-full object-cover rounded-xl" />
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-700 p-2.5 flex items-center justify-center text-white shadow-sm">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
                   </div>
                   <div>
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      ⚡ &lt; 60s UPI Rollback
+                      ₹ Direct Source Account Reversal
                     </span>
                     <h3 className="font-extrabold text-xl text-slate-900 mt-1">
-                      Instant Refund Pipeline
+                      Automated Refund Policy &amp; Timelines
                     </h3>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveSpeedModal(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm cursor-pointer"
                 >
                   &times;
                 </button>
               </div>
 
-              {/* Real Metrics Grid */}
+              {/* Real Settlement Channels */}
               <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Avg Settlement</p>
-                  <p className="text-lg font-black text-emerald-700 mt-0.5">24.6s</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">UPI Payments</p>
+                  <p className="text-sm font-black text-emerald-700 mt-1">1 - 2 Hours</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Direct to VPA</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">NPCI Switch</p>
-                  <p className="text-lg font-black text-slate-900 mt-0.5">Online</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Net Banking</p>
+                  <p className="text-sm font-black text-slate-900 mt-1">2 - 3 Days</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Bank Settlement</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Automation</p>
-                  <p className="text-lg font-black text-indigo-700 mt-0.5">100%</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Waitlist Drop</p>
+                  <p className="text-sm font-black text-indigo-700 mt-1">Auto-Refund</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">No TDR needed</p>
                 </div>
               </div>
 
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs text-slate-600">
-                <p className="font-bold text-slate-900 text-sm">How Instant Refunds Work:</p>
+                <p className="font-bold text-slate-900 text-sm">How Online Cancellation Works:</p>
                 <ol className="space-y-1.5 list-decimal pl-4 leading-relaxed">
-                  <li>Visit <strong>My Bookings</strong> and click <strong>Cancel &amp; Refund</strong> on any confirmed or waitlisted ticket.</li>
-                  <li>Our saga refund orchestrator releases your berths and commands an instant reversal through the NPCI UPI switch.</li>
-                  <li>Funds appear in your original bank account/UPI VPA within seconds with a live transaction reference.</li>
+                  <li>Navigate to <strong>My Bookings</strong> and click <strong>Cancel Ticket</strong> on your confirmed or waitlisted reservation.</li>
+                  <li>Berths are instantly released into the railway pool for waitlist clearance.</li>
+                  <li>Refund amount calculated as per railway clerkage rules is credited automatically to your original payment source.</li>
                 </ol>
               </div>
 
@@ -2616,16 +2635,15 @@ export default function HomePage() {
                   setActiveSpeedModal(null);
                   navigate('/bookings');
                 }}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>⚡</span>
-                <span>Go to My Bookings to Cancel &amp; Claim Refund &rarr;</span>
+                <span>Go to My Bookings to Manage &amp; Cancel &rarr;</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* ─── MODAL 3: FREE CANCELLATION PASS (BMT TRIP SHIELD) ─── */}
+        {/* ─── MODAL 3: FREE CANCELLATION PASS ─── */}
         {activeSpeedModal === 'cancellation' && (
           <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in-up"
@@ -2637,22 +2655,24 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between border-b border-slate-150 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 p-1 flex items-center justify-center shadow-xs overflow-hidden">
-                    <img src="/free_cancellation.jpg" alt="Free Cancellation" className="w-full h-full object-cover rounded-xl" />
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-700 p-2.5 flex items-center justify-center text-white shadow-sm">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                   </div>
                   <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      🛡️ Zero Deduction Shield
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded-full">
+                      🛡️ Zero Clerkage Protection
                     </span>
                     <h3 className="font-extrabold text-xl text-slate-900 mt-1">
-                      BMT Trip Shield Pass
+                      Free Cancellation Guarantee
                     </h3>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveSpeedModal(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm cursor-pointer"
                 >
                   &times;
                 </button>
@@ -2664,34 +2684,34 @@ export default function HomePage() {
                   <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
                     <tr>
                       <th className="py-2.5 px-3 text-left font-bold">Coach Class</th>
-                      <th className="py-2.5 px-3 text-center font-bold text-rose-600">Standard Deduction</th>
-                      <th className="py-2.5 px-3 text-center font-extrabold text-emerald-700 bg-emerald-50">With Trip Shield</th>
+                      <th className="py-2.5 px-3 text-center font-bold text-rose-600">Standard Railway Clerkage</th>
+                      <th className="py-2.5 px-3 text-center font-extrabold text-emerald-700 bg-emerald-50">With Zero-Fee Pass</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     <tr>
                       <td className="py-2 px-3 font-semibold">1A / Executive (EC)</td>
-                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹240 / ticket</td>
+                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹240 / passenger</td>
                       <td className="py-2 px-3 text-center font-black text-emerald-700 bg-emerald-50/50">₹0 (100% Refund)</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3 font-semibold">2 Tier AC (2A)</td>
-                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹200 / ticket</td>
+                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹200 / passenger</td>
                       <td className="py-2 px-3 text-center font-black text-emerald-700 bg-emerald-50/50">₹0 (100% Refund)</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3 font-semibold">3 Tier AC (3A / 3E)</td>
-                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹180 / ticket</td>
+                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹180 / passenger</td>
                       <td className="py-2 px-3 text-center font-black text-emerald-700 bg-emerald-50/50">₹0 (100% Refund)</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3 font-semibold">Sleeper Class (SL)</td>
-                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹120 / ticket</td>
+                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹120 / passenger</td>
                       <td className="py-2 px-3 text-center font-black text-emerald-700 bg-emerald-50/50">₹0 (100% Refund)</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3 font-semibold">Waitlist / RAC</td>
-                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹60 / ticket</td>
+                      <td className="py-2 px-3 text-center font-bold text-rose-500">₹60 / passenger</td>
                       <td className="py-2 px-3 text-center font-black text-emerald-700 bg-emerald-50/50">₹0 (100% Refund)</td>
                     </tr>
                   </tbody>
@@ -2699,9 +2719,9 @@ export default function HomePage() {
               </div>
 
               <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs text-slate-700">
-                <p className="font-bold text-emerald-950 mb-0.5">How to Activate:</p>
+                <p className="font-bold text-emerald-950 mb-0.5">Policy Terms:</p>
                 <p className="text-slate-600 leading-relaxed">
-                  Simply check the <strong>BMT Trip Shield</strong> box on the checkout page for just ₹49/passenger to unlock complete peace of mind.
+                  Zero cancellation is valid when cancelling prior to railway chart preparation (typically 4 hours before scheduled departure).
                 </p>
               </div>
 
@@ -2711,15 +2731,15 @@ export default function HomePage() {
                   setActiveSpeedModal(null);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
               >
-                Search Trains &amp; Book with Free Cancellation &rarr;
+                Search Trains &amp; Book with Zero Cancellation &rarr;
               </button>
             </div>
           </div>
         )}
 
-        {/* ─── MODAL 4: FAST TATKAL ENGINE LAUNCHPAD ─── */}
+        {/* ─── MODAL 4: TATKAL BOOKING ASSISTANT ─── */}
         {activeSpeedModal === 'tatkal' && (
           <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in-up"
@@ -2731,22 +2751,24 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between border-b border-slate-150 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 p-1 flex items-center justify-center shadow-xs overflow-hidden">
-                    <img src="/fast_tatkal.jpg" alt="Fast Tatkal" className="w-full h-full object-cover rounded-xl" />
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 p-2.5 flex items-center justify-center text-white shadow-sm">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
                   <div>
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full">
-                      🚀 Sub-50ms Rush Engine
+                      ⏰ Official IRCTC Tatkal Timings
                     </span>
                     <h3 className="font-extrabold text-xl text-slate-900 mt-1">
-                      Fast Tatkal Launchpad
+                      Tatkal Booking Guide
                     </h3>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveSpeedModal(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm cursor-pointer"
                 >
                   &times;
                 </button>
@@ -2761,7 +2783,7 @@ export default function HomePage() {
                   <p className="text-xl font-mono font-black text-white">
                     {tatkalTimeLeft.acLive ? '🔥 BOOKING LIVE' : tatkalTimeLeft.ac}
                   </p>
-                  <p className="text-[10px] text-slate-400">Daily 10:00 AM Rush</p>
+                  <p className="text-[10px] text-slate-400">Daily 10:00 AM IST</p>
                 </div>
 
                 <div className="p-4 bg-slate-900 text-white rounded-2xl space-y-1">
@@ -2771,22 +2793,18 @@ export default function HomePage() {
                   <p className="text-xl font-mono font-black text-white">
                     {tatkalTimeLeft.nonAcLive ? '🔥 BOOKING LIVE' : tatkalTimeLeft.nonAc}
                   </p>
-                  <p className="text-[10px] text-slate-400">Daily 11:00 AM Rush</p>
+                  <p className="text-[10px] text-slate-400">Daily 11:00 AM IST</p>
                 </div>
               </div>
 
-              {/* Fast Tatkal Advantages */}
+              {/* Official Tatkal Rules */}
               <div className="space-y-2 text-xs text-slate-600">
-                <p className="font-bold text-slate-900 text-sm">Tatkal Advantage with Book My Train:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
-                    <p className="font-bold text-slate-900">⚡ 1-Tap Passenger Autofill</p>
-                    <p className="text-[11px] text-slate-500">Master passengers loaded in 24ms with zero typing.</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
-                    <p className="font-bold text-slate-900">🔒 Direct Gateway Sync</p>
-                    <p className="text-[11px] text-slate-500">Bypasses bank OTP delays with instant UPI authorization.</p>
-                  </div>
+                <p className="font-bold text-slate-900 text-sm">Official Tatkal Booking Guidelines:</p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-amber-300 text-slate-600">
+                  <p>&bull; <strong>Booking Window:</strong> Opens exactly 1 day prior to train origin departure date.</p>
+                  <p>&bull; <strong>Passenger Limit:</strong> Maximum 4 passengers can be booked per PNR under Tatkal.</p>
+                  <p>&bull; <strong>Concessions:</strong> No senior citizen or quota concessions are applicable in Tatkal.</p>
+                  <p>&bull; <strong>Cancellations:</strong> Confirmed Tatkal tickets are non-refundable except under train cancellation or severe delay (>3 hours).</p>
                 </div>
               </div>
 
@@ -2798,7 +2816,7 @@ export default function HomePage() {
                     setActiveSpeedModal(null);
                     navigate('/profile');
                   }}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
                 >
                   Manage Master Passengers &rarr;
                 </button>
@@ -2809,9 +2827,8 @@ export default function HomePage() {
                     setActiveSpeedModal(null);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold rounded-xl text-xs shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-1"
+                  className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold rounded-xl text-xs shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  <span>⚡</span>
                   <span>Search Tatkal Quota Trains &uarr;</span>
                 </button>
               </div>
