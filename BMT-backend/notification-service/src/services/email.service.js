@@ -29,6 +29,7 @@ class EmailService {
     constructor() {
         const sender = config.EMAIL_USER || "teambookmytrain@gmail.com";
         this.from = `"Book My Train" <${sender}>`;
+        this.replyTo = `"Book My Train Support" <${sender}>`;
         this.maxRetries = 3;
     }
 
@@ -38,10 +39,15 @@ class EmailService {
             return { success: true, simulated: true };
         }
 
+        const finalMsg = {
+            ...msg,
+            replyTo: msg.replyTo || this.replyTo,
+        };
+
         try {
-            await transporter.sendMail(msg);
-            logger.info(`Email sent successfully to ${msg.to}`, {
-                subject: msg.subject,
+            await transporter.sendMail(finalMsg);
+            logger.info(`Email sent successfully to ${finalMsg.to}`, {
+                subject: finalMsg.subject,
                 attempt: retries + 1,
             });
             return { success: true };
@@ -61,18 +67,15 @@ class EmailService {
         }
     }
 
-    async sendOtpEmail(email, otp, ttlMinutes) {
+    async sendOtpEmail(email, otp, ttlMinutes = 5) {
         return this.sendWithRetry({
             from: this.from,
             to: email,
-            subject: `${otp} is your Book My Train verification code`,
+            subject: `Your Book My Train verification code: ${otp}`,
             html: getOtpTemplate(otp, ttlMinutes),
-            text: `Your Book My Train verification code is: ${otp}\n\nThis code expires in ${ttlMinutes} minutes. Do not share this code with anyone.\n\nSupport: teambookmytrain@gmail.com\nBook My Train Technologies, India`,
+            text: getOtpText(otp, ttlMinutes),
             headers: {
-                'X-Priority': '1',
-                'Importance': 'High',
-                'Auto-Submitted': 'auto-generated',
-                'X-Auto-Response-Suppress': 'All',
+                'X-Entity-Ref-ID': `bmt-otp-${Date.now()}`,
             }
         });
     }

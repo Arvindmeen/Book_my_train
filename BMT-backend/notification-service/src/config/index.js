@@ -17,6 +17,8 @@ const config = {
 
     EMAIL_PASS: process.env.EMAIL_PASS,
 
+    SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || process.env.EMAIL_USER || "teambookmytrain@gmail.com",
+
     FRONTEND_URL: process.env.FRONTEND_URL
 };
 
