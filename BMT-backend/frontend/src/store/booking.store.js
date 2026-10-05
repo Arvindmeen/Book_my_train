@@ -8,15 +8,27 @@ export const useBookingStore = create((set, get) => ({
   toStation: null,    // --- SEGMENT BOOKING: { stationId, name, code, sequenceNumber }
   selectedSeats: new Map(),
   passengers: [],
+  isWaitlist: false,
+  waitlistPaxCount: 1,
+  waitlistFare: 450,
 
   // --- SEGMENT BOOKING: Store from/to station data when selecting a train ---
   setSelectedTrain: (train, scheduleId) => set({
     selectedTrain: train,
     scheduleId,
-    fromStation: train.from ? { stationId: train.from.stationId, name: train.from.name, code: train.from.code, sequenceNumber: train.from.sequenceNumber } : null,
-    toStation: train.to ? { stationId: train.to.stationId, name: train.to.name, code: train.to.code, sequenceNumber: train.to.sequenceNumber } : null,
+    fromStation: train?.from ? { stationId: train.from.stationId, name: train.from.name, code: train.from.code, sequenceNumber: train.from.sequenceNumber } : null,
+    toStation: train?.to ? { stationId: train.to.stationId, name: train.to.name, code: train.to.code, sequenceNumber: train.to.sequenceNumber } : null,
     selectedSeats: new Map(),
     passengers: [],
+    isWaitlist: false,
+    waitlistPaxCount: 1,
+  }),
+
+  setWaitlistBooking: ({ isWaitlist = true, paxCount = 1, fare = 450 } = {}) => set({
+    isWaitlist: Boolean(isWaitlist),
+    waitlistPaxCount: Math.max(1, Math.min(MAX_SEATS_PER_BOOKING, paxCount)),
+    waitlistFare: fare || 450,
+    selectedSeats: new Map(),
   }),
 
   toggleSeat: (seat) => {
@@ -27,17 +39,30 @@ export const useBookingStore = create((set, get) => ({
       if (current.size >= MAX_SEATS_PER_BOOKING) return false;
       current.set(seat.seatId, seat);
     }
-    set({ selectedSeats: current });
+    set({ selectedSeats: current, isWaitlist: false });
     return true;
   },
 
   setPassengers: (passengers) => set({ passengers }),
 
   get totalPrice() {
+    if (get().isWaitlist) {
+      return (get().waitlistPaxCount || 1) * (get().waitlistFare || 450);
+    }
     let total = 0;
     get().selectedSeats.forEach((s) => (total += s.price || 0));
     return total;
   },
 
-  reset: () => set({ selectedTrain: null, scheduleId: null, fromStation: null, toStation: null, selectedSeats: new Map(), passengers: [] }), // --- SEGMENT BOOKING: reset from/to station
+  reset: () => set({
+    selectedTrain: null,
+    scheduleId: null,
+    fromStation: null,
+    toStation: null,
+    selectedSeats: new Map(),
+    passengers: [],
+    isWaitlist: false,
+    waitlistPaxCount: 1,
+    waitlistFare: 450,
+  }), // --- SEGMENT BOOKING: reset from/to station
 }));

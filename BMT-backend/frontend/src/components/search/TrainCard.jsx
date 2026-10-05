@@ -303,9 +303,13 @@ export default function TrainCard({ train }) {
             {schedule && schedule.status !== 'CANCELLED' ? (
               <Button
                 onClick={handleCheckAvailability}
-                className="w-full py-3 sm:py-2.5 shadow-md shadow-emerald-500/20 font-bold"
+                className={`w-full py-3 sm:py-2.5 shadow-md font-bold ${
+                  schedule.available === 0
+                    ? '!bg-amber-600 hover:!bg-amber-700 text-white shadow-amber-500/20'
+                    : 'shadow-emerald-500/20'
+                }`}
               >
-                Select Seats &rarr;
+                {schedule.available === 0 ? 'Book Waitlist \u2192' : 'Select Seats \u2192'}
               </Button>
             ) : (
               <span className="inline-block text-center w-full py-2.5 text-xs font-bold text-slate-400 bg-slate-100 rounded-xl">

@@ -96,8 +96,16 @@ export default function BookingDetailPage() {
               ✓
             </div>
             <div>
-              <p className="font-extrabold text-emerald-900 text-base">Booking Confirmed &amp; Seats Reserved!</p>
-              <p className="text-xs text-emerald-700 mt-0.5">Your digital ticket is confirmed. Show this PNR or SMS during onboard chart verification.</p>
+              <p className="font-extrabold text-emerald-900 text-base">
+                {(!booking.seats || booking.seats.length === 0) 
+                  ? 'Waitlist Ticket Confirmed (WL Queue)!' 
+                  : 'Booking Confirmed & Seats Reserved!'}
+              </p>
+              <p className="text-xs text-emerald-700 mt-0.5">
+                {(!booking.seats || booking.seats.length === 0)
+                  ? 'Your waitlist reservation is confirmed. Berths will be automatically assigned upon chart preparation or cancellation clearance.'
+                  : 'Your digital ticket is confirmed. Show this PNR or SMS during onboard chart verification.'}
+              </p>
             </div>
           </div>
         )}
@@ -166,26 +174,42 @@ export default function BookingDetailPage() {
             <h4 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider mb-3">
               Reserved Berths Allotment
             </h4>
-            <div className="overflow-x-auto border border-slate-150 rounded-xl">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-150 text-slate-400 text-left">
-                    <th className="py-2.5 px-4 font-bold">Seat #</th>
-                    <th className="py-2.5 px-4 font-bold">Berth Type</th>
-                    <th className="py-2.5 px-4 font-bold text-right">Fare</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {booking.seats?.map((s) => (
-                    <tr key={s.seatId} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4 font-bold text-slate-900">Seat #{s.seatNumber}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-600">{formatSeatType(s.seatType)}</td>
-                      <td className="py-3 px-4 text-right font-bold text-slate-800">{formatCurrency(s.price)}</td>
+            {booking.seats && booking.seats.length > 0 ? (
+              <div className="overflow-x-auto border border-slate-150 rounded-xl">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-150 text-slate-400 text-left">
+                      <th className="py-2.5 px-4 font-bold">Seat #</th>
+                      <th className="py-2.5 px-4 font-bold">Berth Type</th>
+                      <th className="py-2.5 px-4 font-bold text-right">Fare</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {booking.seats.map((s) => (
+                      <tr key={s.seatId} className="hover:bg-slate-50/50">
+                        <td className="py-3 px-4 font-bold text-slate-900">Seat #{s.seatNumber}</td>
+                        <td className="py-3 px-4 font-semibold text-slate-600">{formatSeatType(s.seatType)}</td>
+                        <td className="py-3 px-4 text-right font-bold text-slate-800">{formatCurrency(s.price)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-black text-amber-900 uppercase tracking-wider block">
+                    Status: Indian Railways Waitlist (WL)
+                  </span>
+                  <p className="text-xs text-amber-800 mt-0.5">
+                    Physical berth numbers will be allocated automatically upon chart preparation or ticket cancellations.
+                  </p>
+                </div>
+                <span className="text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 rounded-full shrink-0">
+                  ⚡ Auto-Confirmation Eligible
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Passengers Details */}

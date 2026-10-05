@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useBookingStore } from '../store/booking.store';
@@ -19,21 +19,38 @@ export default function BookingPage() {
   const user = useAuthStore((s) => s.user);
 
   const [optTripShield, setOptTripShield] = useState(false);
+  const isWaitlist = useBookingStore((s) => s.isWaitlist);
+  const waitlistPaxCount = useBookingStore((s) => s.waitlistPaxCount) || 1;
+  const waitlistFare = useBookingStore((s) => s.waitlistFare) || 450;
 
-  const seats = useMemo(() => Array.from(selectedSeats.values()), [selectedSeats]);
-  const seatIds = useMemo(() => seats.map((s) => s.seatId), [seats]);
-  const totalPrice = useMemo(() => seats.reduce((sum, s) => sum + (s.price || 0), 0), [seats]);
-  const tripShieldFee = seats.length * 49;
+  const rawSeats = useMemo(() => Array.from(selectedSeats.values()), [selectedSeats]);
+
+  const waitlistVirtualSeats = useMemo(() => {
+    return Array.from({ length: waitlistPaxCount }, (_, idx) => ({
+      seatId: `wl-${idx}`,
+      seatNumber: `WL #${idx + 1}`,
+      seatType: 'Waitlist',
+      price: waitlistFare,
+    }));
+  }, [waitlistPaxCount, waitlistFare]);
+
+  const seats = isWaitlist ? waitlistVirtualSeats : rawSeats;
+  const seatIds = useMemo(() => (isWaitlist ? [] : seats.map((s) => s.seatId)), [isWaitlist, seats]);
+  const totalPrice = useMemo(() => {
+    if (isWaitlist) return waitlistPaxCount * waitlistFare;
+    return seats.reduce((sum, s) => sum + (s.price || 0), 0);
+  }, [isWaitlist, waitlistPaxCount, waitlistFare, seats]);
+  const tripShieldFee = (isWaitlist ? waitlistPaxCount : seats.length) * 49;
 
   const { register, handleSubmit, setValue, formState: { errors, isValid }, getValues } = useForm({
     mode: 'onChange',
   });
 
   useEffect(() => {
-    if (seats.length === 0) {
+    if (!isWaitlist && rawSeats.length === 0) {
       navigate('/search');
     }
-  }, [seats.length, navigate]);
+  }, [isWaitlist, rawSeats.length, navigate]);
 
   const handleAutofillMasterPassengers = () => {
     try {
@@ -65,7 +82,7 @@ export default function BookingPage() {
     }
   };
 
-  if (seats.length === 0) return null;
+  if (!isWaitlist && rawSeats.length === 0) return null;
 
   return (
     <div className="min-h-screen bg-[#FAFCFE] py-8 pb-20">
@@ -80,6 +97,12 @@ export default function BookingPage() {
             <span>&larr;</span> Back to Seat Selection
           </Link>
           <div className="flex items-center gap-2">
+            {isWaitlist && (
+              <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">
+                <span>⚡</span>
+                <span>Waitlist (WL) Ticket</span>
+              </span>
+            )}
             {quota === 'TQ' && (
               <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">
                 <span>⚡</span>

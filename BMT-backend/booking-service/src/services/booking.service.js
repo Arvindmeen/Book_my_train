@@ -92,19 +92,22 @@ const generatePNR = () => {
 // ─── Create Booking ──────────────────────────────────────────────────────────
 
 // --- SEGMENT BOOKING: Added fromStationId, toStationId, fromSeq, toSeq, tripShield params ---
-const createBooking = async (userId, scheduleId, seatIds, passengers, idempotencyKey, fromStationId, toStationId, fromSeq, toSeq, tripShield = false) => {
+const createBooking = async (userId, scheduleId, seatIds = [], passengers, idempotencyKey, fromStationId, toStationId, fromSeq, toSeq, tripShield = false) => {
      // 1. Validate input
-     if (!scheduleId || !seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
-          throw new BadRequestError('scheduleId and seatIds (non-empty array) are required');
+     if (!scheduleId) {
+          throw new BadRequestError('scheduleId is required');
      }
      if (!passengers || !Array.isArray(passengers) || passengers.length === 0) {
           throw new BadRequestError('passengers (non-empty array) is required');
      }
-     if (seatIds.length !== passengers.length) {
-          throw new BadRequestError('Number of seats must match number of passengers');
-     }
      if (!idempotencyKey) {
           throw new BadRequestError('idempotencyKey is required');
+     }
+
+     const isWaitlist = !Array.isArray(seatIds) || seatIds.length === 0;
+
+     if (!isWaitlist && seatIds.length !== passengers.length) {
+          throw new BadRequestError('Number of seats must match number of passengers');
      }
 
      // --- SEGMENT BOOKING: Validate segment params if provided ---
@@ -127,30 +130,43 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
           throw new BadRequestError('Cannot book a train that has already departed');
      }
 
-     // --- SEGMENT BOOKING: Pass segment params to get segment-aware seat availability ---
-     const seatData = await inventoryClient.getSeats(scheduleId, {
-          fromSeq: fromSeq || undefined,
-          toSeq: toSeq || undefined,
-     });
-     const seatMap = new Map(seatData.seats.map(s => [s.seatId, s]));
-
-     // Verify all requested seats exist and are available
-     const bookingSeats = [];
+     let bookingSeats = [];
      let totalAmount = 0;
-     for (const seatId of seatIds) {
-          const seat = seatMap.get(seatId);
-          if (!seat) {
-               throw new NotFoundError(`Seat ${seatId} not found in schedule`);
+
+     if (!isWaitlist) {
+          // --- SEGMENT BOOKING: Pass segment params to get segment-aware seat availability ---
+          const seatData = await inventoryClient.getSeats(scheduleId, {
+               fromSeq: fromSeq || undefined,
+               toSeq: toSeq || undefined,
+          });
+          const seatMap = new Map(seatData.seats.map(s => [s.seatId, s]));
+
+          // Verify all requested seats exist and are available
+          for (const seatId of seatIds) {
+               const seat = seatMap.get(seatId);
+               if (!seat) {
+                    throw new NotFoundError(`Seat ${seatId} not found in schedule`);
+               }
+               // --- SEGMENT BOOKING: Use segmentStatus when available for segment-aware validation ---
+               const isAvailable = (fromSeq && toSeq && seat.segmentStatus !== undefined)
+                    ? seat.segmentStatus === 'AVAILABLE'
+                    : seat.status === 'AVAILABLE';
+               if (!isAvailable) {
+                    throw new ConflictError(`Seat #${seat.seatNumber} is not available for this segment`, 'SEATS_UNAVAILABLE');
+               }
+               bookingSeats.push(seat);
+               totalAmount += seat.price;
           }
-          // --- SEGMENT BOOKING: Use segmentStatus when available for segment-aware validation ---
-          const isAvailable = (fromSeq && toSeq && seat.segmentStatus !== undefined)
-               ? seat.segmentStatus === 'AVAILABLE'
-               : seat.status === 'AVAILABLE';
-          if (!isAvailable) {
-               throw new ConflictError(`Seat #${seat.seatNumber} is not available for this segment`, 'SEATS_UNAVAILABLE');
-          }
-          bookingSeats.push(seat);
-          totalAmount += seat.price;
+     } else {
+          // Waitlist booking: calculate fare from base ticket price of schedule
+          let basePrice = 450;
+          try {
+               const seatData = await inventoryClient.getSeats(scheduleId, {});
+               if (seatData?.seats?.length > 0 && seatData.seats[0]?.price) {
+                    basePrice = seatData.seats[0].price;
+               }
+          } catch (_) {}
+          totalAmount = passengers.length * basePrice;
      }
 
      // Add Trip Shield fee if passenger opted in (Rs 49 per passenger, matching BookingSummary.jsx)
@@ -160,29 +176,31 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
      }
 
      // 4. Sort seatIds (deadlock prevention for distributed locks)
-     const sortedSeatIds = [...seatIds].sort();
+     const sortedSeatIds = isWaitlist ? [] : [...seatIds].sort();
 
-     // 5. Acquire Redis distributed locks (segment-aware keys for segment bookings)
-     const { acquired, lockValue } = await acquireSeatLocks(
-          scheduleId,
-          sortedSeatIds,
-          `pre-${Date.now()}`, // temporary ID before booking is created
-          config.BOOKING_TTL_SECONDS,
-          fromSeq,  // --- SEGMENT BOOKING: include in lock key
-          toSeq     // --- SEGMENT BOOKING: include in lock key
-     );
-
-     if (!acquired) {
-          throw new ConflictError(
-               'One or more seats are being booked by another user. Please try again.',
-               'SEATS_LOCKED'
+     if (!isWaitlist) {
+          // 5. Acquire Redis distributed locks (segment-aware keys for segment bookings)
+          const { acquired } = await acquireSeatLocks(
+               scheduleId,
+               sortedSeatIds,
+               `pre-${Date.now()}`, // temporary ID before booking is created
+               config.BOOKING_TTL_SECONDS,
+               fromSeq,  // --- SEGMENT BOOKING: include in lock key
+               toSeq     // --- SEGMENT BOOKING: include in lock key
           );
+
+          if (!acquired) {
+               throw new ConflictError(
+                    'One or more seats are being booked by another user. Please try again.',
+                    'SEATS_LOCKED'
+               );
+          }
      }
 
      let booking;
      try {
           // 6. Create booking record in DB
-          const lockExpiresAt = new Date(Date.now() + config.BOOKING_TTL_SECONDS * 1000);
+          const lockExpiresAt = isWaitlist ? null : new Date(Date.now() + config.BOOKING_TTL_SECONDS * 1000);
           const pnr = generatePNR();
 
           booking = await prisma.booking.create({
@@ -196,7 +214,7 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                     departureDate: new Date(availability.departureDate),
                     status: 'PENDING',
                     totalAmount,
-                    seatCount: seatIds.length,
+                    seatCount: passengers.length,
                     fromStationId: fromStationId || null,  // --- SEGMENT BOOKING
                     toStationId: toStationId || null,      // --- SEGMENT BOOKING
                     fromSeq: fromSeq || null,              // --- SEGMENT BOOKING
@@ -204,7 +222,7 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                     idempotencyKey,
                     lockExpiresAt,
                     seats: {
-                         create: bookingSeats.map((seat, index) => ({
+                         create: bookingSeats.map((seat) => ({
                               seatId: seat.seatId,
                               seatNumber: seat.seatNumber,
                               seatType: seat.seatType,
@@ -216,15 +234,22 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                               name: p.name,
                               age: p.age,
                               gender: p.gender,
-                              seatId: seatIds[index] || null, // use original order to match user's intended seat assignment
+                              seatId: isWaitlist ? null : (seatIds[index] || null),
                          })),
                     },
                },
                include: { seats: true, passengers: true },
           });
 
-          // 7. Execute saga Step 1: Hold seats in inventory
-          await saga.executeHoldSeats(booking, sortedSeatIds, config.LOCK_TTL_SECONDS, fromSeq, toSeq); // --- SEGMENT BOOKING
+          // 7. Execute saga Step 1: Hold seats in inventory (only if physical seats exist)
+          if (!isWaitlist) {
+               await saga.executeHoldSeats(booking, sortedSeatIds, config.LOCK_TTL_SECONDS, fromSeq, toSeq);
+          } else {
+               await prisma.booking.update({
+                    where: { id: booking.id },
+                    data: { status: 'SEATS_HELD' },
+               });
+          }
 
           // 8. Execute saga Step 2: Create payment order
           const paymentOrder = await saga.executeCreatePayment(booking);
@@ -240,6 +265,7 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                bookingId: booking.id,
                pnr: booking.pnr,
                status: booking.status,
+               isWaitlist,
                totalAmount: booking.totalAmount,
                tripShield: hasTripShield,
                lockExpiresAt: booking.lockExpiresAt,
@@ -249,14 +275,14 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                     seatType: s.seatType,
                     price: s.price,
                })),
-               passengers: booking.passengers.map(p => {
+               passengers: booking.passengers.map((p, idx) => {
                     const seat = booking.seats.find(s => s.seatId === p.seatId);
                     return {
                          name: p.name,
                          age: p.age,
                          gender: p.gender,
-                         seatNumber: seat?.seatNumber,
-                         seatType: seat?.seatType,
+                         seatNumber: seat?.seatNumber || `WL #${idx + 1}`,
+                         seatType: seat?.seatType || 'Waitlist',
                     };
                }),
                paymentOrder: {
@@ -340,14 +366,16 @@ const handlePaymentSuccess = async (paymentOrderId, gatewayPaymentId, amount) =>
           return;
      }
 
-     const seatIds = booking.seats.map(s => s.seatId).sort();
+     const seatIds = (booking.seats || []).map(s => s.seatId).sort();
 
      try {
           // Atomically claim this booking — if expiry job or cancel already changed it, bail out
           await casUpdateBooking(booking.id, booking.version, { status: 'CONFIRMING' });
 
-          // Execute saga Step 3: Confirm seats in inventory
-          await saga.executeConfirmSeats(booking, seatIds, booking.fromSeq, booking.toSeq); // --- SEGMENT BOOKING
+          // Execute saga Step 3: Confirm seats in inventory (only if physical seats exist)
+          if (seatIds.length > 0) {
+               await saga.executeConfirmSeats(booking, seatIds, booking.fromSeq, booking.toSeq); // --- SEGMENT BOOKING
+          }
 
           // Final status update (version was already incremented by CAS above)
           await prisma.booking.updateMany({
@@ -355,8 +383,10 @@ const handlePaymentSuccess = async (paymentOrderId, gatewayPaymentId, amount) =>
                data: { status: 'CONFIRMED', version: { increment: 1 } },
           });
 
-          // Release Redis locks (segment-aware)
-          await forceReleaseSeatLocks(booking.scheduleId, seatIds, booking.fromSeq, booking.toSeq);
+          // Release Redis locks (segment-aware) if physical seats were locked
+          if (seatIds.length > 0) {
+               await forceReleaseSeatLocks(booking.scheduleId, seatIds, booking.fromSeq, booking.toSeq);
+          }
 
           // Publish BOOKING_CONFIRMED (retried by producer — log but don't fail the booking)
           try {
@@ -543,23 +573,25 @@ const cancelBooking = async (bookingId, userId) => {
      }
 
      if (booking.status === 'CONFIRMED') {
-          // Cancel confirmed booking: release seats + refund
-          try {
-               await inventoryClient.cancelBooking(booking.scheduleId, booking.id, booking.userId);
-          } catch (error) {
-               logger.error(`Failed to release seats in inventory for booking ${booking.id}`, {
-                    error: error.message,
-               });
-               // Roll back from CANCELLING to CONFIRMED so the user can retry
-               await prisma.booking.updateMany({
-                    where: { id: booking.id, status: 'CANCELLING' },
-                    data: {
-                         status: 'CONFIRMED',
-                         failureReason: null,
-                         version: { increment: 1 },
-                    },
-               });
-               throw error;
+          // Cancel confirmed booking: release seats in inventory only if physical seats were allocated
+          if (booking.seats && booking.seats.length > 0) {
+               try {
+                    await inventoryClient.cancelBooking(booking.scheduleId, booking.id, booking.userId);
+               } catch (error) {
+                    logger.error(`Failed to release seats in inventory for booking ${booking.id}`, {
+                         error: error.message,
+                    });
+                    // Roll back from CANCELLING to CONFIRMED so the user can retry
+                    await prisma.booking.updateMany({
+                         where: { id: booking.id, status: 'CANCELLING' },
+                         data: {
+                              status: 'CONFIRMED',
+                              failureReason: null,
+                              version: { increment: 1 },
+                         },
+                    });
+                    throw error;
+               }
           }
 
           if (booking.paymentOrderId) {

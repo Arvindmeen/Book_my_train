@@ -20,8 +20,14 @@ export default function PassengerForm({ index, seat, register, errors }) {
             Passenger {index + 1}
           </span>
         </div>
-        <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-          Seat #{seat.seatNumber} ({formatSeatType(seat.seatType)})
+        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+          seat?.seatType === 'Waitlist'
+            ? 'text-amber-800 bg-amber-100 border border-amber-300'
+            : 'text-emerald-800 bg-emerald-100'
+        }`}>
+          {seat?.seatType === 'Waitlist'
+            ? `${seat.seatNumber} (Waitlist Queue)`
+            : `Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})`}
         </span>
       </div>
 
