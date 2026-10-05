@@ -1868,7 +1868,7 @@ async function seedRealIndianRailways() {
   const existingTrains = await prisma.train.findMany({
     include: {
       seats: true,
-      routes: {
+      route: {
         include: {
           routeStations: {
             include: { station: true },
@@ -1963,7 +1963,7 @@ async function seedRealIndianRailways() {
         }
 
         newTrainsCount++;
-        train = { ...train, seats, routes: [{ id: route.id, routeStations: createdRouteStations }], schedules: [] };
+        train = { ...train, seats, route: { id: route.id, routeStations: createdRouteStations }, schedules: [] };
         existingTrainMap.set(t.trainNumber, train);
       } else {
         // Pre-existing train: update metadata if needed
@@ -1977,7 +1977,7 @@ async function seedRealIndianRailways() {
           },
           include: {
             seats: true,
-            routes: {
+            route: {
               include: {
                 routeStations: {
                   include: { station: true },
@@ -1989,7 +1989,7 @@ async function seedRealIndianRailways() {
           },
         });
         seats = train.seats;
-        createdRouteStations = train.routes?.[0]?.routeStations || [];
+        createdRouteStations = train.route?.routeStations || [];
       }
 
       // Provision missing schedules for next 35 operating days
