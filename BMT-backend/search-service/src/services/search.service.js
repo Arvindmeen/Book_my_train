@@ -313,29 +313,17 @@ const searchTrains = async (from, to, date) => {
                let scheduleInfo = null;
                if (src.schedules && src.schedules.length > 0) {
                     if (targetDate) {
+                         // Strictly match the requested targetDate
                          scheduleInfo = src.schedules.find(
                               (s) => s.status === 'ACTIVE' && normalizeDateStr(s.departureDate) === targetDate
                          ) || null;
-                    }
-                    if (!scheduleInfo) {
+                    } else {
+                         // If no specific date was requested, find the earliest upcoming active schedule
                          const todayStr = normalizeDateStr(new Date());
                          scheduleInfo = src.schedules.find(
                               (s) => s.status === 'ACTIVE' && normalizeDateStr(s.departureDate) >= todayStr
-                         ) || src.schedules[0] || null;
+                         ) || src.schedules.find((s) => s.status === 'ACTIVE') || null;
                     }
-               }
-
-               // Always ensure scheduleInfo exists so the user can see seats & availability
-               if (!scheduleInfo) {
-                    const fallbackDate = targetDate || normalizeDateStr(new Date());
-                    scheduleInfo = {
-                         scheduleId: `${src.trainId}-${fallbackDate}`,
-                         departureDate: fallbackDate,
-                         status: 'ACTIVE',
-                         available: src.seatSummary?.total || 72,
-                         locked: 0,
-                         booked: 0,
-                    };
                }
 
                return {

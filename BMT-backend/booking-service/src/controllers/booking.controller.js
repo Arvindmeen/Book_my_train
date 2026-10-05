@@ -4,16 +4,16 @@ const bookingService = require('../services/booking.service');
 
 exports.createBooking = asyncHandler(async (req, res) => {
      const userId = req.user.id;
-     const { scheduleId, seatIds, passengers, idempotencyKey, fromStationId, toStationId, fromSeq, toSeq } = req.body; // --- SEGMENT BOOKING: added segment params
+     const { scheduleId, seatIds, passengers, idempotencyKey, fromStationId, toStationId, fromSeq, toSeq, tripShield } = req.body; // --- SEGMENT BOOKING: added segment params
 
      if (!scheduleId || !seatIds || !passengers || !idempotencyKey) {
           throw new BadRequestError('scheduleId, seatIds, passengers, and idempotencyKey are required');
      }
 
-     // --- SEGMENT BOOKING: Pass segment params to service ---
+     // --- SEGMENT BOOKING: Pass segment params & tripShield to service ---
      const result = await bookingService.createBooking(
           userId, scheduleId, seatIds, passengers, idempotencyKey,
-          fromStationId, toStationId, fromSeq, toSeq
+          fromStationId, toStationId, fromSeq, toSeq, tripShield
      );
 
      res.status(201).json({ success: true, data: result });

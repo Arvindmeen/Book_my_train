@@ -70,8 +70,15 @@ class BaseGateway {
       * @param {string} refundId - Gateway refund ID
       * @returns {Promise<{ status: string, amount: number, rawResponse: object }>}
       */
-     async fetchRefund(paymentId, refundId) {
-          throw new Error('fetchRefund() must be implemented by gateway');
+     /**
+      * Capture an authorized payment.
+      * @param {string} paymentId - Gateway payment ID
+      * @param {number} amount - Amount in base currency
+      * @param {string} currency - Currency code
+      * @returns {Promise<{ status: string, amount: number, rawResponse: object }>}
+      */
+     async capturePayment(paymentId, amount, currency = 'INR') {
+          throw new Error('capturePayment() must be implemented by gateway');
      }
 }
 

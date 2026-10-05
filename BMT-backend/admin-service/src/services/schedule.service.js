@@ -68,8 +68,19 @@ const createSchedule = async (data) => {
      };
 
      // This event goes to both inventory-service and search-service via Kafka
-     await adminProducer.publishScheduleCreated(eventPayload);
-     logger.info(`Schedule created and event published for train ${train.trainNumber} on ${departureDate}`);
+     try {
+          await adminProducer.publishScheduleCreated(eventPayload);
+          logger.info(`Schedule created and event published for train ${train.trainNumber} on ${departureDate}`);
+     } catch (kafkaError) {
+          logger.error(`Failed to publish ScheduleCreated event for schedule ${schedule.id}, rolling back database record`, {
+               error: kafkaError.message,
+          });
+          // Roll back database record so retrying doesn't encounter duplicate schedule conflict
+          await prisma.schedule.delete({ where: { id: schedule.id } }).catch((delErr) => {
+               logger.error(`Failed to rollback schedule ${schedule.id}`, { error: delErr.message });
+          });
+          throw kafkaError;
+     }
 
      return schedule;
 }

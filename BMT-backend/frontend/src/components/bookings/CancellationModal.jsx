@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { formatCurrency, formatDate, formatTrainName } from '../../utils/format';
 import { bookingApi } from '../../api/booking.api';
 import { useToast } from '../ui/Toast';
@@ -29,29 +29,43 @@ export default function CancellationModal({ booking, onClose, onSuccess }) {
     setProcessing(true);
     setStep('processing');
 
-    const generatedRef = `BMT-REF-${Math.floor(100000 + Math.random() * 900000)}`;
-    setRefundRef(generatedRef);
-
-    // Call backend API if possible, or gracefully simulate instant UPI rollback
     try {
-      if (booking.id) {
-        await bookingApi.cancel(booking.id).catch(() => {});
+      if (!booking.id) {
+        throw new Error('Invalid booking ID');
       }
-    } catch {
-      // Graceful fallback for offline / mock
-    }
-
-    setTimeout(() => {
+      const res = await bookingApi.cancel(booking.id);
+      const data = res?.data || res;
+      const refundInitiated = data.refundInitiated ?? true;
+      const ref = data.refundRef || `BMT-REF-${Math.floor(100000 + Math.random() * 900000)}`;
+      setRefundRef(ref);
       setProcessing(false);
       setStep('refunded');
-      showToast(
-        `Ticket Cancelled. Instant Refund of ${formatCurrency(netRefund)} settled to UPI ID (Ref: ${generatedRef})`,
-        'error'
-      );
-      if (onSuccess) {
-        onSuccess(booking.id, netRefund, generatedRef);
+
+      if (refundInitiated) {
+        showToast(
+          `Ticket Cancelled. Instant Refund of ${formatCurrency(netRefund)} settled to UPI ID (Ref: ${ref})`,
+          'success'
+        );
+      } else {
+        showToast(
+          `Ticket Cancelled successfully. No refund was applicable or refund is pending review.`,
+          'info'
+        );
       }
-    }, 1200);
+
+      if (onSuccess) {
+        onSuccess(booking.id, refundInitiated ? netRefund : 0, ref);
+      }
+    } catch (err) {
+      setProcessing(false);
+      setStep('confirm');
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Cancellation failed. Please try again.';
+      showToast(errorMsg, 'error');
+    }
   };
 
   return (

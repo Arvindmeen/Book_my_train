@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useBookingPolling } from '../hooks/useBookingPolling';
 import Badge from '../components/ui/Badge';
@@ -38,7 +38,7 @@ export default function BookingDetailPage() {
 
   if (!booking) return null;
 
-  const canCancel = ['CONFIRMED', 'PAYMENT_PENDING', 'SEATS_HELD'].includes(booking.status);
+  const canCancel = booking.status === 'CONFIRMED';
 
   const displayPnr = booking.pnr || (() => {
     let hash = 0;

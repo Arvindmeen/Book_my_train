@@ -3,7 +3,7 @@ import Badge from '../ui/Badge';
 import { formatDate, formatCurrency, formatTrainName } from '../../utils/format';
 
 export default function BookingCard({ booking, onCancel }) {
-  const canCancel = ['CONFIRMED', 'SEATS_HELD', 'PAYMENT_PENDING'].includes(booking.status);
+  const canCancel = booking.status === 'CONFIRMED';
   const isCancelled = booking.status === 'CANCELLED';
 
   const displayPnr = booking.pnr || (() => {

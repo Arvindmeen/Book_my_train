@@ -118,6 +118,19 @@ class RazorpayGateway extends BaseGateway {
                rawResponse: refund,
           };
      }
+
+     async capturePayment(paymentId, amount, currency = 'INR') {
+          const amountInPaise = Math.round(amount * 100);
+          const payment = await this.client.payments.capture(paymentId, amountInPaise, currency);
+
+          logger.info(`Razorpay payment captured: ${payment.id}`, { paymentId, amount });
+
+          return {
+               status: payment.status,
+               amount: payment.amount / 100,
+               rawResponse: payment,
+          };
+     }
 }
 
 module.exports = RazorpayGateway;

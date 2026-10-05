@@ -91,8 +91,8 @@ const generatePNR = () => {
 
 // ─── Create Booking ──────────────────────────────────────────────────────────
 
-// --- SEGMENT BOOKING: Added fromStationId, toStationId, fromSeq, toSeq params ---
-const createBooking = async (userId, scheduleId, seatIds, passengers, idempotencyKey, fromStationId, toStationId, fromSeq, toSeq) => {
+// --- SEGMENT BOOKING: Added fromStationId, toStationId, fromSeq, toSeq, tripShield params ---
+const createBooking = async (userId, scheduleId, seatIds, passengers, idempotencyKey, fromStationId, toStationId, fromSeq, toSeq, tripShield = false) => {
      // 1. Validate input
      if (!scheduleId || !seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
           throw new BadRequestError('scheduleId and seatIds (non-empty array) are required');
@@ -151,6 +151,12 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
           }
           bookingSeats.push(seat);
           totalAmount += seat.price;
+     }
+
+     // Add Trip Shield fee if passenger opted in (Rs 49 per passenger, matching BookingSummary.jsx)
+     const hasTripShield = Boolean(tripShield);
+     if (hasTripShield) {
+          totalAmount += passengers.length * 49;
      }
 
      // 4. Sort seatIds (deadlock prevention for distributed locks)
@@ -235,6 +241,7 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                pnr: booking.pnr,
                status: booking.status,
                totalAmount: booking.totalAmount,
+               tripShield: hasTripShield,
                lockExpiresAt: booking.lockExpiresAt,
                seats: booking.seats.map(s => ({
                     seatId: s.seatId,
@@ -242,11 +249,16 @@ const createBooking = async (userId, scheduleId, seatIds, passengers, idempotenc
                     seatType: s.seatType,
                     price: s.price,
                })),
-               passengers: booking.passengers.map(p => ({
-                    name: p.name,
-                    age: p.age,
-                    gender: p.gender,
-               })),
+               passengers: booking.passengers.map(p => {
+                    const seat = booking.seats.find(s => s.seatId === p.seatId);
+                    return {
+                         name: p.name,
+                         age: p.age,
+                         gender: p.gender,
+                         seatNumber: seat?.seatNumber,
+                         seatType: seat?.seatType,
+                    };
+               }),
                paymentOrder: {
                     paymentOrderId: paymentOrder.paymentOrderId,
                     gatewayOrderId: paymentOrder.gatewayOrderId,
@@ -298,6 +310,28 @@ const handlePaymentSuccess = async (paymentOrderId, gatewayPaymentId, amount) =>
      // Idempotent: already confirmed
      if (booking.status === 'CONFIRMED') {
           logger.info(`Booking ${booking.id} already confirmed`);
+          return;
+     }
+
+     // If booking was cancelled while payment was pending, initiate refund immediately
+     if (booking.status === 'CANCELLED') {
+          logger.warn(`Booking ${booking.id} was already CANCELLED when payment captured event arrived. Initiating full refund.`);
+          if (booking.paymentOrderId) {
+               try {
+                    const idempotencyKey = `${booking.id}-post-cancel-refund`;
+                    await paymentClient.initiateRefund(
+                         booking.paymentOrderId,
+                         booking.totalAmount,
+                         'cancelled_before_payment_capture',
+                         idempotencyKey
+                    );
+                    logger.info(`Refund successfully initiated for post-cancel payment on booking ${booking.id}`);
+               } catch (refundErr) {
+                    logger.error(`Failed to initiate refund for post-cancel payment on booking ${booking.id}`, {
+                         error: refundErr.message,
+                    });
+               }
+          }
           return;
      }
 
@@ -552,6 +586,23 @@ const cancelBooking = async (bookingId, userId) => {
           } catch (error) {
                logger.error(`Failed to release seats during cancel`, { error: error.message });
           }
+
+          // If a payment order exists and was captured, initiate refund
+          if (booking.paymentOrderId) {
+               try {
+                    const idempotencyKey = `${booking.id}-cancel-pending-refund`;
+                    await paymentClient.initiateRefund(
+                         booking.paymentOrderId,
+                         booking.totalAmount,
+                         'user_cancelled_pending',
+                         idempotencyKey
+                    );
+                    refundInitiated = true;
+               } catch (error) {
+                    // Gateway will throw if payment wasn't captured yet; post-cancel handler will catch it if it captures later
+                    logger.info(`No immediate refund required for pending booking ${booking.id}: ${error.message}`);
+               }
+          }
      }
 
      // Final status (CANCELLING → CANCELLED)
@@ -625,6 +676,7 @@ const getBooking = async (bookingId, userId) => {
           trainName: cleanTrainName(booking.trainName),
           departureDate: booking.departureDate,
           totalAmount: booking.totalAmount,
+          tripShield: booking.totalAmount > booking.seats.reduce((sum, s) => sum + s.price, 0),
           seatCount: booking.seatCount,
           fromStationId: booking.fromStationId,  // --- SEGMENT BOOKING
           toStationId: booking.toStationId,      // --- SEGMENT BOOKING
@@ -704,6 +756,7 @@ const getUserBookings = async (userId, { status, page = 1, limit = 10, all = fal
                trainName: cleanTrainName(b.trainName),
                departureDate: b.departureDate,
                totalAmount: b.totalAmount,
+               tripShield: b.totalAmount > b.seats.reduce((sum, s) => sum + s.price, 0),
                seatCount: b.seatCount,
                fromStationId: b.fromStationId,  // --- SEGMENT BOOKING
                toStationId: b.toStationId,      // --- SEGMENT BOOKING

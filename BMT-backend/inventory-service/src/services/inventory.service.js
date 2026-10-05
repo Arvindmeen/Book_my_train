@@ -601,9 +601,9 @@ const confirmSeats = async (scheduleId, seatIds, userId, bookingId, fromSeq, toS
                          AND status = 'LOCKED'
                     `;
 
-                    if (updated === 0) {
+                    if (updated !== seatIds.length) {
                          throw new ConflictError(
-                              'Segment lock expired or not found. Please lock seats again.',
+                              `Expected ${seatIds.length} segment seat locks to be confirmed, but only ${updated} were valid. Please lock seats again.`,
                               'LOCK_EXPIRED'
                          );
                     }

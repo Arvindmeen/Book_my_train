@@ -127,8 +127,33 @@ const handleWebhook = async (rawBody, signature) => {
           },
      });
 
-     if (event === 'payment.captured' || event === 'payment.authorized') {
+     if (event === 'payment.captured') {
           return handlePaymentCaptured(paymentOrder, gatewayPaymentId, paymentEntity);
+     }
+
+     if (event === 'payment.authorized') {
+          // Payment is authorized by user, but not yet captured by gateway.
+          // Explicitly capture it before marking order captured and confirming the booking.
+          try {
+               const gateway = getGateway();
+               if (typeof gateway.capturePayment === 'function') {
+                    const captureRes = await gateway.capturePayment(
+                         gatewayPaymentId,
+                         paymentOrder.amount,
+                         paymentOrder.currency
+                    );
+                    logger.info(`Successfully captured authorized payment ${gatewayPaymentId} for order ${paymentOrder.id}`);
+                    return handlePaymentCaptured(paymentOrder, gatewayPaymentId, captureRes.rawResponse || paymentEntity);
+               }
+          } catch (captureErr) {
+               logger.error(`Failed to capture authorized payment ${gatewayPaymentId}`, {
+                    paymentOrderId: paymentOrder.id,
+                    error: captureErr.message,
+               });
+               return { status: 'capture_failed', error: captureErr.message };
+          }
+          logger.info(`Payment authorized for order ${paymentOrder.id}; awaiting payment.captured event`);
+          return { status: 'authorized_awaiting_capture' };
      }
 
      if (event === 'payment.failed') {
