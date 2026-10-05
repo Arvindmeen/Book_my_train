@@ -13,8 +13,19 @@ export default function RouteManager() {
   const showToast = useToast();
 
   useEffect(() => {
-    adminApi.getTrains().then((res) => setTrains(res.data || [])).catch(() => {});
-    adminApi.getStations(1, 100).then((res) => setStations(res.data || [])).catch(() => {});
+    adminApi.getTrains().then((res) => {
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setTrains(list);
+    }).catch((err) => {
+      showToast(err.message || 'Failed to fetch trains', 'error');
+    });
+
+    adminApi.getStations(1, 300).then((res) => {
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setStations(list);
+    }).catch((err) => {
+      showToast(err.message || 'Failed to fetch stations', 'error');
+    });
   }, []);
 
   const addStop = () => {
@@ -42,9 +53,14 @@ export default function RouteManager() {
         distanceFromOrigin: parseInt(s.distanceFromOrigin, 10) || 0,
       }));
       await adminApi.createRoute({ trainId: selectedTrain, stations: stationsPayload });
-      showToast('Route created!', 'success');
+      showToast('Route created successfully! 30-day schedules auto-provisioned.', 'success');
       setSelectedTrain('');
       setStops([{ stationId: '', sequenceNumber: 1, arrivalTime: '', departureTime: '', distanceFromOrigin: 0 }]);
+      // Refresh trains to update route status
+      adminApi.getTrains().then((res) => {
+        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        setTrains(list);
+      }).catch(() => {});
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -54,13 +70,27 @@ export default function RouteManager() {
 
   return (
     <form onSubmit={handleCreate} className="card">
-      <h3 className="font-semibold mb-4">Create Route</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-slate-900">Create Route</h3>
+        <div className="flex gap-2">
+          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
+            {trains.length} Trains
+          </span>
+          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            {stations.length} Stations
+          </span>
+        </div>
+      </div>
 
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Train</label>
-        <select value={selectedTrain} onChange={(e) => setSelectedTrain(e.target.value)} className="input-field max-w-sm" required>
-          <option value="">Select a train</option>
-          {trains.map((t) => <option key={t.id} value={t.id}>{t.trainNumber} — {t.trainName}</option>)}
+        <select value={selectedTrain} onChange={(e) => setSelectedTrain(e.target.value)} className="input-field max-w-lg" required>
+          <option value="">{trains.length === 0 ? 'Loading trains...' : `Select a train (${trains.length} available)`}</option>
+          {trains.map((t) => (
+            <option key={t.id} value={t.id}>
+              #{t.trainNumber} — {t.trainName} {t.route ? '✓ (Route Configured)' : '• (No Route)'}
+            </option>
+          ))}
         </select>
       </div>
 

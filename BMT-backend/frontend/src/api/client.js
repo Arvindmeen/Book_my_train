@@ -10,6 +10,17 @@ const client = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Attach Authorization Bearer token to all requests if present in localStorage
+client.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('bmt_access_token');
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -39,14 +50,35 @@ client.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
+      const storedRefreshToken = typeof window !== 'undefined' ? localStorage.getItem('bmt_refresh_token') : null;
+
       try {
-        await axios.post(`${API_BASE}/users/auth/refresh`, {}, { withCredentials: true });
+        const refreshRes = await axios.post(
+          `${API_BASE}/users/auth/refresh`,
+          { refreshToken: storedRefreshToken },
+          { withCredentials: true }
+        );
+
+        const newAccessToken = refreshRes.data?.accessToken;
+        const newRefreshToken = refreshRes.data?.refreshToken;
+
+        if (newAccessToken && typeof window !== 'undefined') {
+          localStorage.setItem('bmt_access_token', newAccessToken);
+          if (newRefreshToken) localStorage.setItem('bmt_refresh_token', newRefreshToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
+
         processQueue(null);
         return client(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Clear auth state — will be picked up by store
-        window.dispatchEvent(new Event('auth:logout'));
+        // Clear auth tokens
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('bmt_access_token');
+          localStorage.removeItem('bmt_refresh_token');
+          localStorage.removeItem('bmt_auth_user');
+          window.dispatchEvent(new Event('auth:logout'));
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

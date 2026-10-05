@@ -39,9 +39,12 @@ async function rateLimiter(key, maxRequests, windowMs) {
           const requestCount = results[2][1];
 
           if (requestCount > maxRequests) {
+               // Remove this rejected request from the set so it does not permanently keep the key locked
+               redis.zremrangebyscore(key, now, now).catch(() => {});
+
                const oldestRequest = await redis.zrange(key, 0, 0, 'WITHSCORES');
-               const resetTime = parseInt(oldestRequest[1]) + windowMs;
-               const retryAfter = Math.ceil((resetTime - now) / 1000);
+               const resetTime = oldestRequest && oldestRequest[1] ? parseInt(oldestRequest[1], 10) + windowMs : now + windowMs;
+               const retryAfter = Math.max(1, Math.ceil((resetTime - now) / 1000));
 
                return {
                     allowed: false,
@@ -72,6 +75,11 @@ function ipRateLimit(options = {}) {
      const windowMs = options.windowMs || config.RATE_LIMIT_WINDOW_MS;
 
      return async (req, res, next) => {
+          // Never throttle administrators managing the platform
+          if (req.user?.role === 'ADMIN') {
+               return next();
+          }
+
           const ip = req.ip || req.connection.remoteAddress;
           const key = `ratelimit:ip:${ip}`;
 
@@ -107,6 +115,11 @@ function userRateLimit(options = {}) {
      const windowMs = options.windowMs || config.RATE_LIMIT_WINDOW_MS;
 
      return async (req, res, next) => {
+          // Never throttle administrators managing the platform
+          if (req.user?.role === 'ADMIN') {
+               return next();
+          }
+
           // Skip if no user authenticated
           if (!req.user || !req.user.id) {
                return next();
@@ -142,6 +155,11 @@ function userRateLimit(options = {}) {
 **/
 function endpointRateLimit(maxRequests, windowMs) {
      return async (req, res, next) => {
+          // Never throttle administrators managing the platform
+          if (req.user?.role === 'ADMIN') {
+               return next();
+          }
+
           const ip = req.ip || req.connection.remoteAddress;
           const endpoint = `${req.method}:${req.path}`;
           const key = `ratelimit:endpoint:${endpoint}:${ip}`;
@@ -176,13 +194,18 @@ function combinedRateLimit(ipOptions = {}, userOptions = {}) {
      const userLimiter = userRateLimit(userOptions);
 
      return async (req, res, next) => {
-          // Apply IP rate limit first
-          ipLimiter(req, res, (err) => {
-               if (err) return next(err);
+          // 1. Never throttle administrators managing the platform
+          if (req.user?.role === 'ADMIN') {
+               return next();
+          }
 
-               // Then apply user rate limit if authenticated
-               userLimiter(req, res, next);
-          });
+          // 2. If user is authenticated, use user-based rate limit instead of choking on shared IP
+          if (req.user && req.user.id) {
+               return userLimiter(req, res, next);
+          }
+
+          // 3. For unauthenticated visitors, apply IP rate limiting
+          return ipLimiter(req, res, next);
      };
 }
 

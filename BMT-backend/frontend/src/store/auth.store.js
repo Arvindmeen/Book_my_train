@@ -36,13 +36,29 @@ const mergeExtendedProfile = (rawUser) => {
   return enriched;
 };
 
+const getStoredUser = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const saved = localStorage.getItem('bmt_auth_user');
+    if (!saved) return null;
+    return mergeExtendedProfile(JSON.parse(saved));
+  } catch {
+    return null;
+  }
+};
+
+const initialUser = getStoredUser();
+
 export const useAuthStore = create((set, get) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
+  user: initialUser,
+  isAuthenticated: !!initialUser,
+  isLoading: false,
 
   setUser: (rawUser) => {
     const user = mergeExtendedProfile(rawUser);
+    if (typeof window !== 'undefined' && user) {
+      localStorage.setItem('bmt_auth_user', JSON.stringify(user));
+    }
     set({ user, isAuthenticated: !!user, isLoading: false });
   },
 
@@ -51,10 +67,24 @@ export const useAuthStore = create((set, get) => ({
       const res = await authApi.getProfile();
       const rawUser = res.data?.user || res.data;
       const user = mergeExtendedProfile(rawUser);
+      if (typeof window !== 'undefined' && user) {
+        localStorage.setItem('bmt_auth_user', JSON.stringify(user));
+      }
       set({ user, isAuthenticated: !!user, isLoading: false });
       return user;
-    } catch {
-      set({ user: null, isAuthenticated: false, isLoading: false });
+    } catch (err) {
+      // Only clear user session if the server definitively rejected with 401 or 403
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('bmt_auth_user');
+          localStorage.removeItem('bmt_access_token');
+          localStorage.removeItem('bmt_refresh_token');
+        }
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      } else {
+        // Network error, 500, or proxy delay: KEEP cached authenticated session so user is not logged out!
+        set({ isLoading: false });
+      }
       return null;
     }
   },
@@ -88,12 +118,19 @@ export const useAuthStore = create((set, get) => ({
       }
     }
 
+    if (typeof window !== 'undefined' && merged) {
+      localStorage.setItem('bmt_auth_user', JSON.stringify(merged));
+    }
+
     set({ user: merged });
     return merged;
   },
 
   logout: () => {
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('bmt_auth_user');
+      localStorage.removeItem('bmt_access_token');
+      localStorage.removeItem('bmt_refresh_token');
       localStorage.removeItem('bmt_admin_session');
     }
     set({ user: null, isAuthenticated: false, isLoading: false });

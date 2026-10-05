@@ -14,8 +14,15 @@ export default function ScheduleManager() {
   const [loading, setLoading] = useState(false);
   const showToast = useToast();
 
+  const [filterQuery, setFilterQuery] = useState('');
+
   useEffect(() => {
-    adminApi.getTrains().then((res) => setTrains(res.data || [])).catch(() => {});
+    adminApi.getTrains().then((res) => {
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setTrains(list);
+    }).catch((err) => {
+      showToast(err.message || 'Failed to fetch trains', 'error');
+    });
     fetchSchedules();
   }, []);
 
@@ -23,9 +30,10 @@ export default function ScheduleManager() {
     setLoading(true);
     try {
       const res = await adminApi.getSchedules();
-      setSchedules(res.data || []);
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setSchedules(list);
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(err.message || 'Failed to fetch schedules', 'error');
     } finally {
       setLoading(false);
     }
@@ -37,7 +45,7 @@ export default function ScheduleManager() {
     setCreating(true);
     try {
       await adminApi.createSchedule({ trainId: selectedTrain, departureDate: date });
-      showToast('Schedule created!', 'success');
+      showToast('Schedule created successfully!', 'success');
       setSelectedTrain('');
       setDate('');
       fetchSchedules();
@@ -60,48 +68,112 @@ export default function ScheduleManager() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  const filteredSchedules = schedules.filter((s) => {
+    if (!filterQuery) return true;
+    const q = filterQuery.toLowerCase();
+    const trainNum = String(s.train?.trainNumber || s.trainId || '').toLowerCase();
+    const trainName = String(s.train?.trainName || '').toLowerCase();
+    const dateStr = String(s.departureDate || '').toLowerCase();
+    return trainNum.includes(q) || trainName.includes(q) || dateStr.includes(q);
+  });
+
   return (
     <div>
       <form onSubmit={handleCreate} className="card mb-6">
-        <h3 className="font-semibold mb-4">Create Schedule</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-900">Create Schedule</h3>
+          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+            {trains.length} Trains Registered
+          </span>
+        </div>
         <div className="flex flex-wrap gap-3 items-end">
-          <div>
+          <div className="flex-1 min-w-[240px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">Train</label>
             <select value={selectedTrain} onChange={(e) => setSelectedTrain(e.target.value)} className="input-field" required>
-              <option value="">Select train</option>
-              {trains.map((t) => <option key={t.id} value={t.id}>{t.trainNumber} — {t.trainName}</option>)}
+              <option value="">{trains.length === 0 ? 'Loading trains...' : `Select train (${trains.length} available)`}</option>
+              {trains.map((t) => <option key={t.id} value={t.id}>#{t.trainNumber} — {t.trainName}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={today} className="input-field" required />
           </div>
-          <Button type="submit" loading={creating}>Create Schedule</Button>
+          <Button type="submit" loading={creating} className="px-5">Create Schedule</Button>
         </div>
       </form>
 
       <div className="card">
-        <h3 className="font-semibold mb-4">Schedules</h3>
-        {loading ? <p className="text-center py-4 text-gray-400">Loading...</p> : (
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-slate-900">Schedules</h3>
+            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              {schedules.length} Total
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Filter by train no, name or date..."
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              className="input-field text-xs py-1.5 px-3 w-64"
+            />
+            {filterQuery && (
+              <button
+                type="button"
+                onClick={() => setFilterQuery('')}
+                className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded bg-slate-100"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-2" />
+            <p className="text-xs text-gray-500 font-medium">Fetching real-time schedules...</p>
+          </div>
+        ) : filteredSchedules.length === 0 ? (
+          <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <p className="text-sm font-bold text-slate-700 mb-1">
+              {schedules.length === 0 ? 'No train schedules found' : `No schedules match "${filterQuery}"`}
+            </p>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {schedules.length === 0
+                ? 'Select a train and departure date above to provision new active schedules, or seed the railway dataset.'
+                : 'Try adjusting your search query or clear the filter.'}
+            </p>
+          </div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="py-2 text-left">Train</th>
-                  <th className="py-2 text-left">Date</th>
-                  <th className="py-2 text-left">Status</th>
-                  <th className="py-2 text-right">Actions</th>
+                <tr className="border-b text-slate-500 text-xs uppercase tracking-wider">
+                  <th className="py-2.5 text-left font-bold">Train</th>
+                  <th className="py-2.5 text-left font-bold">Date</th>
+                  <th className="py-2.5 text-left font-bold">Status</th>
+                  <th className="py-2.5 text-right font-bold">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {schedules.map((s) => (
-                  <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-2">{s.train?.trainNumber || s.trainId} — {s.train?.trainName || ''}</td>
-                    <td className="py-2">{formatDate(s.departureDate)}</td>
-                    <td className="py-2"><Badge status={s.status} /></td>
-                    <td className="py-2 text-right">
+              <tbody className="divide-y divide-slate-100">
+                {filteredSchedules.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-2.5">
+                      <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-xs mr-2">
+                        #{s.train?.trainNumber || s.trainId}
+                      </span>
+                      <span className="font-medium text-slate-800">
+                        {s.train?.trainName || ''}
+                      </span>
+                    </td>
+                    <td className="py-2.5 font-medium text-slate-700">{formatDate(s.departureDate)}</td>
+                    <td className="py-2.5"><Badge status={s.status} /></td>
+                    <td className="py-2.5 text-right">
                       {s.status === 'ACTIVE' && (
-                        <Button variant="danger" onClick={() => handleCancel(s.id)} className="text-xs py-1 px-2">Cancel</Button>
+                        <Button variant="danger" onClick={() => handleCancel(s.id)} className="text-xs py-1 px-2.5">Cancel</Button>
                       )}
                     </td>
                   </tr>

@@ -61,12 +61,14 @@ exports.login = asyncHandler(async(req, res) =>{
      .status(200).json({
           success: true,
           message: "Logged in successfully",
+          accessToken,
+          refreshToken,
           loggedInUser
      })
 })
 
 exports.rotateRefreshToken = asyncHandler(async(req, res) =>{
-     const refreshToken = req.cookies.refreshToken;
+     const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
      if(!refreshToken){
           throw new UnauthorizedError("Refresh token is missing", "LOGIN AGAIN")
      }
@@ -76,7 +78,9 @@ exports.rotateRefreshToken = asyncHandler(async(req, res) =>{
      res.cookie("refreshToken", newRefreshToken, cookieOptions(config.REFRESH_TOKEN_EXP_SEC * 1000))
      .status(200).json({
           success: true,
-          message: "Access and Refresh token reissued"
+          message: "Access and Refresh token reissued",
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken
      })
 })
 
@@ -96,6 +100,8 @@ exports.verifyGoogleIdToken = asyncHandler(async(req, res) =>{
      .status(200).json({
           success: true,
           message: "Logged in successfully",
+          accessToken,
+          refreshToken,
           loggedInUser
      })
 })

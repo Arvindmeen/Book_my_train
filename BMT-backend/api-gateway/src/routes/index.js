@@ -93,14 +93,12 @@ const adminServiceProxy = createProxy(
 router.post(
     '/admins/stations/station',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/stations/station',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
@@ -111,21 +109,18 @@ router.get(
 router.post(
     '/admins/trains/train',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/trains/train',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/trains/train/:trainId',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
@@ -136,14 +131,12 @@ router.get(
 router.post(
     '/admins/trains/route',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/trains/route',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
@@ -154,21 +147,18 @@ router.get(
 router.post(
     '/admins/schedules/schedule',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
 router.get(
     '/admins/schedules/schedule',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 
 router.put(
     '/admins/schedules/schedule/:scheduleId',
     requireAdmin,
-    combinedRateLimit(),
     adminServiceProxy
 );
 // ===========================
