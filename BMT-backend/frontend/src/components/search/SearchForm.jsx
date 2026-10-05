@@ -121,7 +121,7 @@ export default function SearchForm({ compact }) {
   const tomorrow = getLocalDateString(tmrw);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative z-30">
       {/* Top Search Mode Selector: Route vs Train Explorer & Quota Selector */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-3 border-b border-slate-150">
         <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto shrink-0">
@@ -196,9 +196,9 @@ export default function SearchForm({ compact }) {
       {searchMode === 'route' && (
         <form onSubmit={handleSearch} className="space-y-4 animate-fade-in">
 
-          <div className={`grid grid-cols-1 ${compact ? 'sm:grid-cols-2 lg:grid-cols-12' : 'md:grid-cols-12'} gap-3 items-end`}>
+          <div className={`grid grid-cols-1 ${compact ? 'sm:grid-cols-2 lg:grid-cols-12' : 'md:grid-cols-12'} gap-3 items-end relative z-30`}>
             {/* From Station */}
-            <div className={compact ? 'lg:col-span-3' : 'md:col-span-4'}>
+            <div className={`${compact ? 'lg:col-span-3' : 'md:col-span-4'} relative z-30`}>
               <StationAutocomplete
                 label="From Station"
                 value={fromValue}
@@ -248,7 +248,7 @@ export default function SearchForm({ compact }) {
             </div>
 
             {/* To Station */}
-            <div className={compact ? 'lg:col-span-3' : 'md:col-span-4'}>
+            <div className={`${compact ? 'lg:col-span-3' : 'md:col-span-4'} relative z-20`}>
               <StationAutocomplete
                 label="To Destination"
                 value={toValue}
@@ -260,7 +260,7 @@ export default function SearchForm({ compact }) {
             </div>
 
             {/* Date of Journey */}
-            <div className={compact ? 'lg:col-span-3' : 'md:col-span-3'}>
+            <div className={`${compact ? 'lg:col-span-3' : 'md:col-span-3'} relative z-10`}>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Travel Date
@@ -298,7 +298,7 @@ export default function SearchForm({ compact }) {
             </div>
 
             {/* Submit Action */}
-            <div className={compact ? 'lg:col-span-2' : 'md:col-span-12 lg:col-span-12'}>
+            <div className={`${compact ? 'lg:col-span-2' : 'md:col-span-12 lg:col-span-12'} relative z-10`}>
               <Button
                 type="submit"
                 loading={isSearching}

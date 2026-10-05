@@ -110,7 +110,7 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
   };
 
   return (
-    <div className="relative" ref={wrapperRef}>
+    <div className={`relative ${open ? 'z-50' : 'z-10'}`} ref={wrapperRef}>
       {label && (
         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
           {label}
@@ -144,7 +144,7 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
       </div>
 
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-card-hover max-h-60 overflow-y-auto p-1.5 animate-scale-in">
+        <ul className="absolute left-0 right-0 z-[100] w-full mt-1.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-h-64 overflow-y-auto p-1.5 animate-scale-in">
           {suggestions.map((s) => (
             <li
               key={s.stationId || s.code}

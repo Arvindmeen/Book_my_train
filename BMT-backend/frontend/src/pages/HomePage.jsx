@@ -664,10 +664,10 @@ export default function HomePage() {
         </div>
       )}
       
-      {/* 1. Ambient Hero Canvas (Reduced padding to eliminate huge gaps) */}
-      <div className="relative pt-8 pb-8 px-4 overflow-hidden bg-groww-hero border-b border-slate-150">
+      {/* 1. Ambient Hero Canvas (Elevated z-index and overflow-visible so station dropdown floats freely) */}
+      <div className="relative pt-8 pb-8 px-4 bg-groww-hero border-b border-slate-150 z-30">
         
-        <div className="max-w-6xl mx-auto relative z-10">
+        <div className="max-w-6xl mx-auto relative z-30">
           
           {/* Centered Catchy Hero Headline & Subtitle with Portfolio-Grade Aesthetics */}
           <div className="text-center max-w-4xl mx-auto mb-7 animate-fade-in-up">
@@ -724,7 +724,7 @@ export default function HomePage() {
           </div>
 
           {/* Elevated Multi-Service Hub Card */}
-          <div className="glass-card rounded-3xl shadow-card p-3 md:p-5 max-w-4xl mx-auto border border-slate-150 animate-fade-in-up">
+          <div className="glass-card rounded-3xl shadow-card p-3 md:p-5 max-w-4xl mx-auto border border-slate-150 animate-fade-in-up relative z-30">
             
             {/* Horizontal Service Tab Switcher with Real Icons & High-Contrast Active Styling */}
             <div className="min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none border-b border-slate-150 pb-2.5">
@@ -839,7 +839,7 @@ export default function HomePage() {
               
               {/* TAB 1: Search Form */}
               {activeTab === 'search' && (
-                <div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 shadow-xs">
+                <div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 shadow-xs relative z-30">
                   <SearchForm />
                 </div>
               )}
@@ -1774,7 +1774,7 @@ export default function HomePage() {
           </div>
 
           {/* Dedicated High-Speed Train Track (Engine leading in front, 4 coaches trailing behind!) */}
-          <div className="w-full max-w-4xl mx-auto mt-5 pointer-events-none">
+          <div className="w-full max-w-4xl mx-auto mt-5 pointer-events-none relative z-0">
             <div className="relative h-8 border-b border-dashed border-emerald-300/80 overflow-hidden">
               <div className="animate-train-glide absolute bottom-0.5 flex items-end">
                 {/* Coach 4 (Tail Guard Coach with Red Blinking Beacon) */}
