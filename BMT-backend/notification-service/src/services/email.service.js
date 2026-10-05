@@ -1,8 +1,7 @@
-const path = require("path");
-const fs = require("fs");
 const nodemailer = require("nodemailer");
 const logger = require("../config/logger");
 const { config } = require("../config");
+const { createTicketPdf } = require("./ticketPdf.service");
 const {
     getOtpTemplate,
     getWelcomeTemplate,
@@ -26,19 +25,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-const LOGO_PATHS = [
-    path.join(__dirname, "../assets/navbar-logo.jpg"),
-    path.join(__dirname, "../../../frontend/public/navbar-logo.jpg"),
-    path.resolve("src/assets/navbar-logo.jpg")
-];
-
-function getLogoPath() {
-    for (const p of LOGO_PATHS) {
-        if (fs.existsSync(p)) return p;
-    }
-    return null;
-}
-
 class EmailService {
     constructor() {
         const sender = config.EMAIL_USER || "teambookmytrain@gmail.com";
@@ -50,17 +36,6 @@ class EmailService {
         if (!config.EMAIL_USER || !config.EMAIL_PASS) {
             logger.warn(`Email sending simulated (EMAIL_USER or EMAIL_PASS not configured): to=${msg.to}, subject=${msg.subject}`);
             return { success: true, simulated: true };
-        }
-
-        // Attach brand train logo via CID for Gmail & all email clients
-        if (!msg.attachments) msg.attachments = [];
-        const logoPath = getLogoPath();
-        if (logoPath && !msg.attachments.some(a => a.cid === "bmt-logo")) {
-            msg.attachments.push({
-                filename: "navbar-logo.jpg",
-                path: logoPath,
-                cid: "bmt-logo"
-            });
         }
 
         try {
@@ -114,12 +89,18 @@ class EmailService {
 
     async sendBookingConfirmedEmail(email, bookingData) {
         const pnrPrefix = bookingData.pnr ? `Ticket Confirmed | PNR: ${bookingData.pnr}` : 'Booking Confirmed';
+        const ticketPdf = await createTicketPdf(bookingData);
         return this.sendWithRetry({
             from: this.from,
             to: email,
             subject: `${pnrPrefix} - ${bookingData.trainName || "Your Train Ticket"}`,
             html: getBookingConfirmedTemplate(bookingData),
             text: getBookingConfirmedText(bookingData),
+            attachments: [{
+                filename: `Book-My-Train-Ticket-${bookingData.pnr || bookingData.bookingId || 'confirmed'}.pdf`,
+                content: ticketPdf,
+                contentType: 'application/pdf',
+            }],
         });
     }
 
