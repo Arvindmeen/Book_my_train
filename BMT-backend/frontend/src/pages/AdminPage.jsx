@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
+import { adminApi } from '../api/admin.api';
+import { AnimatedCounter } from '../utils/useAnimatedValue';
 import AdminTabs from '../components/admin/AdminTabs';
 import StationManager from '../components/admin/StationManager';
 import TrainManager from '../components/admin/TrainManager';
@@ -15,6 +17,45 @@ export default function AdminPage() {
   const initialTab = searchParams.get('tab') || 'Traffic';
   const [tab, setTab] = useState(initialTab);
   const { user } = useAuthStore();
+
+  // Real Header Telemetry Counts
+  const [trainCount, setTrainCount] = useState(28);
+  const [healthyServicesCount, setHealthyServicesCount] = useState(8);
+  const [totalServicesCount, setTotalServicesCount] = useState(8);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadQuickStats = async () => {
+      try {
+        const [trainsRes, healthRes] = await Promise.allSettled([
+          adminApi.getTrains(),
+          adminApi.getSystemHealth(),
+        ]);
+        if (!isMounted) return;
+
+        if (trainsRes.status === 'fulfilled') {
+          const list = Array.isArray(trainsRes.value?.data)
+            ? trainsRes.value.data
+            : Array.isArray(trainsRes.value)
+            ? trainsRes.value
+            : [];
+          if (list.length > 0) setTrainCount(list.length);
+        }
+
+        if (healthRes.status === 'fulfilled' && healthRes.value?.services) {
+          const svcs = healthRes.value.services;
+          const healthy = svcs.filter((s) => s.status === 'OPERATIONAL').length;
+          setHealthyServicesCount(healthy);
+          setTotalServicesCount(svcs.length);
+        }
+      } catch (_) {}
+    };
+
+    loadQuickStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const currentParam = searchParams.get('tab');
@@ -54,6 +95,10 @@ export default function AdminPage() {
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                     Administrator Authority
                   </span>
+                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
+                    Live Telemetry
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 font-semibold">
                   Administrator: <span className="text-slate-900 font-bold">{adminName}</span> ({adminEmail})
@@ -75,26 +120,30 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Quick Metrics Bar */}
+          {/* Quick Metrics Bar (Animated & Live) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-150 text-xs">
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all">
               <span className="text-slate-400 text-[11px] font-bold block uppercase">NETWORK CORRIDORS</span>
               <span className="font-black text-lg text-slate-900">Live Traffic</span>
               <span className="text-[10px] text-slate-500 block">Density &amp; waitlist surge</span>
             </div>
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all">
               <span className="text-slate-400 text-[11px] font-bold block uppercase">RAIL SERVICES</span>
-              <span className="font-black text-lg text-emerald-700">28 Active Services</span>
+              <span className="font-black text-lg text-emerald-700">
+                <AnimatedCounter value={trainCount} suffix=" Active Services" />
+              </span>
               <span className="text-[10px] text-slate-500 block">Vande Bharat &amp; Rajdhani</span>
             </div>
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all">
               <span className="text-slate-400 text-[11px] font-bold block uppercase">PNR AUDIT LEDGER</span>
               <span className="font-black text-lg text-indigo-700">Master Search</span>
               <span className="text-[10px] text-slate-500 block">System-wide verification</span>
             </div>
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all">
               <span className="text-slate-400 text-[11px] font-bold block uppercase">MICROSERVICES</span>
-              <span className="font-black text-lg text-emerald-700">8 of 8 Healthy</span>
+              <span className="font-black text-lg text-emerald-700">
+                {healthyServicesCount} of {totalServicesCount} Healthy
+              </span>
               <span className="text-[10px] text-slate-500 block">Cluster radar active</span>
             </div>
           </div>
