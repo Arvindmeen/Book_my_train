@@ -285,6 +285,9 @@ export default function HomePage() {
   const [adminMode, setAdminMode] = useState('admin'); // 'admin' | 'passenger'
 
   const [recentBookings, setRecentBookings] = useState([]);
+  const [activeBooking, setActiveBooking] = useState(null);
+  const [activeBookingLoading, setActiveBookingLoading] = useState(false);
+  const [quickPnrInput, setQuickPnrInput] = useState('');
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -431,10 +434,31 @@ export default function HomePage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      bookingApi.list(null, 1, 3).then((res) => {
+      setActiveBookingLoading(true);
+      bookingApi.list(null, 1, 10).then((res) => {
         const data = res.data || res;
-        setRecentBookings(data.bookings || []);
-      }).catch(() => {});
+        const list = Array.isArray(data.bookings) ? data.bookings : (Array.isArray(data) ? data : []);
+        setRecentBookings(list);
+
+        // Find active/upcoming booking (CONFIRMED, SEATS_HELD, PAYMENT_PENDING, WAITLISTED, ACTIVE)
+        const activeList = list.filter((b) =>
+          ['CONFIRMED', 'SEATS_HELD', 'PAYMENT_PENDING', 'WAITLISTED', 'ACTIVE'].includes(b.status)
+        );
+        const upcoming = activeList.find((b) => {
+          const dateVal = b.departureDate || b.journeyDate;
+          if (!dateVal) return true;
+          return new Date(dateVal).getTime() >= Date.now() - 24 * 60 * 60 * 1000;
+        }) || activeList[0] || (list.length > 0 ? list[0] : null);
+
+        setActiveBooking(upcoming || null);
+      }).catch((err) => {
+        console.warn('Could not load user bookings:', err);
+      }).finally(() => {
+        setActiveBookingLoading(false);
+      });
+    } else {
+      setRecentBookings([]);
+      setActiveBooking(null);
     }
   }, [isAuthenticated]);
 
@@ -2053,94 +2077,310 @@ export default function HomePage() {
           /* LOGGED IN USER VIEW */
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 animate-fade-in-up">
             
-            {/* Panel 1: Upcoming Travel & Actions */}
-            <div className="card bg-white border border-slate-200/80 p-6 md:p-8 relative overflow-hidden flex flex-col justify-between">
+            {/* Panel 1: Upcoming Travel & Actions (Connected to Real Bookings) */}
+            {activeBookingLoading ? (
+              <div className="card bg-white border border-slate-200/80 p-8 flex flex-col items-center justify-center min-h-[280px] space-y-3">
+                <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs font-bold text-slate-500">Checking your active journeys...</p>
+              </div>
+            ) : activeBooking ? (
+              <div className="card bg-white border border-slate-200/80 p-6 md:p-8 relative overflow-hidden flex flex-col justify-between shadow-xs hover:border-emerald-300 transition-all">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <div>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Real Upcoming Travel
+                      </span>
+                      <h3 className="font-extrabold text-lg text-slate-900 mt-1 tracking-tight">Active Journey Board</h3>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                      {(() => {
+                        const dateVal = activeBooking.departureDate || activeBooking.journeyDate;
+                        if (!dateVal) return 'Confirmed Travel';
+                        try {
+                          const diff = new Date(dateVal).getTime() - Date.now();
+                          if (diff < 0) {
+                            const hoursAgo = Math.floor(Math.abs(diff) / (1000 * 60 * 60));
+                            return hoursAgo < 24 ? `Departed ${hoursAgo}h ago` : 'Journey Completed';
+                          }
+                          const hours = Math.floor(diff / (1000 * 60 * 60));
+                          if (hours < 24) return `Departing in ${hours}h`;
+                          const days = Math.floor(hours / 24);
+                          return `Departing in ${days}d ${hours % 24}h`;
+                        } catch (_) {
+                          return 'Upcoming Travel';
+                        }
+                      })()}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3 text-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Train</p>
+                        <span className="font-mono font-bold text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          PNR: {activeBooking.pnr || (() => {
+                            let hash = 0;
+                            for (let i = 0; i < (activeBooking.id || '').length; i++) {
+                              hash = (hash * 31 + activeBooking.id.charCodeAt(i)) >>> 0;
+                            }
+                            return `241${String(hash).padStart(7, '0').slice(-7)}`;
+                          })()}
+                        </span>
+                      </div>
+                      <p className="font-black text-slate-800 text-sm">
+                        {activeBooking.trainName || 'Express Special'} {activeBooking.trainNumber ? `(${activeBooking.trainNumber})` : ''}
+                      </p>
+                      <p className="text-slate-600 font-medium">
+                        {activeBooking.fromStation || activeBooking.from || 'Origin'} &rarr; {activeBooking.toStation || activeBooking.to || 'Destination'}
+                        {activeBooking.passengers && activeBooking.passengers.length > 0 ? (
+                          <span className="text-slate-500 font-normal">
+                            {' '}| Coach {activeBooking.passengers[0].coach || activeBooking.passengers[0].coachNumber || 'B1'}, Seat {activeBooking.passengers[0].seat || activeBooking.passengers[0].seatNumber || '14'}
+                          </span>
+                        ) : activeBooking.seatCount ? (
+                          <span className="text-slate-500 font-normal"> | {activeBooking.seatCount} Seat{activeBooking.seatCount > 1 ? 's' : ''}</span>
+                        ) : null}
+                      </p>
+                    </div>
+                    <div className="sm:text-right space-y-1">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Status</p>
+                      <p className={`font-black text-sm ${
+                        activeBooking.status === 'CONFIRMED'
+                          ? 'text-emerald-600'
+                          : activeBooking.status === 'WAITLISTED'
+                          ? 'text-amber-600'
+                          : activeBooking.status === 'CANCELLED'
+                          ? 'text-rose-600'
+                          : 'text-indigo-600'
+                      }`}>
+                        {activeBooking.status || 'CONFIRMED'}
+                      </p>
+                      <p className="text-slate-500">
+                        {activeBooking.departureDate || activeBooking.journeyDate
+                          ? new Date(activeBooking.departureDate || activeBooking.journeyDate).toLocaleDateString('en-IN', {
+                              weekday: 'short',
+                              day: '2-digit',
+                              month: 'short'
+                            })
+                          : 'Confirmed Schedule'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                    <Link
+                      to={`/bookings/${activeBooking.id}`}
+                      className="p-2.5 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-1"
+                    >
+                      <span>🎫</span>
+                      <span>E-Ticket</span>
+                    </Link>
+                    <Link
+                      to={`/pnr?pnr=${activeBooking.pnr || ''}`}
+                      className="p-2.5 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-1"
+                    >
+                      <span>📡</span>
+                      <span>Live PNR</span>
+                    </Link>
+                    <Link
+                      to="/my-bookings"
+                      className="p-2.5 bg-slate-50 hover:bg-rose-50 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-1"
+                    >
+                      <span>⚡</span>
+                      <span>Refund / TDR</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('food');
+                        setFoodSearchPnr(activeBooking.pnr || '');
+                        window.scrollTo({ top: 380, behavior: 'smooth' });
+                      }}
+                      className="p-2.5 bg-slate-50 hover:bg-amber-50 hover:text-amber-800 border border-slate-200 hover:border-amber-200 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-1"
+                    >
+                      <span>🍱</span>
+                      <span>Meal to Seat</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* No Active Bookings State */
+              <div className="card bg-white border border-slate-200/80 p-6 md:p-8 relative overflow-hidden flex flex-col justify-between shadow-xs">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <div>
+                      <span className="text-[10px] bg-slate-100 text-slate-700 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Journey Dashboard
+                      </span>
+                      <h3 className="font-extrabold text-lg text-slate-900 mt-1 tracking-tight">Active Journey Board</h3>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                      No active trips
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-5 text-center space-y-2">
+                    <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">
+                      🚆
+                    </div>
+                    <h4 className="font-extrabold text-sm text-slate-800">No Upcoming Train Journeys</h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                      You do not have any active or upcoming train reservations scheduled right now. Plan a trip or search express routes!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('search');
+                      window.scrollTo({ top: 120, behavior: 'smooth' });
+                    }}
+                    className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all text-center shadow-xs flex items-center justify-center gap-2"
+                  >
+                    <span>🔍</span>
+                    <span>Search &amp; Book Trains</span>
+                  </button>
+                  <Link
+                    to="/my-bookings"
+                    className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition-all text-center border border-slate-200 flex items-center justify-center gap-2"
+                  >
+                    <span>📋</span>
+                    <span>View Booking History</span>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Panel 2: Live Railway Passenger Utilities & Radar (Replaces Dummy Loyalty Wallet) */}
+            <div className="card bg-white border border-slate-200/80 p-6 md:p-8 flex flex-col justify-between shadow-xs">
               <div className="space-y-4">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                   <div>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                      Upcoming Travel
-                    </span>
-                    <h3 className="font-extrabold text-lg text-slate-900 mt-1 tracking-tight">Active Journey Board</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                        24x7 Rail Assist
+                      </span>
+                    </div>
+                    <h3 className="font-extrabold text-lg text-slate-900 tracking-tight mt-1">Live Passenger Utilities</h3>
                   </div>
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                    Departing in 14h
+                  <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                    Real Services
                   </span>
                 </div>
 
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex justify-between items-center text-xs">
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Train</p>
-                    <p className="font-black text-slate-800 text-sm">Vande Bharat Express (22436)</p>
-                    <p className="text-slate-600 font-medium">NDLS &rarr; BSB | Coach C4, Seat 14 (Window)</p>
+                {/* Direct PNR Radar Input */}
+                <div className="bg-gradient-to-r from-slate-50 to-emerald-50/40 border border-slate-200/90 rounded-2xl p-3.5 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
+                      <span>⚡</span> Fast PNR Status Radar
+                    </span>
+                    <span className="text-[11px] text-slate-400">Instant database lookup</span>
                   </div>
-                  <div className="text-right space-y-1">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Status</p>
-                    <p className="font-black text-emerald-600 text-sm">CNF (Confirmed)</p>
-                    <p className="text-slate-500">Leaves tomorrow 06:00 AM</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
-                  <button onClick={() => setPopupMsg({ title: 'Download Ticket PDF', text: 'Preparing high-resolution e-ticket invoice. PDF document is downloading...' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
-                    🎫 E-Ticket
-                  </button>
-                  <button onClick={() => setPopupMsg({ title: 'TDR Filing Center', text: 'TDR applications are accepted up to 4 hours post departure time. Connecting to Book My Train TDR portal...' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
-                    📝 File TDR
-                  </button>
-                  <button onClick={() => setPopupMsg({ title: 'Instant Refund Status', text: 'Zero pending refunds. Last transaction was settled back to original UPI payment source.' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
-                    ⚡ Refund Check
-                  </button>
-                  <button onClick={() => setPopupMsg({ title: 'Wheelchair / Porter Help', text: 'Station assistance request registered for New Delhi station (NDLS). Porter contact details sent via SMS.' })} className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all">
-                    ♿ Station Help
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Panel 2: Loyalty Rewards Wallet */}
-            <div className="card bg-white border border-slate-200/80 p-6 md:p-8 flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                  <div>
-                    <h3 className="font-extrabold text-lg text-slate-900 tracking-tight">Your Loyalty Wallet</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Collect BMT reward coins on every booking and unlock perks.</p>
-                  </div>
-                  <div className="bg-amber-50 border border-amber-200 text-amber-800 font-extrabold text-xs px-3.5 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5">
-                    <span>👑</span> Gold Member
-                  </div>
-                </div>
-
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-slate-900">1,450</span>
-                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded">BMT Coins</span>
-                </div>
-
-                <div className="space-y-1.5 text-xs font-semibold">
-                  <div className="flex justify-between text-slate-600">
-                    <span>Points to Platinum Level</span>
-                    <span>150 XP needed</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-emerald-600 h-full rounded-full transition-all duration-500" style={{ width: '90%' }} />
-                  </div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const clean = quickPnrInput.trim().replace(/\D/g, '');
+                      if (clean.length === 10) {
+                        navigate(`/pnr?pnr=${clean}`);
+                      } else {
+                        showToast('Please enter a valid 10-digit PNR number', 'warning');
+                      }
+                    }}
+                    className="flex gap-2"
+                  >
+                    <input
+                      type="text"
+                      maxLength={10}
+                      value={quickPnrInput}
+                      onChange={(e) => setQuickPnrInput(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Enter 10-digit PNR"
+                      className="flex-1 px-3 py-2 text-xs font-mono font-bold tracking-wider bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={quickPnrInput.length < 10}
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
+                    >
+                      Check Status
+                    </button>
+                  </form>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100">
-                <button onClick={() => setPopupMsg({ title: 'Complimentary Meal Voucher', text: 'Voucher BMT-FOOD100 applied to your profile. Redeem it in Food on Track tab.' })} className="p-3 border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-left rounded-xl transition-all flex items-center justify-between">
-                  <div className="text-xs font-bold">
-                    <p className="text-slate-800">Free Catering Thali</p>
-                    <p className="text-[10px] text-emerald-700 font-semibold">Claim voucher</p>
+              {/* 4 Functional Passenger Service Shortcuts */}
+              <div className="grid grid-cols-2 gap-2.5 mt-4 pt-3 border-t border-slate-100">
+                <Link
+                  to="/my-bookings"
+                  className="p-3 border border-slate-200 bg-slate-50/70 hover:bg-emerald-50/60 hover:border-emerald-200 rounded-xl transition-all group flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-base">⚡</span>
+                    <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">100% UPI</span>
                   </div>
-                  <span className="text-lg">🍱</span>
+                  <div className="mt-1">
+                    <p className="text-xs font-bold text-slate-800 group-hover:text-emerald-800">Auto-Refund &amp; TDR</p>
+                    <p className="text-[10px] text-slate-500">Track refunds &amp; file claims</p>
+                  </div>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuota('TATKAL');
+                    setActiveTab('search');
+                    window.scrollTo({ top: 120, behavior: 'smooth' });
+                    showToast('Tatkal Quota selected! AC opens 10:00 AM, Non-AC opens 11:00 AM.', 'info');
+                  }}
+                  className="p-3 border border-slate-200 bg-slate-50/70 hover:bg-amber-50/60 hover:border-amber-200 rounded-xl transition-all text-left group flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-base">⏱️</span>
+                    <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100/70 px-1.5 py-0.5 rounded">10 AM / 11 AM</span>
+                  </div>
+                  <div className="mt-1">
+                    <p className="text-xs font-bold text-slate-800 group-hover:text-amber-900">Tatkal Radar</p>
+                    <p className="text-[10px] text-slate-500">Fast 1-click tatkal booking</p>
+                  </div>
                 </button>
-                <button onClick={() => setPopupMsg({ title: 'Zero Convenience Pass', text: 'You have 2 active Zero Convenience Fee passes. Automatically applied on checkout.' })} className="p-3 border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-left rounded-xl transition-all flex items-center justify-between">
-                  <div className="text-xs font-bold">
-                    <p className="text-slate-800">Zero Convenience Pass</p>
-                    <p className="text-[10px] text-emerald-600 font-semibold">Active (2 passes)</p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('food');
+                    window.scrollTo({ top: 380, behavior: 'smooth' });
+                  }}
+                  className="p-3 border border-slate-200 bg-slate-50/70 hover:bg-orange-50/60 hover:border-orange-200 rounded-xl transition-all text-left group flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-base">🍱</span>
+                    <span className="text-[10px] font-extrabold text-orange-800 bg-orange-100/70 px-1.5 py-0.5 rounded">To Berth</span>
                   </div>
-                  <span className="text-lg">🎫</span>
+                  <div className="mt-1">
+                    <p className="text-xs font-bold text-slate-800 group-hover:text-orange-900">Food on Track</p>
+                    <p className="text-[10px] text-slate-500">Haldiram's &amp; Domino's</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPopupMsg({
+                    title: 'BMT Trip Shield Guarantee',
+                    text: 'With BMT Trip Shield, get 100% full refund with ZERO cancellation charges if your waitlisted ticket fails to confirm or if your train is cancelled. Guaranteed direct refund to your original payment UPI ID within 15 minutes.'
+                  })}
+                  className="p-3 border border-slate-200 bg-slate-50/70 hover:bg-indigo-50/60 hover:border-indigo-200 rounded-xl transition-all text-left group flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-base">🛡️</span>
+                    <span className="text-[10px] font-extrabold text-indigo-800 bg-indigo-100/70 px-1.5 py-0.5 rounded">Zero Fee</span>
+                  </div>
+                  <div className="mt-1">
+                    <p className="text-xs font-bold text-slate-800 group-hover:text-indigo-900">Trip Shield Cover</p>
+                    <p className="text-[10px] text-slate-500">Zero cancellation charges</p>
+                  </div>
                 </button>
               </div>
             </div>
