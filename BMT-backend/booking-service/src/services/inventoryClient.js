@@ -124,6 +124,18 @@ const inventoryClient = {
                return data.data;
           });
      },
+
+     async assignPromotedSeats(scheduleId, seatIds, userId, bookingId) {
+          return withRetry(async () => {
+               const { data } = await client.post('/seats/assign-promoted', {
+                    scheduleId,
+                    seatIds,
+                    userId,
+                    bookingId,
+               });
+               return data.data;
+          });
+     },
 };
 
 module.exports = { inventoryClient, extractError };

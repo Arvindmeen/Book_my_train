@@ -123,3 +123,19 @@ exports.cancelBooking = asyncHandler(async (req, res) => {
           },
      });
 });
+
+exports.assignPromotedSeats = asyncHandler(async (req, res) => {
+     const { scheduleId, seatIds, userId, bookingId } = req.body;
+
+     if (!scheduleId || !bookingId || !seatIds || !seatIds.length) {
+          throw new BadRequestError('scheduleId, bookingId, and seatIds are required');
+     }
+
+     const result = await inventoryService.assignPromotedSeats(scheduleId, seatIds, userId, bookingId);
+
+     res.status(200).json({
+          success: true,
+          message: `${seatIds.length} seat(s) assigned to promoted waitlist booking`,
+          data: result,
+     });
+});

@@ -685,6 +685,19 @@ const cancelBooking = async (bookingId, userId) => {
           logger.error('Failed to publish BOOKING_CANCELLED after retries', { bookingId: booking.id, error: err.message });
      }
 
+     // Automatic IRCTC Waitlist Promotion Engine:
+     // If physical seats were freed by this cancellation, immediately promote
+     // the earliest waiting list passengers on this schedule in FIFO order.
+     if (booking.seats && booking.seats.length > 0) {
+          try {
+               await promoteNextWaitlistedBookings(booking.scheduleId, booking.seats);
+          } catch (promoteErr) {
+               logger.error(`Error promoting waitlist after cancellation of booking ${booking.id}`, {
+                    error: promoteErr.message,
+               });
+          }
+     }
+
      logger.info(`Booking ${booking.id} cancelled by user ${userId}`);
 
      return {
@@ -692,6 +705,109 @@ const cancelBooking = async (bookingId, userId) => {
           status: 'CANCELLED',
           refundInitiated,
      };
+};
+
+// ─── Auto-Promote Waitlist Bookings (IRCTC FIFO Clearance) ───────────────────
+const promoteNextWaitlistedBookings = async (scheduleId, releasedSeats) => {
+     if (!scheduleId || !releasedSeats || releasedSeats.length === 0) return;
+
+     let seatsPool = [...releasedSeats];
+
+     try {
+          // Find earliest active waitlisted bookings on this schedule (FIFO queue)
+          const waitlistBookings = await prisma.booking.findMany({
+               where: {
+                    scheduleId,
+                    OR: [
+                         { status: 'WAITLISTED', seats: { none: {} } },
+                         { status: 'CONFIRMED', seats: { none: {} } },
+                    ],
+               },
+               include: { passengers: true },
+               orderBy: { createdAt: 'asc' }, // Strict FIFO: earliest waitlist reservation first
+          });
+
+          for (const wlBooking of waitlistBookings) {
+               if (seatsPool.length === 0) break;
+
+               const paxCount = wlBooking.passengers.length || wlBooking.seatCount || 1;
+               if (seatsPool.length >= paxCount) {
+                    const assignedSeats = seatsPool.splice(0, paxCount);
+                    const assignedSeatIds = assignedSeats.map(s => s.seatId);
+
+                    // 1. Assign seats in inventory to this promoted booking
+                    try {
+                         await inventoryClient.assignPromotedSeats(
+                              scheduleId,
+                              assignedSeatIds,
+                              wlBooking.userId,
+                              wlBooking.id
+                         );
+                    } catch (invErr) {
+                         logger.error(`Failed to assign promoted seats in inventory for booking ${wlBooking.id}`, { error: invErr.message });
+                         continue;
+                    }
+
+                    // 2. Create bookingSeat rows in Prisma for wlBooking
+                    for (let i = 0; i < assignedSeats.length; i++) {
+                         const seat = assignedSeats[i];
+                         await prisma.bookingSeat.create({
+                              data: {
+                                   bookingId: wlBooking.id,
+                                   seatId: seat.seatId,
+                                   seatNumber: seat.seatNumber,
+                                   seatType: seat.seatType,
+                                   price: seat.price,
+                              },
+                         });
+
+                         // 3. Update passenger's seatId
+                         if (wlBooking.passengers[i]) {
+                              await prisma.passenger.update({
+                                   where: { id: wlBooking.passengers[i].id },
+                                   data: { seatId: seat.seatId },
+                              });
+                         }
+                    }
+
+                    // 4. Update booking status to CONFIRMED
+                    await prisma.booking.update({
+                         where: { id: wlBooking.id },
+                         data: {
+                              status: 'CONFIRMED',
+                              version: { increment: 1 },
+                         },
+                    });
+
+                    logger.info(`[Waitlist Promotion] Booking ${wlBooking.id} (PNR: ${wlBooking.pnr}) successfully promoted from WAITLISTED to CONFIRMED with seats: ${assignedSeats.map(s => s.seatNumber).join(', ')}`);
+
+                    // 5. Notify user of confirmation via booking producer
+                    try {
+                         const userInfo = await fetchUserForNotification(wlBooking.userId);
+                         await bookingProducer.publishBookingConfirmed({
+                              bookingId: wlBooking.id,
+                              userId: wlBooking.userId,
+                              pnr: wlBooking.pnr,
+                              scheduleId: wlBooking.scheduleId,
+                              trainNumber: wlBooking.trainNumber,
+                              trainName: wlBooking.trainName,
+                              departureDate: wlBooking.departureDate,
+                              seats: assignedSeats.map(s => ({
+                                   seatNumber: s.seatNumber,
+                                   seatType: s.seatType,
+                              })),
+                              totalAmount: wlBooking.totalAmount,
+                              email: userInfo.email,
+                              firstName: userInfo.firstName,
+                         });
+                    } catch (pubErr) {
+                         logger.warn(`Could not publish confirmation notification for promoted booking ${wlBooking.id}`, { error: pubErr.message });
+                    }
+               }
+          }
+     } catch (error) {
+          logger.error(`Error during waitlist promotion for schedule ${scheduleId}`, { error: error.message });
+     }
 };
 
 // ─── Get Booking ─────────────────────────────────────────────────────────────

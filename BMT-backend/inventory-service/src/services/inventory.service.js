@@ -841,6 +841,68 @@ const recountAndPublish = async (scheduleId) => {
      return { available, locked, booked };
 };
 
+// ─── Assign Promoted Seats to Waitlist Booking ──────────────────────────────
+const assignPromotedSeats = async (scheduleId, seatIds, userId, bookingId) => {
+     const result = await retryTransaction(async () => {
+          return prisma.$transaction(async (tx) => {
+               const seats = await tx.$queryRaw`
+                    SELECT id, "seatId", "seatNumber", status
+                    FROM seat_inventories
+                    WHERE "scheduleId" = ${scheduleId}
+                    AND "seatId" = ANY(${seatIds}::text[])
+                    FOR UPDATE NOWAIT
+               `;
+
+               if (seats.length === 0) {
+                    throw new NotFoundError('Seats not found for waitlist promotion');
+               }
+
+               const seatPkIds = seats.map(s => s.id);
+               await tx.$executeRaw`
+                    UPDATE seat_inventories
+                    SET status = 'BOOKED', "bookingId" = ${bookingId},
+                        "lockedBy" = ${userId}, "lockedAt" = NULL, "lockExpiresAt" = NULL,
+                        version = version + 1, "updatedAt" = NOW()
+                    WHERE id = ANY(${seatPkIds}::text[])
+               `;
+
+               await tx.$executeRaw`
+                    UPDATE schedule_inventories
+                    SET available = GREATEST(0, available - ${seats.length}),
+                        booked = booked + ${seats.length},
+                        version = version + 1,
+                        "updatedAt" = NOW()
+                    WHERE "scheduleId" = ${scheduleId}
+               `;
+
+               const schedule = await tx.scheduleInventory.findUnique({ where: { scheduleId } });
+
+               return {
+                    scheduleId,
+                    trainId: schedule.trainId,
+                    bookingId,
+                    confirmedSeats: seats.map(s => s.seatId),
+                    counts: {
+                         available: schedule.available,
+                         locked: schedule.locked,
+                         booked: schedule.booked,
+                    },
+               };
+          }, { timeout: 10000 });
+     });
+
+     try {
+          await inventoryProducer.publishSeatAvailabilityUpdated(
+               result.scheduleId, result.trainId,
+               result.counts.available, result.counts.locked, result.counts.booked
+          );
+     } catch (err) {
+          logger.error('Failed to publish availability after waitlist promotion', { scheduleId: result.scheduleId, error: err.message });
+     }
+
+     return result;
+};
+
 module.exports = {
      initializeInventory,
      cancelScheduleInventory,
@@ -850,6 +912,7 @@ module.exports = {
      unlockSeats,
      confirmSeats,
      cancelBooking,
+     assignPromotedSeats,
      recountAndPublish,
      recomputeSegmentSeatStatuses,
 };

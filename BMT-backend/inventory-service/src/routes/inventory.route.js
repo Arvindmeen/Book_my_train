@@ -9,6 +9,7 @@ const {
      unlockSeats,
      confirmSeats,
      cancelBooking,
+     assignPromotedSeats,
 } = require('../controllers/inventory.controller');
 
 const router = express.Router();
@@ -34,5 +35,6 @@ router.post('/seats/lock', internalAuth, lockSeats);
 router.post('/seats/unlock', internalAuth, unlockSeats);
 router.post('/seats/confirm', internalAuth, confirmSeats);
 router.post('/seats/cancel-booking', internalAuth, cancelBooking);
+router.post('/seats/assign-promoted', internalAuth, assignPromotedSeats);
 
 module.exports = router;
