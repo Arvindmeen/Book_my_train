@@ -7,6 +7,7 @@ const {
      cancelBooking,
      verifyPayment,
      getPnrStatus,
+     getScheduleWaitlist,
 } = require('../controllers/booking.controller');
 
 const router = express.Router();
@@ -14,6 +15,10 @@ const router = express.Router();
 // Public PNR verification & status tracking (handles both proxy rewrite /pnr and direct /bookings/pnr)
 router.get('/pnr/:pnr', getPnrStatus);
 router.get('/bookings/pnr/:pnr', getPnrStatus);
+
+// Public Schedule Waitlist Queue Info
+router.get('/schedules/:scheduleId/waitlist', getScheduleWaitlist);
+router.get('/bookings/schedules/:scheduleId/waitlist', getScheduleWaitlist);
 
 // All other booking routes require authentication (user context from gateway)
 router.post('/bookings', getUserContext, createBooking);

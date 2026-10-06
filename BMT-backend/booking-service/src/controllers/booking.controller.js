@@ -79,3 +79,10 @@ exports.getPnrStatus = asyncHandler(async (req, res) => {
      res.status(200).json({ success: true, data: result });
 });
 
+exports.getScheduleWaitlist = asyncHandler(async (req, res) => {
+     const { scheduleId } = req.params;
+     const result = await bookingService.getScheduleWaitlist(scheduleId);
+     res.status(200).json({ success: true, data: result });
+});
+
+

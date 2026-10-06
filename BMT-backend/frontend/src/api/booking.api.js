@@ -33,4 +33,21 @@ export const bookingApi = {
       throw err;
     }
   },
+
+  getScheduleWaitlist: async (scheduleId) => {
+    if (!scheduleId) return { waitlistCount: 0, nextWlPosition: 1 };
+    try {
+      const res = await client.get(`/bookings/schedules/${scheduleId}/waitlist`);
+      return res.data;
+    } catch (err) {
+      if (err.response?.status === 404 || err.status === 404) {
+        try {
+          const res2 = await client.get(`/schedules/${scheduleId}/waitlist`);
+          return res2.data;
+        } catch (_) {}
+      }
+      return { waitlistCount: 0, nextWlPosition: 1 };
+    }
+  },
 };
+

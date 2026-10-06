@@ -336,7 +336,7 @@ export default function AdminAuditManager() {
                     : b.status;
                   const seatList = b.seats?.length > 0
                     ? b.seats.map((s) => `#${s.seatNumber}`).join(', ')
-                    : (b.passengers?.map((p, i) => `WL #${i + 1}`).join(', ') || 'WL Queue');
+                    : (b.passengers?.map((p) => p.seatNumber || p.seat || 'WL').join(', ') || 'WL Queue');
                   const pnrStr = getPnrDisplay(b);
                   const routeStr = getRouteDisplay(b);
 
@@ -527,7 +527,7 @@ export default function AdminAuditManager() {
                             <td className={`py-2 px-3 font-semibold ${
                               seat ? 'text-emerald-800' : 'text-amber-800'
                             }`}>
-                              {seat ? `Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})` : `Waitlist (WL #${idx + 1})`}
+                              {seat ? `Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})` : (p.seatNumber || p.seat || `Waitlist (WL #${idx + 1})`)}
                             </td>
                             <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
                               {seat?.price ? formatCurrency(seat.price) : '—'}

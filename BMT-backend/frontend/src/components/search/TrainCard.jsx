@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBookingStore } from '../../store/booking.store';
 import { useSearchStore } from '../../store/search.store';
 import { useAuthStore } from '../../store/auth.store';
+import { bookingApi } from '../../api/booking.api';
 import { formatSeatType, formatTrainName, formatTime, calculateDurationFromDistance } from '../../utils/format';
 import { predictWaitlist } from '../../utils/aiPrediction';
 import { getTrainSegmentRoute } from '../../utils/trainRoutes';
@@ -16,6 +17,7 @@ export default function TrainCard({ train }) {
 
   const [activePrediction, setActivePrediction] = useState(null);
   const [showRoute, setShowRoute] = useState(false);
+  const [liveWlCount, setLiveWlCount] = useState(null);
 
   const cleanName = formatTrainName(train.trainName);
   const segmentRoute = getTrainSegmentRoute(train);
@@ -26,11 +28,30 @@ export default function TrainCard({ train }) {
   const arrivalRaw = train.to?.arrival || '';
   const segmentDistanceKm = segmentRoute.segmentDistanceKm || null;
   const tripDuration = calculateDurationFromDistance(segmentDistanceKm);
-  const departureFormatted = formatTime(departureRaw) || '�';
-  const arrivalFormatted = formatTime(arrivalRaw) || '�';
+  const departureFormatted = formatTime(departureRaw) || '—';
+  const arrivalFormatted = formatTime(arrivalRaw) || '—';
 
   const schedule = train.schedule;
   const seatSummary = train.seatSummary || {};
+
+  // Fetch real-time active waitlist count for this train schedule
+  useEffect(() => {
+    let isMounted = true;
+    if (schedule?.scheduleId) {
+      bookingApi.getScheduleWaitlist(schedule.scheduleId)
+        .then((res) => {
+          if (!isMounted) return;
+          const count = res?.data?.waitlistCount ?? res?.waitlistCount;
+          if (typeof count === 'number') {
+            setLiveWlCount(count);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [schedule?.scheduleId]);
 
   const handleCheckAvailability = () => {
     if (!isAuthenticated) {
@@ -49,7 +70,6 @@ export default function TrainCard({ train }) {
   const bookedCount = schedule?.booked ?? 0;
   const totalSeats = train.totalSeats || 64;
   const isWaitlist = availableCount === 0;
-  const dynamicWlPos = bookedCount > totalSeats ? (bookedCount - totalSeats + 1) : 1;
 
   // Base fare determination
   const baseFare = train.basePrice || train.schedule?.basePrice || (train.seats?.[0]?.price) || 450;
@@ -78,8 +98,10 @@ export default function TrainCard({ train }) {
       ];
     }
 
-    // Calculate class-wise respective available seats distribution
-    const totalWlOnSchedule = bookedCount > totalSeats ? (bookedCount - totalSeats) : 0;
+    // Live waitlist queue depth on this schedule
+    const totalWlOnSchedule = liveWlCount !== null
+      ? liveWlCount
+      : (bookedCount > totalSeats ? (bookedCount - totalSeats) : 0);
 
     // Distribute available seats proportionally across classes so each class has its own real count
     let distributedAvailable = [];
@@ -103,10 +125,9 @@ export default function TrainCard({ train }) {
       const classAvailableSeats = distributedAvailable[idx] ?? 0;
       const classIsWl = classAvailableSeats === 0 || isWaitlist;
 
-      // Real waitlist calculation for this specific class (NO hardcoded + idx offset!)
-      // If there are waitlisted passengers on this train, distribute them proportionally; otherwise next booking is WL 1.
-      const classWlCount = totalWlOnSchedule > 0 ? Math.round(totalWlOnSchedule * c.ratio) : 0;
-      const classWlPos = classIsWl ? Math.max(1, classWlCount + 1) : 1;
+      // Authentic sequential waitlist position:
+      // When train/class is waitlisted, next ticket to be issued will be (current waitlist queue + 1)
+      const classWlPos = classIsWl ? Math.max(1, totalWlOnSchedule + 1) : 1;
 
       const statusText = classIsWl
         ? `WL ${classWlPos}`
@@ -121,7 +142,7 @@ export default function TrainCard({ train }) {
         statusText,
       };
     });
-  }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, bookedCount, totalSeats, isWaitlist]);
+  }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, bookedCount, totalSeats, isWaitlist, liveWlCount]);
 
   const [selectedClassCode, setSelectedClassCode] = useState(() => {
     return availableClasses[1]?.code || availableClasses[0]?.code || '3A';

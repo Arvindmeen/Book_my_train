@@ -229,6 +229,18 @@ router.get(
      bookingServiceProxy
 );
 
+// Public Schedule Live Waitlist Queue Tracking
+router.get(
+     '/bookings/schedules/:scheduleId/waitlist',
+     combinedRateLimit(),
+     bookingServiceProxy
+);
+router.get(
+     '/schedules/:scheduleId/waitlist',
+     combinedRateLimit(),
+     bookingServiceProxy
+);
+
 router.post(
      '/bookings/bookings',
      requireAuth,

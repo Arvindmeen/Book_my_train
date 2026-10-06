@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { inventoryApi } from '../api/inventory.api';
+import { bookingApi } from '../api/booking.api';
 import { useBookingStore } from '../store/booking.store';
 import { useToast } from '../components/ui/Toast';
 import AvailabilitySummary from '../components/seats/AvailabilitySummary';
@@ -24,6 +25,7 @@ export default function SeatSelectionPage() {
 
   const [availability, setAvailability] = useState(null);
   const [seats, setSeats] = useState([]);
+  const [liveWlCount, setLiveWlCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState(null);
 
@@ -37,12 +39,25 @@ export default function SeatSelectionPage() {
           seatParams.toSeq = toStation.sequenceNumber;
         }
 
-        const [availRes, seatsRes] = await Promise.all([
+        const [availRes, seatsRes, wlRes] = await Promise.allSettled([
           inventoryApi.getAvailability(scheduleId),
           inventoryApi.getSeats(scheduleId, seatParams),
+          bookingApi.getScheduleWaitlist(scheduleId),
         ]);
-        const rawAvail = availRes.data || availRes;
-        const seatList = (seatsRes.data?.seats || seatsRes.seats || []).sort((a, b) => a.seatNumber - b.seatNumber);
+
+        if (wlRes.status === 'fulfilled') {
+          const count = wlRes.value?.data?.waitlistCount ?? wlRes.value?.waitlistCount;
+          if (typeof count === 'number') {
+            setLiveWlCount(count);
+          }
+        }
+
+        if (availRes.status !== 'fulfilled') {
+          throw new Error('Failed to load schedule availability');
+        }
+
+        const rawAvail = availRes.value?.data || availRes.value;
+        const seatList = (seatsRes.status === 'fulfilled' ? (seatsRes.value?.data?.seats || seatsRes.value?.seats || []) : []).sort((a, b) => a.seatNumber - b.seatNumber);
         setSeats(seatList);
 
         if (seatParams.fromSeq && seatParams.toSeq && seatList.some(s => s.segmentStatus)) {
@@ -87,6 +102,7 @@ export default function SeatSelectionPage() {
   };
 
   const isWaitlist = Boolean(availability && availability.available === 0);
+  const nextWlPos = (liveWlCount !== null ? liveWlCount : (availability?.booked > availability?.totalSeats ? availability.booked - availability.totalSeats : 0)) + 1;
 
   const waitlistFare = seats.length > 0 && seats[0]?.price ? seats[0].price : 450;
 
@@ -95,6 +111,7 @@ export default function SeatSelectionPage() {
       isWaitlist: true,
       paxCount: waitlistPax,
       fare: waitlistFare,
+      wlPos: nextWlPos,
     });
     navigate('/booking');
   };
@@ -153,7 +170,7 @@ export default function SeatSelectionPage() {
                   </div>
                   <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-amber-200 px-3 py-1.5 rounded-xl shadow-xs">
                     <span className="text-xs font-bold text-slate-500">Next Position:</span>
-                    <span className="text-xs sm:text-sm font-black text-amber-800">WL #{availability.booked - availability.totalSeats > 0 ? availability.booked - availability.totalSeats + 1 : 1}</span>
+                    <span className="text-xs sm:text-sm font-black text-amber-800">WL #{nextWlPos}</span>
                   </div>
                 </div>
               </div>
