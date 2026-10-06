@@ -54,47 +54,74 @@ export default function TrainCard({ train }) {
   // Base fare determination
   const baseFare = train.basePrice || train.schedule?.basePrice || (train.seats?.[0]?.price) || 450;
 
-  // Authentic IRCTC Classes determination
+  // Authentic IRCTC Classes determination with respective seat availability & waitlist per class
   const availableClasses = useMemo(() => {
     let classList = [];
     if (isVandeBharat || isShatabdi) {
       classList = [
-        { code: 'CC', name: 'AC Chair Car', mult: 1.0 },
-        { code: 'EC', name: 'Exec Chair Car', mult: 1.85 },
+        { code: 'CC', name: 'AC Chair Car', mult: 1.0, ratio: 0.80 },
+        { code: 'EC', name: 'Exec Chair Car', mult: 1.85, ratio: 0.20 },
       ];
     } else if (isRajdhani) {
       classList = [
-        { code: '3A', name: 'AC 3 Tier', mult: 1.0 },
-        { code: '2A', name: 'AC 2 Tier', mult: 1.45 },
-        { code: '1A', name: 'AC First Class', mult: 2.2 },
+        { code: '3A', name: 'AC 3 Tier', mult: 1.0, ratio: 0.55 },
+        { code: '2A', name: 'AC 2 Tier', mult: 1.45, ratio: 0.30 },
+        { code: '1A', name: 'AC First Class', mult: 2.2, ratio: 0.15 },
       ];
     } else {
       classList = [
-        { code: 'SL', name: 'Sleeper', mult: 0.65 },
-        { code: '3A', name: 'AC 3 Tier', mult: 1.0 },
-        { code: '2A', name: 'AC 2 Tier', mult: 1.45 },
-        { code: '1A', name: 'AC First Class', mult: 2.2 },
-        { code: '2S', name: 'Second Sitting', mult: 0.35 },
+        { code: 'SL', name: 'Sleeper', mult: 0.65, ratio: 0.40 },
+        { code: '3A', name: 'AC 3 Tier', mult: 1.0, ratio: 0.25 },
+        { code: '2A', name: 'AC 2 Tier', mult: 1.45, ratio: 0.15 },
+        { code: '1A', name: 'AC First Class', mult: 2.2, ratio: 0.08 },
+        { code: '2S', name: 'Second Sitting', mult: 0.35, ratio: 0.12 },
       ];
+    }
+
+    // Calculate class-wise respective available seats distribution
+    const totalWlOnSchedule = bookedCount > totalSeats ? (bookedCount - totalSeats) : 0;
+
+    // Distribute available seats proportionally across classes so each class has its own real count
+    let distributedAvailable = [];
+    if (availableCount > 0) {
+      let allocatedSoFar = 0;
+      distributedAvailable = classList.map((c, i) => {
+        if (i === classList.length - 1) {
+          // Last class takes remainder so sum matches availableCount exactly
+          return Math.max(0, availableCount - allocatedSoFar);
+        }
+        const classSeats = Math.round(availableCount * c.ratio);
+        allocatedSoFar += classSeats;
+        return Math.max(0, classSeats);
+      });
+    } else {
+      distributedAvailable = classList.map(() => 0);
     }
 
     return classList.map((c, idx) => {
       const price = Math.round(baseFare * c.mult);
-      const classIsWl = isWaitlist;
-      const classWlPos = classIsWl ? Math.max(1, dynamicWlPos + idx) : 1;
+      const classAvailableSeats = distributedAvailable[idx] ?? 0;
+      const classIsWl = classAvailableSeats === 0 || isWaitlist;
+
+      // Real waitlist calculation for this specific class (NO hardcoded + idx offset!)
+      // If there are waitlisted passengers on this train, distribute them proportionally; otherwise next booking is WL 1.
+      const classWlCount = totalWlOnSchedule > 0 ? Math.round(totalWlOnSchedule * c.ratio) : 0;
+      const classWlPos = classIsWl ? Math.max(1, classWlCount + 1) : 1;
+
       const statusText = classIsWl
         ? `WL ${classWlPos}`
-        : `AVAILABLE-${String(availableCount).padStart(4, '0')}`;
+        : `AVAILABLE-${String(classAvailableSeats).padStart(4, '0')}`;
 
       return {
         ...c,
         price,
+        availableSeats: classAvailableSeats,
         isWaitlist: classIsWl,
         wlPos: classWlPos,
         statusText,
       };
     });
-  }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, isWaitlist, dynamicWlPos]);
+  }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, bookedCount, totalSeats, isWaitlist]);
 
   const [selectedClassCode, setSelectedClassCode] = useState(() => {
     return availableClasses[1]?.code || availableClasses[0]?.code || '3A';
