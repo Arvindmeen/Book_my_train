@@ -4,10 +4,13 @@ import { useForm } from 'react-hook-form';
 import { useBookingStore } from '../store/booking.store';
 import { useSearchStore } from '../store/search.store';
 import { useAuthStore } from '../store/auth.store';
+import { inventoryApi } from '../api/inventory.api';
+import { allocateSeatsTogether } from '../utils/seatAllocation';
 import BookingSummary from '../components/booking/BookingSummary';
 import PassengerList from '../components/booking/PassengerList';
 import PaymentButton from '../components/booking/PaymentButton';
 import { useToast } from '../components/ui/Toast';
+import { MAX_SEATS_PER_BOOKING } from '../utils/constants';
 
 export default function BookingPage() {
   const navigate = useNavigate();
@@ -15,42 +18,85 @@ export default function BookingPage() {
   const selectedTrain = useBookingStore((s) => s.selectedTrain);
   const selectedSeats = useBookingStore((s) => s.selectedSeats);
   const scheduleId = useBookingStore((s) => s.scheduleId);
+  const selectedClass = useBookingStore((s) => s.selectedClass) || '3A';
+  const classFare = useBookingStore((s) => s.classFare) || 450;
+  const isWaitlist = useBookingStore((s) => s.isWaitlist);
+  const waitlistPosition = useBookingStore((s) => s.waitlistPosition) || 1;
+  const fromStation = useBookingStore((s) => s.fromStation);
+  const toStation = useBookingStore((s) => s.toStation);
   const quota = useSearchStore((s) => s.quota);
   const user = useAuthStore((s) => s.user);
 
   const [optTripShield, setOptTripShield] = useState(false);
-  const isWaitlist = useBookingStore((s) => s.isWaitlist);
-  const waitlistPaxCount = useBookingStore((s) => s.waitlistPaxCount) || 1;
-  const waitlistFare = useBookingStore((s) => s.waitlistFare) || 450;
-
   const rawSeats = useMemo(() => Array.from(selectedSeats.values()), [selectedSeats]);
 
-  const waitlistVirtualSeats = useMemo(() => {
-    return Array.from({ length: waitlistPaxCount }, (_, idx) => ({
-      seatId: `wl-${idx}`,
-      seatNumber: `WL #${idx + 1}`,
-      seatType: 'Waitlist',
-      price: waitlistFare,
-    }));
-  }, [waitlistPaxCount, waitlistFare]);
+  // Initial passenger count: rawSeats size, or waitlistPaxCount, or 1
+  const [passengerCount, setPassengerCount] = useState(() => {
+    if (rawSeats.length > 0) return rawSeats.length;
+    return 1;
+  });
 
-  const seats = isWaitlist ? waitlistVirtualSeats : rawSeats;
-  const seatIds = useMemo(() => (isWaitlist ? [] : seats.map((s) => s.seatId)), [isWaitlist, seats]);
-  const totalPrice = useMemo(() => {
-    if (isWaitlist) return waitlistPaxCount * waitlistFare;
-    return seats.reduce((sum, s) => sum + (s.price || 0), 0);
-  }, [isWaitlist, waitlistPaxCount, waitlistFare, seats]);
-  const tripShieldFee = (isWaitlist ? waitlistPaxCount : seats.length) * 49;
-
-  const { register, handleSubmit, setValue, formState: { errors, isValid }, getValues } = useForm({
+  const { register, handleSubmit, setValue, unregister, formState: { errors, isValid }, getValues } = useForm({
     mode: 'onChange',
   });
 
   useEffect(() => {
-    if (!isWaitlist && rawSeats.length === 0) {
+    if (!selectedTrain || !scheduleId) {
       navigate('/search');
     }
-  }, [isWaitlist, rawSeats.length, navigate]);
+  }, [selectedTrain, scheduleId, navigate]);
+
+  const farePerPax = classFare;
+
+  // Build slot representation for summary and passenger list
+  const virtualSeats = useMemo(() => {
+    return Array.from({ length: passengerCount }, (_, idx) => {
+      if (rawSeats[idx]) {
+        return rawSeats[idx];
+      }
+      if (isWaitlist) {
+        return {
+          seatId: `wl-${idx}`,
+          seatNumber: `WL #${waitlistPosition + idx}`,
+          seatType: 'Waitlist',
+          price: farePerPax,
+        };
+      }
+      return {
+        seatId: `auto-${idx}`,
+        seatNumber: `Auto #${idx + 1}`,
+        seatType: selectedClass,
+        price: farePerPax,
+      };
+    });
+  }, [passengerCount, rawSeats, isWaitlist, waitlistPosition, farePerPax, selectedClass]);
+
+  const totalPrice = passengerCount * farePerPax;
+  const tripShieldFee = passengerCount * 49;
+
+  const handleAddPassenger = () => {
+    if (passengerCount >= MAX_SEATS_PER_BOOKING) {
+      showToast(`Maximum ${MAX_SEATS_PER_BOOKING} passengers allowed per ticket`, 'warning');
+      return;
+    }
+    setPassengerCount((prev) => prev + 1);
+  };
+
+  const handleRemovePassenger = (indexToRemove) => {
+    if (passengerCount <= 1) return;
+    unregister(`passengers.${indexToRemove}`);
+    // Shift values
+    const currentValues = getValues('passengers') || [];
+    const remaining = currentValues.filter((_, i) => i !== indexToRemove);
+    remaining.forEach((p, idx) => {
+      setValue(`passengers.${idx}.name`, p?.name || '', { shouldValidate: true });
+      setValue(`passengers.${idx}.age`, p?.age || '', { shouldValidate: true });
+      setValue(`passengers.${idx}.gender`, p?.gender || 'MALE', { shouldValidate: true });
+      setValue(`passengers.${idx}.berthPreference`, p?.berthPreference || 'NO_PREF');
+    });
+    unregister(`passengers.${remaining.length}`);
+    setPassengerCount((prev) => prev - 1);
+  };
 
   const handleAutofillMasterPassengers = () => {
     try {
@@ -69,12 +115,13 @@ export default function BookingPage() {
         masterList = [{ name: ownName, age: Number(user?.age) || 25, gender: user?.gender || 'MALE' }];
       }
 
-      seats.forEach((seat, idx) => {
+      for (let idx = 0; idx < passengerCount; idx++) {
         const p = masterList[idx] || masterList[0];
         setValue(`passengers.${idx}.name`, p.name, { shouldValidate: true });
         setValue(`passengers.${idx}.age`, Number(p.age) || 25, { shouldValidate: true });
         setValue(`passengers.${idx}.gender`, p.gender === 'FEMALE' ? 'FEMALE' : 'MALE', { shouldValidate: true });
-      });
+        setValue(`passengers.${idx}.berthPreference`, p.berthPreference || 'NO_PREF');
+      }
 
       showToast('⚡ Fast Tatkal Autofill: Loaded from Master Passenger List in 24ms!', 'success');
     } catch {
@@ -82,7 +129,50 @@ export default function BookingPage() {
     }
   };
 
-  if (!isWaitlist && rawSeats.length === 0) return null;
+  // Automated Seat Allocation Engine
+  const handleBeforeCreateBooking = async () => {
+    if (isWaitlist) {
+      return [];
+    }
+
+    // If manual seats were selected previously, honor them
+    if (rawSeats.length === passengerCount) {
+      return rawSeats.map((s) => s.seatId);
+    }
+
+    try {
+      const seatParams = {};
+      if (fromStation?.sequenceNumber && toStation?.sequenceNumber) {
+        seatParams.fromSeq = fromStation.sequenceNumber;
+        seatParams.toSeq = toStation.sequenceNumber;
+      }
+
+      const res = await inventoryApi.getSeats(scheduleId, seatParams);
+      const allSeats = res?.data?.seats || res?.seats || [];
+      const availableSeats = allSeats.filter((s) => {
+        if (seatParams.fromSeq && seatParams.toSeq && s.segmentStatus) {
+          return s.segmentStatus === 'AVAILABLE';
+        }
+        return s.status === 'AVAILABLE';
+      });
+
+      const formPax = getValues('passengers') || [];
+      const allocated = allocateSeatsTogether(availableSeats, formPax);
+
+      if (allocated.length === formPax.length) {
+        return allocated.map((s) => s.seatId);
+      }
+
+      // If available seats run out during submission, convert to waitlist automatically
+      showToast('Confirmed berths full; transitioning to official Waitlist Queue', 'info');
+      return [];
+    } catch (err) {
+      console.warn('Seat allocation fallback:', err);
+      return [];
+    }
+  };
+
+  if (!selectedTrain || !scheduleId) return null;
 
   return (
     <div className="min-h-screen bg-[#FAFCFE] py-8 pb-20">
@@ -91,43 +181,42 @@ export default function BookingPage() {
         {/* Breadcrumb Header */}
         <div className="flex items-center justify-between">
           <Link
-            to={scheduleId ? `/seats/${scheduleId}` : '/search'}
+            to="/search"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 transition-colors"
           >
-            <span>&larr;</span> Back to Seat Selection
+            <span>&larr;</span> Back to Train Search Results
           </Link>
           <div className="flex items-center gap-2">
-            {isWaitlist && (
+            {isWaitlist ? (
               <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">
                 <span>⚡</span>
-                <span>Waitlist (WL) Ticket</span>
+                <span>Waitlist Queue (WL #{waitlistPosition})</span>
               </span>
-            )}
-            {quota === 'TQ' && (
-              <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">
-                <span>⚡</span>
-                <span>Fast Tatkal Mode</span>
+            ) : (
+              <span className="text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">
+                <span>✓</span>
+                <span>Confirmed Berth Allocation ({selectedClass})</span>
               </span>
             )}
             <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              Step 3 of 3: Passenger Details
+              Step 2 of 2: Passenger Details
             </span>
           </div>
         </div>
 
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Complete Your Reservation
+            Complete Your Rail Reservation
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Provide government-approved identification details for all travelling passengers.
+            Provide government-approved identification details. System will automatically allot adjacent seats together for your travelling group.
           </p>
         </div>
 
         {/* Fare and Train Summary */}
         <BookingSummary
           train={selectedTrain}
-          seats={seats}
+          seats={virtualSeats}
           totalPrice={totalPrice}
           tripShield={optTripShield}
           tripShieldFee={tripShieldFee}
@@ -142,7 +231,7 @@ export default function BookingPage() {
             </div>
             <div>
               <p className="font-extrabold text-slate-900 text-sm">Fast Tatkal Passenger Engine</p>
-              <p className="text-xs text-slate-600">Skip typing during high-load 10 AM / 11 AM Tatkal rush.</p>
+              <p className="text-xs text-slate-600">Skip typing during peak reservation rush hours.</p>
             </div>
           </div>
           <button
@@ -156,10 +245,30 @@ export default function BookingPage() {
         </div>
 
         {/* Passenger Information Cards */}
-        <div className="card p-6 md:p-8 bg-white border border-slate-150 shadow-card">
+        <div className="card p-6 md:p-8 bg-white border border-slate-150 shadow-card space-y-5">
           <form id="passenger-form" onSubmit={handleSubmit(() => {})}>
-            <PassengerList seats={seats} register={register} errors={errors} />
+            <PassengerList
+              seats={virtualSeats}
+              register={register}
+              errors={errors}
+              selectedClass={selectedClass}
+              isWaitlist={isWaitlist}
+              onRemove={handleRemovePassenger}
+            />
           </form>
+
+          {passengerCount < MAX_SEATS_PER_BOOKING && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleAddPassenger}
+                className="w-full py-3 bg-slate-50 hover:bg-slate-100 text-slate-800 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>➕</span>
+                <span>Add Another Passenger (Together in same compartment) &bull; Max {MAX_SEATS_PER_BOOKING}</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Payment Confirmation Card */}
@@ -175,9 +284,10 @@ export default function BookingPage() {
           <PaymentButton
             passengers={getValues('passengers') || []}
             scheduleId={scheduleId}
-            seatIds={seatIds}
+            seatIds={[]}
             disabled={!isValid}
             tripShield={optTripShield}
+            onBeforeCreateBooking={handleBeforeCreateBooking}
           />
         </div>
 

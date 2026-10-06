@@ -156,9 +156,10 @@ export default function AdminAuditManager() {
     setTimeout(() => setCopiedPnr(null), 2000);
   };
 
-  const confirmedCount = bookings.filter((b) => b.status === 'CONFIRMED').length;
+  const confirmedCount = bookings.filter((b) => b.status === 'CONFIRMED' && (b.seats?.length > 0)).length;
+  const waitlistCount = bookings.filter((b) => b.status === 'WAITLISTED' || (b.seats?.length === 0 && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status))).length;
   const totalRevenue = bookings
-    .filter((b) => b.status === 'CONFIRMED')
+    .filter((b) => ['CONFIRMED', 'WAITLISTED'].includes(b.status))
     .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
   return (
@@ -206,9 +207,16 @@ export default function AdminAuditManager() {
           <span className="text-[10px] text-slate-500 block">Reservations in DB</span>
         </div>
         <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200/80">
-          <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider">CONFIRMED TICKETS</span>
-          <span className="font-black text-xl text-emerald-800">{confirmedCount}</span>
-          <span className="text-[10px] text-emerald-600 block">Active CNF Journeys</span>
+          <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider">CONFIRMED &amp; WAITLIST</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-black text-xl text-emerald-800">{confirmedCount} <span className="text-xs font-bold">CNF</span></span>
+            {waitlistCount > 0 && (
+              <span className="font-black text-xs text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                {waitlistCount} WL
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-emerald-600 block">Active Journeys</span>
         </div>
         <div className="bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-200/80">
           <span className="text-indigo-700 text-[10px] font-bold block uppercase tracking-wider">TOTAL PASSENGERS</span>
@@ -248,7 +256,7 @@ export default function AdminAuditManager() {
           </div>
 
           <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto text-xs font-bold scrollbar-none">
-            {['ALL', 'CONFIRMED', 'PAYMENT_PENDING', 'CANCELLED'].map((st) => (
+            {['ALL', 'CONFIRMED', 'WAITLISTED', 'PAYMENT_PENDING', 'CANCELLED'].map((st) => (
               <button
                 key={st}
                 type="button"
@@ -322,7 +330,13 @@ export default function AdminAuditManager() {
                 bookings.map((b) => {
                   const passengerCount = b.passengers?.length || b.seatCount || 1;
                   const firstPassenger = b.passengers?.[0];
-                  const seatList = b.seats?.map((s) => `#${s.seatNumber}`).join(', ') || 'Assigned';
+                  const isWaitlist = (b.seats?.length === 0) || b.status === 'WAITLISTED' || b.status === 'WAITLIST';
+                  const displayStatus = isWaitlist
+                    ? (['CANCELLED', 'CANCELLING', 'FAILED', 'EXPIRED'].includes(b.status) ? b.status : 'WAITLISTED')
+                    : b.status;
+                  const seatList = b.seats?.length > 0
+                    ? b.seats.map((s) => `#${s.seatNumber}`).join(', ')
+                    : (b.passengers?.map((p, i) => `WL #${i + 1}`).join(', ') || 'WL Queue');
                   const pnrStr = getPnrDisplay(b);
                   const routeStr = getRouteDisplay(b);
 
@@ -386,11 +400,13 @@ export default function AdminAuditManager() {
 
                       {/* Coach / Seats */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="font-semibold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
-                          Seat {seatList}
+                        <span className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
+                          isWaitlist ? 'text-amber-800 bg-amber-100 border border-amber-300' : 'text-slate-800 bg-slate-100'
+                        }`}>
+                          {isWaitlist ? seatList : `Seat ${seatList}`}
                         </span>
                         <div className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">
-                          {b.seats?.[0]?.seatType ? formatSeatType(b.seats[0].seatType) : 'Standard'}
+                          {isWaitlist ? 'Waitlist Queue (WL)' : (b.seats?.[0]?.seatType ? formatSeatType(b.seats[0].seatType) : 'Standard Berth')}
                         </div>
                       </td>
 
@@ -403,16 +419,16 @@ export default function AdminAuditManager() {
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
                           className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
-                            b.status === 'CONFIRMED'
+                            displayStatus === 'CONFIRMED'
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              : b.status === 'WAITLIST' || b.status === 'PENDING'
-                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                              : b.status === 'CANCELLED'
+                              : displayStatus === 'WAITLISTED' || displayStatus === 'WAITLIST' || displayStatus === 'PENDING'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : displayStatus === 'CANCELLED'
                               ? 'bg-rose-100 text-rose-800 border border-rose-200'
                               : 'bg-slate-100 text-slate-700 border border-slate-200'
                           }`}
                         >
-                          {b.status}
+                          {displayStatus}
                         </span>
                       </td>
 
@@ -508,8 +524,10 @@ export default function AdminAuditManager() {
                             <td className="py-2 px-3 text-slate-600">
                               {p.age} yrs / {p.gender || 'Male'}
                             </td>
-                            <td className="py-2 px-3 font-semibold text-emerald-800">
-                              {seat ? `Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})` : 'CNF'}
+                            <td className={`py-2 px-3 font-semibold ${
+                              seat ? 'text-emerald-800' : 'text-amber-800'
+                            }`}>
+                              {seat ? `Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})` : `Waitlist (WL #${idx + 1})`}
                             </td>
                             <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
                               {seat?.price ? formatCurrency(seat.price) : '—'}

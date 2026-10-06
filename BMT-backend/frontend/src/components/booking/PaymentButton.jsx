@@ -7,7 +7,7 @@ import { loadRazorpayScript, openRazorpayCheckout } from '../../utils/razorpay';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 
-export default function PaymentButton({ passengers, scheduleId, seatIds, disabled, tripShield }) {
+export default function PaymentButton({ passengers, scheduleId, seatIds, disabled, tripShield, onBeforeCreateBooking }) {
   const [loading, setLoading] = useState(false);
   const user = useAuthStore((s) => s.user);
   const reset = useBookingStore((s) => s.reset);
@@ -19,10 +19,21 @@ export default function PaymentButton({ passengers, scheduleId, seatIds, disable
   const handlePay = async () => {
     setLoading(true);
     try {
+      let finalSeatIds = seatIds;
+      if (typeof onBeforeCreateBooking === 'function') {
+        const resolved = await onBeforeCreateBooking();
+        if (Array.isArray(resolved)) {
+          finalSeatIds = resolved;
+        }
+      }
+
       const idempotencyKey = crypto.randomUUID();
       // --- SEGMENT BOOKING: Include fromStation/toStation segment params ---
       const res = await bookingApi.create({
-        scheduleId, seatIds, passengers, idempotencyKey,
+        scheduleId,
+        seatIds: finalSeatIds,
+        passengers,
+        idempotencyKey,
         tripShield: Boolean(tripShield),
         fromStationId: fromStation?.stationId,
         toStationId: toStation?.stationId,

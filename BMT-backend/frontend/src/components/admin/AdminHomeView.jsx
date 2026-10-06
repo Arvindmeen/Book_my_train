@@ -121,12 +121,13 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
   // Derive 100% REAL KPIs directly from database (No synthetic formula multipliers!)
   const kpis = useMemo(() => {
     const totalFleet = trains.length;
-    const confirmedBookings = bookings.filter((b) => b && b.status === 'CONFIRMED');
+    const isWaitlistBooking = (b) => (b.seats?.length === 0) || b.status === 'WAITLISTED' || b.status === 'WAITLIST';
+    const confirmedBookings = bookings.filter((b) => b && b.status === 'CONFIRMED' && !isWaitlistBooking(b));
     const confirmedCount = confirmedBookings.length;
-    const waitlistCount = bookings.filter((b) => b && (b.status === 'PENDING' || b.status === 'SEATS_HELD' || b.status === 'WAITLIST')).length;
+    const waitlistCount = bookings.filter((b) => b && (isWaitlistBooking(b) || b.status === 'PENDING' || b.status === 'SEATS_HELD')).length;
 
     // Real sum of confirmed booking revenue from database
-    const rawRevenue = confirmedBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+    const rawRevenue = bookings.filter((b) => b && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status)).reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
 
     // Total actual passengers booked across the system from database
     const totalBookedPassengers = bookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0);
@@ -258,8 +259,9 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
     };
 
     return bookings.slice(0, 5).map((b) => {
-      const isConfirmed = b.status === 'CONFIRMED';
-      const isWl = b.status === 'PENDING' || b.status === 'SEATS_HELD' || b.status === 'WAITLIST';
+      const isWaitlistBooking = (b.seats?.length === 0) || b.status === 'WAITLISTED' || b.status === 'WAITLIST';
+      const isConfirmed = b.status === 'CONFIRMED' && !isWaitlistBooking;
+      const isWl = isWaitlistBooking || b.status === 'PENDING' || b.status === 'SEATS_HELD';
       const type = isConfirmed ? 'confirm' : isWl ? 'wl' : 'refund';
 
       const pnr = b.pnr || (b.id ? b.id.replace(/\D/g, '').padEnd(10, '8').slice(0, 10) : '2489182301');

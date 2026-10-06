@@ -16,4 +16,7 @@ if (!globalForPrisma.prisma) {
 
 const prisma = globalForPrisma.prisma;
 
+// Ensure PostgreSQL BookingStatus enum includes WAITLISTED safely
+prisma.$executeRawUnsafe(`ALTER TYPE "BookingStatus" ADD VALUE IF NOT EXISTS 'WAITLISTED';`).catch(() => {});
+
 module.exports = prisma;

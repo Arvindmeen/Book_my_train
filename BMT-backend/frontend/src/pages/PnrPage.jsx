@@ -64,6 +64,8 @@ export default function PnrPage() {
           })
         : 'Confirmed';
 
+      const isWaitlistBooking = data.isWaitlist || data.status === 'WAITLISTED' || (!data.seats || data.seats.length === 0);
+
       setResult({
         pnr: data.pnr || val,
         trainName: `${data.trainNumber} - ${formatTrainName(data.trainName)}`,
@@ -73,23 +75,24 @@ export default function PnrPage() {
         platform: 'Platform #1',
         from: data.from || 'Origin Station',
         to: data.to || 'Destination Station',
+        isWaitlist: isWaitlistBooking,
         passengers: (data.passengers || []).length > 0
-          ? data.passengers.map((p) => ({
+          ? data.passengers.map((p, idx) => ({
               name: p.name,
               quota: 'General Quota (GN)',
-              bookingStatus: p.status || data.status || 'CNF',
-              status: p.status || (data.status === 'CONFIRMED' ? 'CNF (Confirmed)' : 'CNF'),
-              coach: p.coach || 'B1',
-              seat: p.seat || `${p.seatNumber || 14} (Lower)`,
+              bookingStatus: p.status || (isWaitlistBooking ? `WL #${idx + 1}` : 'CNF'),
+              status: p.status || (isWaitlistBooking ? `WL #${idx + 1} (Waitlist)` : 'CNF (Confirmed)'),
+              coach: p.coach || (isWaitlistBooking ? 'WL' : 'B1'),
+              seat: p.seat || (isWaitlistBooking ? `WL #${idx + 1}` : `${p.seatNumber || 14} (Lower)`),
             }))
           : [
               {
                 name: 'Passenger 1',
                 quota: 'General Quota (GN)',
-                bookingStatus: data.status || 'CNF',
-                status: data.status === 'CONFIRMED' ? 'CNF (Confirmed)' : 'CNF',
-                coach: 'B1',
-                seat: '14 (Lower)',
+                bookingStatus: isWaitlistBooking ? 'WL #1' : 'CNF',
+                status: isWaitlistBooking ? 'WL #1 (Waitlist)' : 'CNF (Confirmed)',
+                coach: isWaitlistBooking ? 'WL' : 'B1',
+                seat: isWaitlistBooking ? 'WL #1' : '14 (Lower)',
               }
             ]
       });
@@ -294,7 +297,7 @@ export default function PnrPage() {
                         Current: {p.status}
                       </span>
                       <span className="font-extrabold text-slate-900 text-sm">
-                        {p.status.includes('CNF') ? `Coach ${p.coach} / Seat ${p.seat}` : `Status: ${p.status}`}
+                        {p.status.includes('CNF') ? `Coach ${p.coach} / Seat ${p.seat}` : `Coach ${p.coach} &middot; ${p.seat}`}
                       </span>
                     </div>
                   </div>

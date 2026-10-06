@@ -260,11 +260,28 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
                include: { seats: true, passengers: true },
           });
 
+          // Calculate prior waitlist passengers for schedule to ensure sequential WL numbering
+          let priorWlCount = 0;
+          if (isWaitlist) {
+               try {
+                    const priorWlBookings = await prisma.booking.findMany({
+                         where: {
+                              scheduleId,
+                              id: { not: booking.id },
+                              status: { in: ['WAITLISTED', 'CONFIRMING', 'PAYMENT_PENDING', 'CONFIRMED'] },
+                              seats: { none: {} },
+                         },
+                         select: { seatCount: true },
+                    });
+                    priorWlCount = priorWlBookings.reduce((sum, b) => sum + (b.seatCount || 0), 0);
+               } catch (_) {}
+          }
+
           // 9. Save idempotency
           const response = {
                bookingId: booking.id,
                pnr: booking.pnr,
-               status: booking.status,
+               status: isWaitlist ? 'WAITLISTED' : booking.status,
                isWaitlist,
                totalAmount: booking.totalAmount,
                tripShield: hasTripShield,
@@ -281,7 +298,7 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
                          name: p.name,
                          age: p.age,
                          gender: p.gender,
-                         seatNumber: seat?.seatNumber || `WL #${idx + 1}`,
+                         seatNumber: seat?.seatNumber || `WL #${priorWlCount + idx + 1}`,
                          seatType: seat?.seatType || 'Waitlist',
                     };
                }),
@@ -377,10 +394,13 @@ const handlePaymentSuccess = async (paymentOrderId, gatewayPaymentId, amount) =>
                await saga.executeConfirmSeats(booking, seatIds, booking.fromSeq, booking.toSeq); // --- SEGMENT BOOKING
           }
 
-          // Final status update (version was already incremented by CAS above)
+          // Final status update: Confirmed if physical seats were held, Waitlisted if queue booking
+          const isWaitlist = seatIds.length === 0;
+          const finalStatus = isWaitlist ? 'WAITLISTED' : 'CONFIRMED';
+
           await prisma.booking.updateMany({
                where: { id: booking.id, status: 'CONFIRMING' },
-               data: { status: 'CONFIRMED', version: { increment: 1 } },
+               data: { status: finalStatus, version: { increment: 1 } },
           });
 
           // Release Redis locks (segment-aware) if physical seats were locked
@@ -572,8 +592,8 @@ const cancelBooking = async (bookingId, userId) => {
           throw error;
      }
 
-     if (booking.status === 'CONFIRMED') {
-          // Cancel confirmed booking: release seats in inventory only if physical seats were allocated
+     if (booking.status === 'CONFIRMED' || booking.status === 'WAITLISTED') {
+          // Cancel confirmed or waitlisted booking: release seats in inventory only if physical seats were allocated
           if (booking.seats && booking.seats.length > 0) {
                try {
                     await inventoryClient.cancelBooking(booking.scheduleId, booking.id, booking.userId);
@@ -581,11 +601,11 @@ const cancelBooking = async (bookingId, userId) => {
                     logger.error(`Failed to release seats in inventory for booking ${booking.id}`, {
                          error: error.message,
                     });
-                    // Roll back from CANCELLING to CONFIRMED so the user can retry
+                    // Roll back from CANCELLING to previous status so the user can retry
                     await prisma.booking.updateMany({
                          where: { id: booking.id, status: 'CANCELLING' },
                          data: {
-                              status: 'CONFIRMED',
+                              status: booking.status,
                               failureReason: null,
                               version: { increment: 1 },
                          },
@@ -698,10 +718,16 @@ const getBooking = async (bookingId, userId) => {
           booking.pnr = generatedPnr;
      }
 
+     const isWaitlist = (booking.seats || []).length === 0 || booking.status === 'WAITLISTED';
+     const effectiveStatus = isWaitlist
+          ? (['CANCELLED', 'CANCELLING', 'FAILED', 'EXPIRED'].includes(booking.status) ? booking.status : 'WAITLISTED')
+          : booking.status;
+
      return {
           id: booking.id,
           pnr: booking.pnr,
-          status: booking.status,
+          status: effectiveStatus,
+          isWaitlist,
           scheduleId: booking.scheduleId,
           trainId: booking.trainId,
           trainNumber: booking.trainNumber,
@@ -723,13 +749,21 @@ const getBooking = async (bookingId, userId) => {
                seatType: s.seatType,
                price: s.price,
           })),
-          passengers: booking.passengers.map(p => ({
-               id: p.id,
-               name: p.name,
-               age: p.age,
-               gender: p.gender,
-               seatId: p.seatId,
-          })),
+          passengers: booking.passengers.map((p, idx) => {
+               const seat = booking.seats[idx] || booking.seats.find(s => s.seatId === p.seatId);
+               const coach = isWaitlist ? 'WL' : (seat?.seatType?.startsWith('1A') ? 'H1' : seat?.seatType?.startsWith('2A') ? 'A1' : seat?.seatType?.startsWith('3A') ? 'B1' : 'S1');
+               return {
+                    id: p.id,
+                    name: p.name,
+                    age: p.age,
+                    gender: p.gender,
+                    seatId: p.seatId,
+                    status: isWaitlist ? 'WL' : (booking.status === 'CONFIRMED' ? 'CNF' : booking.status),
+                    coach,
+                    seat: isWaitlist ? `WL #${idx + 1}` : (seat ? `${seat.seatNumber} (${seat.seatType})` : 'To be assigned'),
+                    berth: isWaitlist ? `WL #${idx + 1}` : (seat ? seat.seatType : 'Waitlist Queue'),
+               };
+          }),
           createdAt: booking.createdAt,
           updatedAt: booking.updatedAt,
      };
@@ -739,19 +773,45 @@ const getBooking = async (bookingId, userId) => {
 
 const getUserBookings = async (userId, { status, page = 1, limit = 10, all = false, search = '' } = {}) => {
      const skip = (page - 1) * limit;
-     const where = all ? {} : { userId };
-     if (status && status !== 'ALL') where.status = status.toUpperCase();
+     const andConditions = [];
+
+     if (!all) {
+          andConditions.push({ userId });
+     }
+
+     if (status && status !== 'ALL') {
+          const upperStatus = status.toUpperCase();
+          if (upperStatus === 'WAITLISTED') {
+               andConditions.push({
+                    OR: [
+                         { status: 'WAITLISTED' },
+                         { status: 'CONFIRMED', seats: { none: {} } },
+                    ],
+               });
+          } else if (upperStatus === 'CONFIRMED') {
+               andConditions.push({
+                    status: 'CONFIRMED',
+                    seats: { some: {} },
+               });
+          } else {
+               andConditions.push({ status: upperStatus });
+          }
+     }
 
      if (search && search.trim()) {
           const q = search.trim();
-          where.OR = [
-               { id: { contains: q, mode: 'insensitive' } },
-               { pnr: { contains: q, mode: 'insensitive' } },
-               { trainNumber: { contains: q, mode: 'insensitive' } },
-               { trainName: { contains: q, mode: 'insensitive' } },
-               { passengers: { some: { name: { contains: q, mode: 'insensitive' } } } },
-          ];
+          andConditions.push({
+               OR: [
+                    { id: { contains: q, mode: 'insensitive' } },
+                    { pnr: { contains: q, mode: 'insensitive' } },
+                    { trainNumber: { contains: q, mode: 'insensitive' } },
+                    { trainName: { contains: q, mode: 'insensitive' } },
+                    { passengers: { some: { name: { contains: q, mode: 'insensitive' } } } },
+               ],
+          });
      }
+
+     const where = andConditions.length > 0 ? { AND: andConditions } : {};
 
      const [bookings, total] = await Promise.all([
           prisma.booking.findMany({
@@ -779,34 +839,44 @@ const getUserBookings = async (userId, { status, page = 1, limit = 10, all = fal
      }
 
      return {
-          bookings: bookings.map(b => ({
-               id: b.id,
-               pnr: b.pnr,
-               status: b.status,
-               scheduleId: b.scheduleId,
-               trainNumber: b.trainNumber,
-               trainName: cleanTrainName(b.trainName),
-               departureDate: b.departureDate,
-               totalAmount: b.totalAmount,
-               tripShield: b.totalAmount > b.seats.reduce((sum, s) => sum + s.price, 0),
-               seatCount: b.seatCount,
-               fromStationId: b.fromStationId,  // --- SEGMENT BOOKING
-               toStationId: b.toStationId,      // --- SEGMENT BOOKING
-               fromSeq: b.fromSeq,              // --- SEGMENT BOOKING
-               toSeq: b.toSeq,                  // --- SEGMENT BOOKING
-               seats: b.seats.map(s => ({
-                    seatId: s.seatId,
-                    seatNumber: s.seatNumber,
-                    seatType: s.seatType,
-                    price: s.price,
-               })),
-               passengers: b.passengers.map(p => ({
-                    name: p.name,
-                    age: p.age,
-                    gender: p.gender,
-               })),
-               createdAt: b.createdAt,
-          })),
+          bookings: bookings.map(b => {
+               const isWaitlist = (b.seats || []).length === 0 || b.status === 'WAITLISTED';
+               const effectiveStatus = isWaitlist
+                    ? (['CANCELLED', 'CANCELLING', 'FAILED', 'EXPIRED'].includes(b.status) ? b.status : 'WAITLISTED')
+                    : b.status;
+               return {
+                    id: b.id,
+                    pnr: b.pnr,
+                    status: effectiveStatus,
+                    isWaitlist,
+                    scheduleId: b.scheduleId,
+                    trainNumber: b.trainNumber,
+                    trainName: cleanTrainName(b.trainName),
+                    departureDate: b.departureDate,
+                    totalAmount: b.totalAmount,
+                    tripShield: b.totalAmount > b.seats.reduce((sum, s) => sum + s.price, 0),
+                    seatCount: b.seatCount,
+                    fromStationId: b.fromStationId,  // --- SEGMENT BOOKING
+                    toStationId: b.toStationId,      // --- SEGMENT BOOKING
+                    fromSeq: b.fromSeq,              // --- SEGMENT BOOKING
+                    toSeq: b.toSeq,                  // --- SEGMENT BOOKING
+                    seats: b.seats.map(s => ({
+                         seatId: s.seatId,
+                         seatNumber: s.seatNumber,
+                         seatType: s.seatType,
+                         price: s.price,
+                    })),
+                    passengers: b.passengers.map((p, idx) => ({
+                         name: p.name,
+                         age: p.age,
+                         gender: p.gender,
+                         seatNumber: b.seats[idx]?.seatNumber || (isWaitlist ? `WL #${idx + 1}` : null),
+                         status: isWaitlist ? 'WL' : 'CNF',
+                         coach: isWaitlist ? 'WL' : (b.seats[idx]?.seatType?.startsWith('1A') ? 'H1' : b.seats[idx]?.seatType?.startsWith('2A') ? 'A1' : b.seats[idx]?.seatType?.startsWith('3A') ? 'B1' : 'S1'),
+                    })),
+                    createdAt: b.createdAt,
+               };
+          }),
           pagination: {
                page,
                limit,
@@ -867,7 +937,7 @@ const handleScheduleCancelled = async (scheduleId) => {
      const activeBookings = await prisma.booking.findMany({
           where: {
                scheduleId,
-               status: { in: ['PENDING', 'SEATS_HELD', 'PAYMENT_PENDING', 'CONFIRMED'] },
+               status: { in: ['PENDING', 'SEATS_HELD', 'PAYMENT_PENDING', 'CONFIRMED', 'WAITLISTED'] },
           },
           include: { seats: true },
      });
@@ -886,7 +956,7 @@ const handleScheduleCancelled = async (scheduleId) => {
                     where: {
                          id: booking.id,
                          version: booking.version,
-                         status: { in: ['PENDING', 'SEATS_HELD', 'PAYMENT_PENDING', 'CONFIRMED'] },
+                         status: { in: ['PENDING', 'SEATS_HELD', 'PAYMENT_PENDING', 'CONFIRMED', 'WAITLISTED'] },
                     },
                     data: {
                          status: 'CANCELLED',
@@ -905,8 +975,8 @@ const handleScheduleCancelled = async (scheduleId) => {
                // Release Redis locks if any are still held
                await forceReleaseSeatLocks(booking.scheduleId, seatIds, booking.fromSeq, booking.toSeq);
 
-               // Initiate refund for confirmed bookings that had payment
-               if (booking.status === 'CONFIRMED' && booking.paymentOrderId) {
+               // Initiate refund for confirmed or waitlisted bookings that had payment
+               if (['CONFIRMED', 'WAITLISTED'].includes(booking.status) && booking.paymentOrderId) {
                     try {
                          const idempotencyKey = `${booking.id}-schedule-cancel-refund`;
                          await paymentClient.initiateRefund(
@@ -932,7 +1002,7 @@ const handleScheduleCancelled = async (scheduleId) => {
                          firstName: userInfo.firstName,
                          scheduleId: booking.scheduleId,
                          reason: 'schedule_cancelled',
-                         refundAmount: booking.status === 'CONFIRMED' ? booking.totalAmount : 0,
+                         refundAmount: ['CONFIRMED', 'WAITLISTED'].includes(booking.status) ? booking.totalAmount : 0,
                     });
                } catch (err) {
                     logger.error('Failed to publish BOOKING_CANCELLED for schedule cancellation', {
@@ -985,13 +1055,19 @@ const getPnrStatus = async (pnr) => {
      const now = new Date();
      const isChartPrepared = depDate <= now || (depDate.getTime() - now.getTime()) < 4 * 3600 * 1000;
 
+     const isWaitlist = (booking.seats || []).length === 0 || booking.status === 'WAITLISTED';
+     const effectiveStatus = isWaitlist
+          ? (['CANCELLED', 'CANCELLING', 'FAILED', 'EXPIRED'].includes(booking.status) ? booking.status : 'WAITLISTED')
+          : booking.status;
+
      return {
           pnr: booking.pnr || cleanPnr,
           bookingId: booking.id,
           trainNumber: booking.trainNumber,
           trainName: cleanTrainName(booking.trainName),
           departureDate: booking.departureDate,
-          status: booking.status,
+          status: effectiveStatus,
+          isWaitlist,
           chartStatus: isChartPrepared ? 'CHART PREPARED' : 'CHART NOT PREPARED',
           from: fromStationName || 'Origin Station',
           to: toStationName || 'Destination Station',
@@ -1001,15 +1077,17 @@ const getPnrStatus = async (pnr) => {
           totalAmount: booking.totalAmount,
           passengers: booking.passengers.map((p, idx) => {
                const seat = booking.seats[idx] || booking.seats.find(s => s.seatId === p.seatId);
-               const coach = seat?.seatType?.startsWith('1A') ? 'H1' : seat?.seatType?.startsWith('2A') ? 'A1' : seat?.seatType?.startsWith('3A') ? 'B1' : 'S1';
+               const coach = isWaitlist ? 'WL' : (seat?.seatType?.startsWith('1A') ? 'H1' : seat?.seatType?.startsWith('2A') ? 'A1' : seat?.seatType?.startsWith('3A') ? 'B1' : 'S1');
                return {
                     name: p.name,
                     age: p.age,
                     gender: p.gender,
-                    status: booking.status === 'CONFIRMED' ? 'CNF (Confirmed)' : booking.status === 'CANCELLED' ? 'CAN (Cancelled)' : 'WL (Waitlist)',
-                    coach: coach,
-                    seat: seat ? `${seat.seatNumber} (${seat.seatType})` : 'To be assigned',
-                    berth: seat ? seat.seatType : 'Standard',
+                    status: isWaitlist
+                         ? `WL #${idx + 1} (Waitlist)`
+                         : (booking.status === 'CONFIRMED' ? 'CNF (Confirmed)' : booking.status === 'CANCELLED' ? 'CAN (Cancelled)' : 'WL (Waitlist)'),
+                    coach,
+                    seat: isWaitlist ? `WL #${idx + 1}` : (seat ? `${seat.seatNumber} (${seat.seatType})` : 'To be assigned'),
+                    berth: isWaitlist ? `WL #${idx + 1}` : (seat ? seat.seatType : 'Waitlist Queue'),
                };
           }),
           seats: booking.seats.map(s => ({

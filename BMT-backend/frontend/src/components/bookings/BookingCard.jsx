@@ -3,8 +3,9 @@ import Badge from '../ui/Badge';
 import { formatDate, formatCurrency, formatTrainName } from '../../utils/format';
 
 export default function BookingCard({ booking, onCancel }) {
-  const canCancel = booking.status === 'CONFIRMED';
+  const canCancel = booking.status === 'CONFIRMED' || booking.status === 'WAITLISTED';
   const isCancelled = booking.status === 'CANCELLED';
+  const isWaitlist = booking.status === 'WAITLISTED' || booking.isWaitlist;
 
   const displayPnr = booking.pnr || (() => {
     let hash = 0;
@@ -42,7 +43,9 @@ export default function BookingCard({ booking, onCancel }) {
             <span className="text-slate-300">&bull;</span>
             <span className="font-semibold text-slate-700">{formatDate(booking.departureDate)}</span>
             <span className="text-slate-300">&bull;</span>
-            <span>{booking.seatCount} Seat{booking.seatCount !== 1 ? 's' : ''}</span>
+            <span className={isWaitlist ? 'font-bold text-amber-700' : ''}>
+              {booking.seatCount} Passenger{booking.seatCount !== 1 ? 's' : ''} {isWaitlist ? '(WL Queue)' : '(Confirmed Berths)'}
+            </span>
           </p>
 
           {isCancelled && (

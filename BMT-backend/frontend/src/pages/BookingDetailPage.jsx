@@ -38,7 +38,8 @@ export default function BookingDetailPage() {
 
   if (!booking) return null;
 
-  const canCancel = booking.status === 'CONFIRMED';
+  const canCancel = booking.status === 'CONFIRMED' || booking.status === 'WAITLISTED';
+  const isWaitlist = booking.status === 'WAITLISTED' || (!booking.seats || booking.seats.length === 0);
 
   const displayPnr = booking.pnr || (() => {
     let hash = 0;
@@ -90,6 +91,22 @@ export default function BookingDetailPage() {
 
         <BookingStatusPoller status={booking.status} />
 
+        {booking.status === 'WAITLISTED' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center gap-4 animate-scale-in">
+            <div className="w-10 h-10 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center text-lg shadow-sm">
+              ⏳
+            </div>
+            <div>
+              <p className="font-extrabold text-amber-950 text-base">
+                Waitlisted Ticket (WL Queue)
+              </p>
+              <p className="text-xs text-amber-800 mt-0.5">
+                Your reservation is placed in the official Indian Railways Waitlist queue. Physical berths will be automatically assigned upon chart preparation or cancellation clearance.
+              </p>
+            </div>
+          </div>
+        )}
+
         {booking.status === 'CONFIRMED' && (
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-center gap-4 animate-scale-in">
             <div className="w-10 h-10 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-lg shadow-sm">
@@ -97,14 +114,10 @@ export default function BookingDetailPage() {
             </div>
             <div>
               <p className="font-extrabold text-emerald-900 text-base">
-                {(!booking.seats || booking.seats.length === 0) 
-                  ? 'Waitlist Ticket Confirmed (WL Queue)!' 
-                  : 'Booking Confirmed & Seats Reserved!'}
+                Booking Confirmed &amp; Seats Reserved!
               </p>
               <p className="text-xs text-emerald-700 mt-0.5">
-                {(!booking.seats || booking.seats.length === 0)
-                  ? 'Your waitlist reservation is confirmed. Berths will be automatically assigned upon chart preparation or cancellation clearance.'
-                  : 'Your digital ticket is confirmed. Show this PNR or SMS during onboard chart verification.'}
+                Your digital ticket is confirmed. Show this PNR or SMS during onboard chart verification.
               </p>
             </div>
           </div>
@@ -161,7 +174,12 @@ export default function BookingDetailPage() {
             </div>
             <div>
               <p className="text-slate-400 font-medium">Total Passengers</p>
-              <p className="font-bold text-slate-800 mt-0.5">{booking.seatCount} Seat{booking.seatCount !== 1 ? 's' : ''}</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {booking.seatCount} Passenger{booking.seatCount !== 1 ? 's' : ''}{' '}
+                <span className={`text-[11px] font-extrabold ${isWaitlist ? 'text-amber-700' : 'text-emerald-700'}`}>
+                  ({isWaitlist ? 'WL Queue' : 'Confirmed'})
+                </span>
+              </p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Payment Channel</p>
@@ -216,27 +234,44 @@ export default function BookingDetailPage() {
           {booking.passengers && booking.passengers.length > 0 && (
             <div>
               <h4 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider mb-3">
-                Passenger Identity Records
+                Passenger Identity Records &amp; Berth Allotments
               </h4>
               <div className="overflow-x-auto border border-slate-150 rounded-xl">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-slate-50/80 border-b border-slate-150 text-slate-400 text-left">
                       <th className="py-2.5 px-4 font-bold">#</th>
-                      <th className="py-2.5 px-4 font-bold">Full Name</th>
-                      <th className="py-2.5 px-4 font-bold">Age</th>
-                      <th className="py-2.5 px-4 font-bold">Gender</th>
+                      <th className="py-2.5 px-4 font-bold">Passenger Name</th>
+                      <th className="py-2.5 px-4 font-bold">Age / Gender</th>
+                      <th className="py-2.5 px-4 font-bold">Booking Status</th>
+                      <th className="py-2.5 px-4 font-bold">Coach</th>
+                      <th className="py-2.5 px-4 font-bold">Berth / Position</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {booking.passengers.map((p, i) => (
-                      <tr key={p.id || i} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-4 font-bold text-slate-400">{i + 1}</td>
-                        <td className="py-3 px-4 font-bold text-slate-900">{p.name}</td>
-                        <td className="py-3 px-4 text-slate-700">{p.age} Yrs</td>
-                        <td className="py-3 px-4 text-slate-700">{p.gender}</td>
-                      </tr>
-                    ))}
+                    {booking.passengers.map((p, i) => {
+                      const isPassengerWl = isWaitlist || p.status?.startsWith('WL');
+                      const passStatus = p.status || (isWaitlist ? `WL #${i + 1}` : 'CNF');
+                      const coach = p.coach || (isWaitlist ? 'WL' : (booking.seats?.[i]?.seatType?.startsWith('1A') ? 'H1' : booking.seats?.[i]?.seatType?.startsWith('2A') ? 'A1' : booking.seats?.[i]?.seatType?.startsWith('3A') ? 'B1' : 'S1'));
+                      const berth = p.seat || (booking.seats?.[i] ? `Seat #${booking.seats[i].seatNumber} (${formatSeatType(booking.seats[i].seatType)})` : (isWaitlist ? `WL #${i + 1} (Waitlist Queue)` : 'Assigned'));
+
+                      return (
+                        <tr key={p.id || i} className="hover:bg-slate-50/50">
+                          <td className="py-3 px-4 font-bold text-slate-400">{i + 1}</td>
+                          <td className="py-3 px-4 font-bold text-slate-900">{p.name}</td>
+                          <td className="py-3 px-4 text-slate-700">{p.age} Yrs &middot; {p.gender}</td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-0.5 rounded font-extrabold text-[11px] ${
+                              isPassengerWl ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            }`}>
+                              {passStatus}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-mono font-bold text-slate-800">{coach}</td>
+                          <td className="py-3 px-4 font-bold text-slate-900">{berth}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

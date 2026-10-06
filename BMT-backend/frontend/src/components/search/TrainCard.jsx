@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBookingStore } from '../../store/booking.store';
 import { useSearchStore } from '../../store/search.store';
@@ -44,6 +44,84 @@ export default function TrainCard({ train }) {
   const isVandeBharat = train.trainName?.toLowerCase().includes('vande bharat');
   const isRajdhani = train.trainName?.toLowerCase().includes('rajdhani');
   const isShatabdi = train.trainName?.toLowerCase().includes('shatabdi');
+
+  const availableCount = schedule?.available ?? 0;
+  const bookedCount = schedule?.booked ?? 0;
+  const totalSeats = train.totalSeats || 64;
+  const isWaitlist = availableCount === 0;
+  const dynamicWlPos = bookedCount > totalSeats ? (bookedCount - totalSeats + 1) : 1;
+
+  // Base fare determination
+  const baseFare = train.basePrice || train.schedule?.basePrice || (train.seats?.[0]?.price) || 450;
+
+  // Authentic IRCTC Classes determination
+  const availableClasses = useMemo(() => {
+    let classList = [];
+    if (isVandeBharat || isShatabdi) {
+      classList = [
+        { code: 'CC', name: 'AC Chair Car', mult: 1.0 },
+        { code: 'EC', name: 'Exec Chair Car', mult: 1.85 },
+      ];
+    } else if (isRajdhani) {
+      classList = [
+        { code: '3A', name: 'AC 3 Tier', mult: 1.0 },
+        { code: '2A', name: 'AC 2 Tier', mult: 1.45 },
+        { code: '1A', name: 'AC First Class', mult: 2.2 },
+      ];
+    } else {
+      classList = [
+        { code: 'SL', name: 'Sleeper', mult: 0.65 },
+        { code: '3A', name: 'AC 3 Tier', mult: 1.0 },
+        { code: '2A', name: 'AC 2 Tier', mult: 1.45 },
+        { code: '1A', name: 'AC First Class', mult: 2.2 },
+        { code: '2S', name: 'Second Sitting', mult: 0.35 },
+      ];
+    }
+
+    return classList.map((c, idx) => {
+      const price = Math.round(baseFare * c.mult);
+      const classIsWl = isWaitlist;
+      const classWlPos = classIsWl ? Math.max(1, dynamicWlPos + idx) : 1;
+      const statusText = classIsWl
+        ? `WL ${classWlPos}`
+        : `AVAILABLE-${String(availableCount).padStart(4, '0')}`;
+
+      return {
+        ...c,
+        price,
+        isWaitlist: classIsWl,
+        wlPos: classWlPos,
+        statusText,
+      };
+    });
+  }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, isWaitlist, dynamicWlPos]);
+
+  const [selectedClassCode, setSelectedClassCode] = useState(() => {
+    return availableClasses[1]?.code || availableClasses[0]?.code || '3A';
+  });
+
+  const currentSelectedClass = useMemo(() => {
+    return availableClasses.find((c) => c.code === selectedClassCode) || availableClasses[0];
+  }, [availableClasses, selectedClassCode]);
+
+  const handleBookNow = (targetClass) => {
+    const cls = targetClass || currentSelectedClass;
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent('/booking')}`);
+      return;
+    }
+    if (!schedule?.scheduleId) return;
+
+    setSelectedTrain(
+      train,
+      schedule.scheduleId,
+      cls.code,
+      cls.price,
+      cls.isWaitlist,
+      cls.wlPos
+    );
+    navigate('/booking');
+  };
 
   return (
     <div className="card border border-slate-200/90 hover:border-emerald-300 hover:shadow-card-hover rounded-2xl bg-white transition-all duration-200 group relative overflow-hidden">
@@ -244,78 +322,87 @@ export default function TrainCard({ train }) {
           </div>
         </div>
 
-        {/* ROW 3: Coach Classes + Button */}
-        <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 pt-3 border-t border-slate-100">
+        {/* ROW 3: Authentic IRCTC Travel Classes (SL, 3A, 2A, 1A, 2S) Matching Image 3 */}
+        <div className="pt-3 border-t border-slate-100 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <span>🎟️</span>
+              <span>Select Travel Class</span>
+            </p>
+            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+              <span>⚡</span> Live IRCTC Seat Availability
+            </span>
+          </div>
 
-          {/* Classes */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Coach Classes &amp; AI Forecast
-              </p>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0 inline-flex items-center gap-1">
-                <span>⚡</span> AI Forecast
-              </span>
-            </div>
+          {/* IRCTC Class Cards Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            {availableClasses.map((cls) => {
+              const isSelected = selectedClassCode === cls.code;
+              return (
+                <button
+                  key={cls.code}
+                  type="button"
+                  onClick={() => setSelectedClassCode(cls.code)}
+                  className={`text-left p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer relative ${
+                    isSelected
+                      ? 'border-amber-500 bg-amber-50/40 ring-2 ring-amber-400/40 shadow-sm'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-1 mb-1.5">
+                    <span className="font-black text-sm text-slate-900 tracking-tight">{cls.code}</span>
+                    <span className="font-extrabold text-xs text-slate-700 font-mono">&#8377; {cls.price}</span>
+                  </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
-              {Object.entries(seatSummary).filter(([k]) => k !== 'total').length > 0 ? (
-                Object.entries(seatSummary).filter(([k]) => k !== 'total').map(([type, count]) => {
-                  const wlSeed = ((parseInt(train.trainNumber || '12001', 10) + type.charCodeAt(0)) % 25) + 1;
-                  const statusStr = count > 0 ? `AVL ${count}` : `WL ${wlSeed}`;
-                  const pred = predictWaitlist(train.trainNumber, type, statusStr);
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setActivePrediction({ ...pred, className: formatSeatType(type) })}
-                      title="Click for AI Forecast"
-                      className="flex flex-col items-center bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm rounded-xl px-2 py-1.5 transition-all cursor-pointer w-full"
+                  <div>
+                    <span
+                      className={`block font-black text-xs tracking-tight ${
+                        cls.isWaitlist ? 'text-amber-700' : 'text-emerald-700'
+                      }`}
                     >
-                      <div className="flex items-center gap-1 flex-wrap justify-center">
-                        <span className="text-xs font-extrabold text-slate-800 leading-tight">
-                          {formatSeatType(type)}
-                        </span>
-                        <span className={`text-[11px] font-black leading-tight ${count > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>
-                          {statusStr}
-                        </span>
-                      </div>
-                      <span className={`text-[9px] font-black mt-0.5 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5 ${
-                        pred.probability >= 80 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
-                        pred.probability >= 55 ? 'bg-amber-50 text-amber-800 border border-amber-200' :
-                        'bg-rose-50 text-rose-800 border border-rose-200'
-                      }`}>
-                        <span>{pred.probability >= 80 ? '✓' : '⚡'}</span><span>{pred.probability}% {pred.level === 'CONFIRMED' ? 'CNF' : 'Chance'}</span>
-                      </span>
-                    </button>
-                  );
-                })
+                      {cls.statusText}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* IRCTC Advisory and Action Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 bg-slate-50/60 p-3 rounded-xl border border-slate-150">
+            <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
+              <span>ℹ️</span>
+              <span>Please check NTES website or NTES app for actual time before boarding</span>
+            </p>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowRoute(!showRoute)}
+                className="px-3 py-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors shadow-xs cursor-pointer"
+              >
+                OTHER DATES
+              </button>
+
+              {schedule && schedule.status !== 'CANCELLED' ? (
+                <button
+                  type="button"
+                  id={`book-now-${train.trainNumber}`}
+                  onClick={() => handleBookNow(currentSelectedClass)}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-md transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                    currentSelectedClass.isWaitlist
+                      ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-amber-600/30'
+                      : 'bg-gradient-to-r from-[#FB792B] to-[#F15A24] hover:from-[#E6691E] hover:to-[#D94F1C] shadow-orange-500/30'
+                  }`}
+                >
+                  <span>{currentSelectedClass.isWaitlist ? 'Book Waitlist \u2192' : 'Book Now \u2192'}</span>
+                </button>
               ) : (
-                <span className="col-span-2 text-xs text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1">
-                  General / Chair Car Available
+                <span className="px-4 py-2 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl text-xs font-bold">
+                  {schedule?.status === 'CANCELLED' ? 'Train Cancelled' : 'Not Scheduled'}
                 </span>
               )}
             </div>
-          </div>
-
-          {/* Button */}
-          <div className="sm:w-36 md:w-40 shrink-0">
-            {schedule && schedule.status !== 'CANCELLED' ? (
-              <Button
-                onClick={handleCheckAvailability}
-                className={`w-full py-3 sm:py-2.5 shadow-md font-bold ${
-                  schedule.available === 0
-                    ? '!bg-amber-600 hover:!bg-amber-700 text-white shadow-amber-500/20'
-                    : 'shadow-emerald-500/20'
-                }`}
-              >
-                {schedule.available === 0 ? 'Book Waitlist \u2192' : 'Select Seats \u2192'}
-              </Button>
-            ) : (
-              <span className="inline-block text-center w-full py-2.5 text-xs font-bold text-slate-400 bg-slate-100 rounded-xl">
-                {schedule?.status === 'CANCELLED' ? 'Train Cancelled' : 'No Schedule'}
-              </span>
-            )}
           </div>
         </div>
       </div>
