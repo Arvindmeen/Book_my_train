@@ -165,22 +165,40 @@ export default function BookingPage() {
       const formPax = getValues('passengers') || [];
       const allocated = allocateSeatsTogether(availableSeats, formPax);
 
-      if (allocated.length === formPax.length) {
-        return allocated.map((s) => s.seatId);
+      let seatIdsToUse = [];
+      if (allocated.length > 0) {
+        seatIdsToUse = allocated.map((s) => s.seatId).filter(Boolean);
+      } else if (availableSeats.length > 0) {
+        // Direct allocation fallback: grab available physical seats directly
+        const needed = Math.min(availableSeats.length, passengerCount);
+        seatIdsToUse = availableSeats.slice(0, needed).map((s) => s.seatId).filter(Boolean);
+      }
+
+      if (seatIdsToUse.length === passengerCount) {
+        return seatIdsToUse;
       }
 
       // Partial / Split Allocation: If some physical berths are available, assign them to the first passengers
       // and let remaining passengers join the official Waitlist queue (authentic IRCTC split allocation)
-      if (allocated.length > 0) {
-        showToast(`Allocated ${allocated.length} confirmed berth(s); ${formPax.length - allocated.length} passenger(s) in Waitlist Queue`, 'info');
-        return allocated.map((s) => s.seatId);
+      if (seatIdsToUse.length > 0) {
+        showToast(`Allocated ${seatIdsToUse.length} confirmed berth(s); ${passengerCount - seatIdsToUse.length} passenger(s) in Waitlist Queue`, 'info');
+        return seatIdsToUse;
       }
 
-      // If available seats run out during submission, convert to waitlist automatically
+      // If available seats genuinely run out, convert to waitlist queue
       showToast('Confirmed berths full; transitioning to official Waitlist Queue', 'info');
       return [];
     } catch (err) {
-      console.warn('Seat allocation fallback:', err);
+      console.warn('Seat allocation error, attempting clean inventory query:', err);
+      try {
+        const fallbackRes = await inventoryApi.getSeats(scheduleId, selectedClass ? { travelClass: selectedClass } : {});
+        const fallbackSeats = (fallbackRes?.data?.seats || fallbackRes?.seats || [])
+          .filter((s) => (!selectedClass || s.travelClass === selectedClass) && s.status === 'AVAILABLE');
+        if (fallbackSeats.length > 0) {
+          const needed = Math.min(fallbackSeats.length, passengerCount);
+          return fallbackSeats.slice(0, needed).map((s) => s.seatId).filter(Boolean);
+        }
+      } catch (_) {}
       return [];
     }
   };
@@ -296,6 +314,7 @@ export default function BookingPage() {
 
           <PaymentButton
             passengers={getValues('passengers') || []}
+            getPassengers={() => getValues('passengers') || []}
             scheduleId={scheduleId}
             seatIds={[]}
             disabled={!isValid}

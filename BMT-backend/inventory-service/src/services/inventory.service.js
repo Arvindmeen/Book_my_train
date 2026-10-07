@@ -11,24 +11,24 @@ function getSeatClassAndCoach(seatNumber, totalSeats = 64, trainType = 'EXPRESS'
   const isRajdhani = /rajdhani/i.test(trainName) || trainType === 'RAJDHANI';
 
   if (isVB) {
-    const ecCap = Math.max(4, Math.round(totalSeats * 0.20));
+    const ecCap = Math.max(1, Math.round(totalSeats * 0.20));
     if (seatNumber <= ecCap) return { travelClass: 'EC', coach: 'E1' };
     return { travelClass: 'CC', coach: 'C1' };
   }
 
   if (isRajdhani) {
-    const cap1A = Math.max(4, Math.round(totalSeats * 0.15));
-    const cap2A = cap1A + Math.max(8, Math.round(totalSeats * 0.30));
+    const cap1A = Math.max(1, Math.round(totalSeats * 0.15));
+    const cap2A = cap1A + Math.max(1, Math.round(totalSeats * 0.30));
     if (seatNumber <= cap1A) return { travelClass: '1A', coach: 'H1' };
     if (seatNumber <= cap2A) return { travelClass: '2A', coach: 'A1' };
     return { travelClass: '3A', coach: 'B1' };
   }
 
   // Standard Express / Mail: 1A (~6%), 2A (~12%), 3A (~32%), SL (~32%), 2S (~18%)
-  const cap1A = Math.max(2, Math.round(totalSeats * 0.06));
-  const cap2A = cap1A + Math.max(4, Math.round(totalSeats * 0.12));
-  const cap3A = cap2A + Math.max(10, Math.round(totalSeats * 0.32));
-  const capSL = cap3A + Math.max(10, Math.round(totalSeats * 0.32));
+  const cap1A = Math.max(1, Math.round(totalSeats * 0.06));
+  const cap2A = cap1A + Math.max(1, Math.round(totalSeats * 0.12));
+  const cap3A = cap2A + Math.max(1, Math.round(totalSeats * 0.32));
+  const capSL = cap3A + Math.max(1, Math.round(totalSeats * 0.32));
 
   if (seatNumber <= cap1A) return { travelClass: '1A', coach: 'H1' };
   if (seatNumber <= cap2A) return { travelClass: '2A', coach: 'A1' };
@@ -283,7 +283,7 @@ const getAvailability = async (scheduleId) => {
      // Aggregate seats by travelClass
      const seats = await prisma.seatInventory.findMany({
           where: { scheduleId },
-          select: { seatNumber: true, travelClass: true, coach: true, status: true },
+          select: { seatNumber: true, travelClass: true, coach: true, status: true, lockExpiresAt: true },
      });
 
      const classMap = {
@@ -294,13 +294,15 @@ const getAvailability = async (scheduleId) => {
           '2S': { totalSeats: 0, available: 0, locked: 0, booked: 0 },
      };
 
+     const now = new Date();
      for (const s of seats) {
           const tc = s.travelClass || getSeatClassAndCoach(s.seatNumber, schedule.totalSeats, 'EXPRESS', schedule.trainName).travelClass;
           if (!classMap[tc]) {
                classMap[tc] = { totalSeats: 0, available: 0, locked: 0, booked: 0 };
           }
           classMap[tc].totalSeats++;
-          if (s.status === 'AVAILABLE') classMap[tc].available++;
+          const isLockExpired = s.status === 'LOCKED' && s.lockExpiresAt && new Date(s.lockExpiresAt) < now;
+          if (s.status === 'AVAILABLE' || isLockExpired) classMap[tc].available++;
           else if (s.status === 'LOCKED') classMap[tc].locked++;
           else if (s.status === 'BOOKED') classMap[tc].booked++;
      }
@@ -345,11 +347,14 @@ const getSeats = async (scheduleId, filters = {}) => {
           },
      });
 
-     // Populate class & coach if missing
+     const now = new Date();
+     // Populate class & coach if missing and treat expired locks as available
      seats = seats.map(s => {
           const info = getSeatClassAndCoach(s.seatNumber, schedule.totalSeats, 'EXPRESS', schedule.trainName);
+          const isLockExpired = s.status === 'LOCKED' && s.lockExpiresAt && new Date(s.lockExpiresAt) < now;
           return {
                ...s,
+               status: isLockExpired ? 'AVAILABLE' : s.status,
                travelClass: s.travelClass || info.travelClass,
                coach: s.coach || info.coach,
           };
@@ -364,13 +369,18 @@ const getSeats = async (scheduleId, filters = {}) => {
           const fromSeq = parseInt(filters.fromSeq);
           const toSeq = parseInt(filters.toSeq);
 
-          // Find all active segment locks that overlap with the requested segment
+          // Find all active segment locks that overlap with the requested segment (ignoring expired locks)
           const overlappingLocks = await prisma.seatSegmentLock.findMany({
                where: {
                     scheduleId,
                     status: { in: ['LOCKED', 'BOOKED'] },
                     fromSeq: { lt: toSeq },   // overlap condition: a.from < b.to
                     toSeq: { gt: fromSeq },    // overlap condition: b.from < a.to
+                    OR: [
+                         { status: 'BOOKED' },
+                         { status: 'LOCKED', lockExpiresAt: { gte: now } },
+                         { status: 'LOCKED', lockExpiresAt: null },
+                    ],
                },
                select: { seatId: true, status: true },
           });

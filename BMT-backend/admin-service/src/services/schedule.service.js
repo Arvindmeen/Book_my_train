@@ -54,6 +54,8 @@ const createSchedule = async (data) => {
                seatNumber: s.seatNumber,
                seatType: s.seatType,
                price: s.price,
+               travelClass: s.travelClass || 'SL',
+               coach: s.coach || null,
           })),
           route: train.route.routeStations.map((rs) => ({
                stationId: rs.station.id,

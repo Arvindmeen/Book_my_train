@@ -77,6 +77,7 @@ export default function TrainCard({ train }) {
   const baseFare = train.basePrice || train.schedule?.basePrice || (train.seats?.[0]?.price) || 450;
 
   // Authentic IRCTC Classes in order: 1AC -> 2AC -> 3AC -> Sleeper -> General (2S)
+  // Authentic IRCTC Classes in order: 1AC -> 2AC -> 3AC -> Sleeper -> General (2S)
   const availableClasses = useMemo(() => {
     let classList = [];
     if (isVandeBharat || isShatabdi) {
@@ -100,15 +101,22 @@ export default function TrainCard({ train }) {
       ];
     }
 
-    return classList.map((c) => {
+    const processed = classList.map((c) => {
       const price = Math.round(baseFare * c.mult);
 
-      // Determine physical capacity for this class
-      let classTotalSeats = c.defaultSeats;
+      // Determine physical capacity for this class directly from database records
+      let classTotalSeats = 0;
+      let hasData = false;
+
       if (liveClassAvail?.[c.code]?.totalSeats !== undefined) {
         classTotalSeats = liveClassAvail[c.code].totalSeats;
+        hasData = true;
       } else if (seatSummary?.classes?.[c.code] !== undefined) {
         classTotalSeats = seatSummary.classes[c.code];
+        hasData = true;
+      } else if (totalSeats >= 20) {
+        // Only fall back to standard train roster if train has a full coach capacity
+        classTotalSeats = c.defaultSeats;
       }
 
       // Real booked count in this class
@@ -121,32 +129,29 @@ export default function TrainCard({ train }) {
       // Determine real available seats for this class
       let classAvailableSeats = 0;
       if (liveClassAvail?.[c.code]?.available !== undefined) {
-        classAvailableSeats = liveClassAvail[c.code].available;
-      } else if (liveWlData?.bookedByClass?.[c.code] !== undefined) {
-        classAvailableSeats = Math.max(0, classTotalSeats - bookedInClass);
-      } else if (availableCount > 0 && totalSeats > 0) {
-        const ratio = classTotalSeats / totalSeats;
-        classAvailableSeats = Math.min(classTotalSeats, Math.max(0, Math.floor(availableCount * ratio)));
-      } else {
-        // When no one has booked this train/class yet, all seats are AVAILABLE!
+        classAvailableSeats = Math.max(0, liveClassAvail[c.code].available);
+      } else if (classTotalSeats > 0) {
         classAvailableSeats = Math.max(0, classTotalSeats - bookedInClass);
       }
 
       // Authentic Waitlist condition & queue depth:
       // A class is ONLY waitlisted if:
       // 1) There are real waitlisted bookings in the DB for this class (classWlQueueCount > 0), OR
-      // 2) The physical seats in this class have genuinely been exhausted by confirmed bookings (bookedInClass >= classTotalSeats and classTotalSeats > 0)
-      const classIsWl = classWlQueueCount > 0 || (classAvailableSeats === 0 && bookedInClass >= classTotalSeats && classTotalSeats > 0);
+      // 2) The physical seats in this class have genuinely been exhausted by confirmed bookings (bookedInClass >= classTotalSeats and classTotalSeats > 0 and classAvailableSeats === 0)
+      const classIsWl = classWlQueueCount > 0 || (classTotalSeats > 0 && classAvailableSeats === 0 && bookedInClass >= classTotalSeats);
       const classWlPos = classWlQueueCount > 0 ? classWlQueueCount : 1;
 
-      // If not waitlisted, ensure available seats display is positive
-      if (!classIsWl && classAvailableSeats <= 0) {
-        classAvailableSeats = Math.max(1, classTotalSeats - bookedInClass);
-      }
+      // Check if this class is physically configured on this train
+      const isOffered = classTotalSeats > 0 || classWlQueueCount > 0;
 
-      const statusText = classIsWl
-        ? `WL ${classWlPos}`
-        : `AVAILABLE-${String(classAvailableSeats).padStart(4, '0')}`;
+      let statusText = '';
+      if (!isOffered && hasData) {
+        statusText = 'NOT OFFERED';
+      } else if (classIsWl) {
+        statusText = `WL ${classWlPos}`;
+      } else {
+        statusText = `AVAILABLE-${String(classAvailableSeats).padStart(4, '0')}`;
+      }
 
       return {
         ...c,
@@ -155,18 +160,24 @@ export default function TrainCard({ train }) {
         availableSeats: classAvailableSeats,
         isWaitlist: classIsWl,
         wlPos: classWlPos,
+        isOffered,
         statusText,
       };
     });
+
+    // If explicit class breakdown is known, only display classes that actually run on this train
+    const offeredOnly = processed.filter((c) => c.isOffered);
+    return offeredOnly.length > 0 ? offeredOnly : processed;
   }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, totalSeats, seatSummary, liveWlData, liveClassAvail]);
 
   const [selectedClassCode, setSelectedClassCode] = useState(() => {
-    // Default to 3A or SL or first class
     return '3A';
   });
 
   const currentSelectedClass = useMemo(() => {
-    return availableClasses.find((c) => c.code === selectedClassCode) || availableClasses[0];
+    return availableClasses.find((c) => c.code === selectedClassCode && c.isOffered !== false)
+      || availableClasses.find((c) => c.isOffered !== false)
+      || availableClasses[0];
   }, [availableClasses, selectedClassCode]);
 
   const handleCheckAvailability = () => {

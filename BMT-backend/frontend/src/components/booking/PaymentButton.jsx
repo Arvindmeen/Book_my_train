@@ -7,7 +7,7 @@ import { loadRazorpayScript, openRazorpayCheckout } from '../../utils/razorpay';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 
-export default function PaymentButton({ passengers, scheduleId, seatIds, disabled, tripShield, onBeforeCreateBooking }) {
+export default function PaymentButton({ passengers, getPassengers, scheduleId, seatIds, disabled, tripShield, onBeforeCreateBooking }) {
   const [loading, setLoading] = useState(false);
   const user = useAuthStore((s) => s.user);
   const reset = useBookingStore((s) => s.reset);
@@ -28,13 +28,25 @@ export default function PaymentButton({ passengers, scheduleId, seatIds, disable
         }
       }
 
+      let activePax = typeof getPassengers === 'function' ? getPassengers() : passengers;
+      if (!Array.isArray(activePax) || activePax.length === 0) {
+        activePax = passengers || [];
+      }
+      // Ensure passenger objects have valid names, ages, and genders
+      const sanitizedPassengers = activePax.map((p, idx) => ({
+        name: (p?.name || user?.firstName || `Passenger ${idx + 1}`).trim(),
+        age: Math.max(1, Math.min(120, Number(p?.age) || 25)),
+        gender: p?.gender === 'FEMALE' ? 'FEMALE' : (p?.gender === 'OTHER' ? 'OTHER' : 'MALE'),
+        berthPreference: p?.berthPreference || 'NO_PREF',
+      }));
+
       const idempotencyKey = crypto.randomUUID();
       // --- SEGMENT BOOKING: Include fromStation/toStation segment params ---
       const res = await bookingApi.create({
         scheduleId,
         seatIds: finalSeatIds,
         travelClass: selectedClass,
-        passengers,
+        passengers: sanitizedPassengers,
         idempotencyKey,
         tripShield: Boolean(tripShield),
         fromStationId: fromStation?.stationId,
