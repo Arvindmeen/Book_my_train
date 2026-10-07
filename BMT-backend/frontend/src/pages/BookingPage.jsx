@@ -210,14 +210,14 @@ export default function BookingPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
         
         {/* Breadcrumb Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <Link
             to="/search"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 transition-colors"
           >
             <span>&larr;</span> Back to Train Search Results
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isWaitlist ? (
               <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">
                 <span>⚡</span>
@@ -304,12 +304,12 @@ export default function BookingPage() {
 
         {/* Payment Confirmation Card */}
         <div className="bg-white border border-slate-150 rounded-2xl p-6 shadow-card space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-              <span className="text-base">🔒</span>
+              <span className="text-base shrink-0">🔒</span>
               <span>256-Bit Encrypted Payment with Book My Train Direct Gateway</span>
             </div>
-            <span className="text-xs font-bold text-emerald-600">Instant Refund Eligible</span>
+            <span className="text-xs font-bold text-emerald-600 self-start sm:self-auto">Instant Refund Eligible</span>
           </div>
 
           <PaymentButton

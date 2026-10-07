@@ -122,12 +122,12 @@ export default function RouteManager() {
 
   return (
     <form onSubmit={handleCreate} className="card">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2.5">
         <div>
           <h3 className="font-serif font-black text-slate-900 text-lg">Create Train Routes</h3>
           <p className="text-xs text-slate-500 font-medium">Link stations, scheduled arrival/departure halts, and track corridor distances</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
             {trains.length} Trains
           </span>
@@ -192,9 +192,13 @@ export default function RouteManager() {
           </div>
         ))}
       </div>
-      <div className="flex gap-3">
-        <Button type="button" variant="secondary" onClick={addStop}>+ Add Stop</Button>
-        <Button type="submit" loading={creating}>Create Route</Button>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button type="button" variant="secondary" onClick={addStop} className="w-full sm:w-auto">
+          + Add Stop
+        </Button>
+        <Button type="submit" loading={creating} className="w-full sm:w-auto">
+          Create Route
+        </Button>
       </div>
     </form>
   );

@@ -471,11 +471,11 @@ export default function TrainCard({ train }) {
               <span>Please check NTES website or NTES app for actual time before boarding</span>
             </p>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button
                 type="button"
                 onClick={() => setShowRoute(!showRoute)}
-                className="px-3 py-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors shadow-xs cursor-pointer"
+                className="flex-1 sm:flex-initial px-3 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors shadow-xs cursor-pointer text-center whitespace-nowrap"
               >
                 OTHER DATES
               </button>
@@ -485,7 +485,7 @@ export default function TrainCard({ train }) {
                   type="button"
                   id={`book-now-${train.trainNumber}`}
                   onClick={() => handleBookNow(currentSelectedClass)}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-md transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                  className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-md transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 whitespace-nowrap ${
                     currentSelectedClass.isWaitlist
                       ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-amber-600/30'
                       : 'bg-gradient-to-r from-[#FB792B] to-[#F15A24] hover:from-[#E6691E] hover:to-[#D94F1C] shadow-orange-500/30'
@@ -494,7 +494,7 @@ export default function TrainCard({ train }) {
                   <span>{currentSelectedClass.isWaitlist ? 'Book Waitlist \u2192' : 'Book Now \u2192'}</span>
                 </button>
               ) : (
-                <span className="px-4 py-2 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl text-xs font-bold">
+                <span className="flex-1 sm:flex-initial px-4 py-2.5 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl text-xs font-bold text-center">
                   {schedule?.status === 'CANCELLED' ? 'Train Cancelled' : 'Not Scheduled'}
                 </span>
               )}

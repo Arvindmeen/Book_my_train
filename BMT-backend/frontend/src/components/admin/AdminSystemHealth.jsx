@@ -88,8 +88,8 @@ export default function AdminSystemHealth() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="text-left sm:text-right">
             <span className="text-[10px] text-slate-400 uppercase font-bold block">Live Ping Synced</span>
             <span className="text-xs font-mono font-bold text-emerald-700">{lastPinged} IST</span>
           </div>
@@ -97,24 +97,24 @@ export default function AdminSystemHealth() {
           <button
             onClick={fetchRealHealth}
             disabled={refreshing}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition-all text-white flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-75"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition-all text-white flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-75"
           >
-            <svg className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className={`w-3.5 h-3.5 shrink-0 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <span>{refreshing ? 'Probing Real Latency...' : 'Ping All Services'}</span>
+            <span>{refreshing ? 'Probing...' : 'Ping All Services'}</span>
           </button>
         </div>
       </div>
 
       {/* Microservices Health Matrix with Live Pinged Telemetry */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h3 className="font-bold text-sm text-slate-900">
             Active Microservice Endpoints ({pingStats.healthyCount} of {services.length} Operational)
           </h3>
-          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 self-start sm:self-auto">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             Live Cluster Average Latency: <strong>{pingStats.avgLatency}</strong>
           </span>
         </div>

@@ -129,12 +129,12 @@ export default function ScheduleManager() {
   return (
     <div>
       <form onSubmit={handleCreate} className="card mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2.5">
           <div>
             <h3 className="font-serif font-black text-slate-900 text-lg">Create Train Schedule</h3>
             <p className="text-xs text-slate-500 font-medium">Provision date-specific active runs and inventory windows</p>
           </div>
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full shrink-0">
             {trains.length} Trains Registered
           </span>
         </div>

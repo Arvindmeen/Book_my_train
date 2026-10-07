@@ -292,7 +292,7 @@ export default function PnrPage() {
                         <p className="text-slate-400">{p.quota} &middot; Booking: {p.bookingStatus}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <span className={`font-bold px-2.5 py-0.5 rounded-md ${
                         p.status.includes('CNF') ? 'bg-emerald-100 text-emerald-800' :
                         p.status.includes('RAC') ? 'bg-teal-100 text-teal-800' :
@@ -310,15 +310,15 @@ export default function PnrPage() {
             </div>
 
             {/* Security Guarantee */}
-            <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs">
+            <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2.5">
-                <span className="text-xl">🛡️</span>
+                <span className="text-xl shrink-0">🛡️</span>
                 <div>
                   <p className="font-extrabold text-slate-900">100% Instant Refund Protection</p>
                   <p className="text-slate-600">If your waitlisted ticket is dropped post chart preparation, refund is credited to UPI automatically in &lt; 60 seconds.</p>
                 </div>
               </div>
-              <Link to="/bookings" className="font-bold text-emerald-700 hover:text-emerald-800 whitespace-nowrap ml-4">
+              <Link to="/bookings" className="font-bold text-emerald-700 hover:text-emerald-800 whitespace-nowrap self-start sm:self-auto sm:ml-4">
                 Manage Ticket &rarr;
               </Link>
             </div>

@@ -12,16 +12,16 @@ const GENDER_OPTIONS = [
 export default function PassengerForm({ index, seat, register, errors, selectedClass, isWaitlist, onRemove, canRemove }) {
   return (
     <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3.5 transition-all hover:bg-slate-50 hover:border-slate-300">
-      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
         <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">
+          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
             {index + 1}
           </span>
           <span className="text-sm font-extrabold text-slate-800">
             Passenger {index + 1}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
             isWaitlist || seat?.seatType === 'Waitlist'
               ? 'text-amber-800 bg-amber-100 border border-amber-300'
@@ -47,7 +47,7 @@ export default function PassengerForm({ index, seat, register, errors, selectedC
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="sm:col-span-1">
           <Input
             label="Full Name (Govt ID)"

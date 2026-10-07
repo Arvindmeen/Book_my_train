@@ -293,15 +293,15 @@ export default function AdminAuditManager() {
       </div>
 
       {/* Summary Metrics Bar: Displays Exact Passenger Counts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
-          <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider">TOTAL SYSTEM BOOKINGS</span>
+      <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 min-w-0">
+          <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider truncate">TOTAL SYSTEM BOOKINGS</span>
           <span className="font-black text-xl text-slate-900">{bookings.length}</span>
-          <span className="text-[10px] text-slate-500 block">Reservations in DB</span>
+          <span className="text-[10px] text-slate-500 block truncate">Reservations in DB</span>
         </div>
-        <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200/80">
-          <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider">CONFIRMED &amp; WAITLIST PASSENGERS</span>
-          <div className="flex items-baseline gap-2">
+        <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200/80 min-w-0">
+          <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider truncate">CONFIRMED &amp; WAITLIST PASSENGERS</span>
+          <div className="flex items-baseline gap-2 flex-wrap">
             <span className="font-black text-xl text-emerald-800">{confirmedPaxCount} <span className="text-xs font-bold">CNF</span></span>
             {waitlistPaxCount > 0 && (
               <span className="font-black text-xs text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
@@ -309,21 +309,21 @@ export default function AdminAuditManager() {
               </span>
             )}
           </div>
-          <span className="text-[10px] text-emerald-600 block">
+          <span className="text-[10px] text-emerald-600 block truncate">
             Across {confirmedBookingCount + waitlistBookingCount} active bookings
           </span>
         </div>
-        <div className="bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-200/80">
-          <span className="text-indigo-700 text-[10px] font-bold block uppercase tracking-wider">TOTAL PASSENGERS</span>
+        <div className="bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-200/80 min-w-0">
+          <span className="text-indigo-700 text-[10px] font-bold block uppercase tracking-wider truncate">TOTAL PASSENGERS</span>
           <span className="font-black text-xl text-indigo-800">
             {bookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0)}
           </span>
-          <span className="text-[10px] text-indigo-600 block">Manifest Travellers</span>
+          <span className="text-[10px] text-indigo-600 block truncate">Manifest Travellers</span>
         </div>
-        <div className="bg-purple-50/50 p-3.5 rounded-2xl border border-purple-200/80">
-          <span className="text-purple-700 text-[10px] font-bold block uppercase tracking-wider">NET REVENUE</span>
+        <div className="bg-purple-50/50 p-3.5 rounded-2xl border border-purple-200/80 min-w-0">
+          <span className="text-purple-700 text-[10px] font-bold block uppercase tracking-wider truncate">NET REVENUE</span>
           <span className="font-black text-xl text-purple-900">{formatCurrency(totalRevenue)}</span>
-          <span className="text-[10px] text-purple-600 block">Processed via Gateway</span>
+          <span className="text-[10px] text-purple-600 block truncate">Processed via Gateway</span>
         </div>
       </div>
 

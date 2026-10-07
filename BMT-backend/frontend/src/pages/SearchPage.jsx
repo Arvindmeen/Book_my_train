@@ -87,8 +87,8 @@ export default function SearchPage() {
           <div className="space-y-4">
             {/* Search Results Summary Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-150 shadow-xs">
-              <div>
-                <p className="text-sm font-bold text-slate-800">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-800 break-words">
                   Found <span className="text-emerald-700 font-extrabold">{filteredTrains.length}</span> trains
                   {results.from?.resolved && ` from ${results.from.resolved}`}
                   {results.to?.resolved && ` to ${results.to.resolved}`}

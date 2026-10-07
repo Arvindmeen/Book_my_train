@@ -5,7 +5,7 @@ export default function BookingSummary({ train, seats, totalPrice, departureDate
 
   return (
     <div className="card p-6 bg-white border border-slate-150 shadow-card mb-6">
-      <div className="flex items-center justify-between border-b border-slate-150 pb-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-150 pb-4 mb-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
             Selected Train
@@ -14,7 +14,7 @@ export default function BookingSummary({ train, seats, totalPrice, departureDate
           <p className="text-xs text-slate-500">#{train?.trainNumber}</p>
         </div>
         {departureDate && (
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <span className="text-[10px] font-bold text-slate-400 uppercase">Departure</span>
             <p className="text-xs font-bold text-slate-800">{formatDate(departureDate)}</p>
           </div>

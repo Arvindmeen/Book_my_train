@@ -584,73 +584,75 @@ export default function TrainManager() {
               </div>
             </div>
 
-            <div className="max-h-60 overflow-y-auto space-y-2 p-2 bg-slate-50 rounded-xl border border-slate-200/80">
-              {seatRows.map((row, i) => (
-                <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200 shadow-xs">
-                  <div className="w-16">
-                    <Input
-                      label={i === 0 ? 'Seat #' : undefined}
-                      type="number"
-                      value={row.seatNumber}
-                      onChange={(e) => updateSeatRow(i, 'seatNumber', e.target.value)}
-                      placeholder="#"
-                      required
-                    />
-                  </div>
-                  {row.travelClass && (
-                    <div className="w-14 text-center">
-                      {i === 0 && <span className="block text-[10px] font-bold text-slate-500 mb-1">Class</span>}
-                      <span className="px-1.5 py-1 rounded bg-slate-100 text-slate-700 text-xs font-mono font-bold border border-slate-200 block">
-                        {row.travelClass}
-                      </span>
+            <div className="max-h-60 overflow-y-auto overflow-x-auto space-y-2 p-2 bg-slate-50 rounded-xl border border-slate-200/80">
+              <div className="min-w-[500px] space-y-2">
+                {seatRows.map((row, i) => (
+                  <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200 shadow-xs">
+                    <div className="w-16">
+                      <Input
+                        label={i === 0 ? 'Seat #' : undefined}
+                        type="number"
+                        value={row.seatNumber}
+                        onChange={(e) => updateSeatRow(i, 'seatNumber', e.target.value)}
+                        placeholder="#"
+                        required
+                      />
                     </div>
-                  )}
-                  {row.coach && (
-                    <div className="w-14 text-center">
-                      {i === 0 && <span className="block text-[10px] font-bold text-slate-500 mb-1">Coach</span>}
-                      <span className="px-1.5 py-1 rounded bg-emerald-50 text-emerald-800 text-xs font-mono font-bold border border-emerald-200 block">
-                        {row.coach}
-                      </span>
+                    {row.travelClass && (
+                      <div className="w-14 text-center">
+                        {i === 0 && <span className="block text-[10px] font-bold text-slate-500 mb-1">Class</span>}
+                        <span className="px-1.5 py-1 rounded bg-slate-100 text-slate-700 text-xs font-mono font-bold border border-slate-200 block">
+                          {row.travelClass}
+                        </span>
+                      </div>
+                    )}
+                    {row.coach && (
+                      <div className="w-14 text-center">
+                        {i === 0 && <span className="block text-[10px] font-bold text-slate-500 mb-1">Coach</span>}
+                        <span className="px-1.5 py-1 rounded bg-emerald-50 text-emerald-800 text-xs font-mono font-bold border border-emerald-200 block">
+                          {row.coach}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-[130px]">
+                      <Select
+                        label={i === 0 ? 'Type' : undefined}
+                        value={row.seatType}
+                        onChange={(e) => updateSeatRow(i, 'seatType', e.target.value)}
+                        options={seatTypeOptions}
+                      />
                     </div>
-                  )}
-                  <div className="flex-1 min-w-[130px]">
-                    <Select
-                      label={i === 0 ? 'Type' : undefined}
-                      value={row.seatType}
-                      onChange={(e) => updateSeatRow(i, 'seatType', e.target.value)}
-                      options={seatTypeOptions}
-                    />
+                    <div className="w-24">
+                      <Input
+                        label={i === 0 ? 'Price (₹)' : undefined}
+                        type="number"
+                        value={row.price}
+                        onChange={(e) => updateSeatRow(i, 'price', e.target.value)}
+                        placeholder="₹"
+                        required
+                      />
+                    </div>
+                    {seatRows.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeSeatRow(i)}
+                        className="text-rose-500 hover:text-rose-700 text-lg px-2 mt-auto pb-1 cursor-pointer"
+                        title="Delete seat"
+                      >
+                        &times;
+                      </button>
+                    )}
                   </div>
-                  <div className="w-24">
-                    <Input
-                      label={i === 0 ? 'Price (₹)' : undefined}
-                      type="number"
-                      value={row.price}
-                      onChange={(e) => updateSeatRow(i, 'price', e.target.value)}
-                      placeholder="₹"
-                      required
-                    />
-                  </div>
-                  {seatRows.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeSeatRow(i)}
-                      className="text-rose-500 hover:text-rose-700 text-lg px-2 mt-auto pb-1"
-                      title="Delete seat"
-                    >
-                      &times;
-                    </button>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-            <Button type="submit" loading={creating} className="bg-emerald-600 hover:bg-emerald-700">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3 border-t border-slate-100">
+            <Button type="submit" loading={creating} className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
               Create Train Service
             </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowCreateForm(false)}>
+            <Button type="button" variant="secondary" onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
           </div>
@@ -727,7 +729,7 @@ export default function TrainManager() {
                       <span className="font-mono font-black text-xs text-white bg-slate-900 px-2.5 py-1 rounded-lg shadow-xs shrink-0 tracking-wider">
                         #{train.trainNumber}
                       </span>
-                      <h4 className="font-serif font-black text-sm sm:text-base text-slate-900 truncate">
+                      <h4 className="font-serif font-black text-sm sm:text-base text-slate-900 truncate max-w-[200px] sm:max-w-none">
                         {train.trainName}
                       </h4>
                       <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">

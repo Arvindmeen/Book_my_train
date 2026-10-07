@@ -53,13 +53,13 @@ export default function StationManager() {
     <div>
       <form onSubmit={handleCreate} className="card mb-6">
         <h3 className="font-semibold mb-4">Create Station</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           <Input label="Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required maxLength={10} />
           <Input label="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
           <Input label="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} required />
         </div>
-        <Button type="submit" loading={creating} className="mt-4">Create Station</Button>
+        <Button type="submit" loading={creating} className="mt-4 w-full sm:w-auto">Create Station</Button>
       </form>
 
       <div className="card">

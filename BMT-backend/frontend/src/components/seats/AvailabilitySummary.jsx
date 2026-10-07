@@ -29,7 +29,7 @@ export default function AvailabilitySummary({ availability, train }) {
         </div>
 
         {/* Live Counts Statistics */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-4 text-center">
+        <div className="grid grid-cols-2 min-[440px]:grid-cols-4 gap-2 sm:gap-4 text-center">
           <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3">
             <p className="text-2xl font-black text-emerald-700">{availability.available}</p>
             <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mt-0.5">Available</p>

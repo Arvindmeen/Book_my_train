@@ -315,7 +315,7 @@ export default function ProfileModal({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 aspect-square ${
                             isActive
                               ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-xs'
                               : `${mod.iconBg} ${mod.iconColor} group-hover:scale-105`

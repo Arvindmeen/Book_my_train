@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { useToast } from '../components/ui/Toast';
@@ -322,30 +322,30 @@ export default function ProfilePage() {
           </div>
 
           {/* Key Metrics Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-150 text-xs">
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
-              <span className="text-slate-400 text-[11px] font-bold block">PROFILE COMPLETION</span>
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-150 text-xs">
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 min-w-0">
+              <span className="text-slate-400 text-[11px] font-bold block truncate">PROFILE COMPLETION</span>
               <span className={`font-black text-lg ${completeness.percentage === 100 ? 'text-emerald-700' : 'text-amber-600'}`}>
                 {completeness.percentage}%
               </span>
-              <span className="text-[10px] text-slate-500 block">{completeness.percentage === 100 ? 'All details set' : 'Action recommended'}</span>
+              <span className="text-[10px] text-slate-500 block truncate">{completeness.percentage === 100 ? 'All details set' : 'Action recommended'}</span>
             </div>
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
-              <span className="text-slate-400 text-[11px] font-bold block">FASTPASS GATEWAY</span>
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 min-w-0">
+              <span className="text-slate-400 text-[11px] font-bold block truncate">FASTPASS GATEWAY</span>
               <span className="font-black text-base text-slate-900">Active ✓</span>
-              <span className="text-[10px] text-emerald-600 block">Sub-50ms Tatkal Engine</span>
+              <span className="text-[10px] text-emerald-600 block truncate">Sub-50ms Tatkal Engine</span>
             </div>
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
-              <span className="text-slate-400 text-[11px] font-bold block">SAVED PASSENGERS</span>
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 min-w-0">
+              <span className="text-slate-400 text-[11px] font-bold block truncate">SAVED PASSENGERS</span>
               <span className="font-black text-lg text-slate-900">{passengers.length} Active</span>
-              <span className="text-[10px] text-slate-500 block">Scoped to this account</span>
+              <span className="text-[10px] text-slate-500 block truncate">Scoped to this account</span>
             </div>
-            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
-              <span className="text-slate-400 text-[11px] font-bold block">BOOK MY TRAIN ACCOUNT</span>
-              <span className="font-black text-base text-slate-900">
+            <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 min-w-0">
+              <span className="text-slate-400 text-[11px] font-bold block truncate">BOOK MY TRAIN ACCOUNT</span>
+              <span className="font-black text-base text-slate-900 truncate block">
                 {user?.irctcUsername ? user.irctcUsername : 'Not Linked'}
               </span>
-              <span className="text-[10px] text-slate-500 block">{user?.irctcUsername ? 'Verified Handle' : 'Click to link ID'}</span>
+              <span className="text-[10px] text-slate-500 block truncate">{user?.irctcUsername ? 'Verified Handle' : 'Click to link ID'}</span>
             </div>
           </div>
         </div>
