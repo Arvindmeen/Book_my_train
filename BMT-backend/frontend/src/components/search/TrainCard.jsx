@@ -132,12 +132,12 @@ export default function TrainCard({ train }) {
         classAvailableSeats = Math.max(0, classTotalSeats - bookedInClass);
       }
 
-      // Authentic Waitlist condition:
+      // Authentic Waitlist condition & queue depth:
       // A class is ONLY waitlisted if:
       // 1) There are real waitlisted bookings in the DB for this class (classWlQueueCount > 0), OR
       // 2) The physical seats in this class have genuinely been exhausted by confirmed bookings (bookedInClass >= classTotalSeats and classTotalSeats > 0)
       const classIsWl = classWlQueueCount > 0 || (classAvailableSeats === 0 && bookedInClass >= classTotalSeats && classTotalSeats > 0);
-      const classWlPos = classWlInfo?.nextWlPosition ?? (classWlQueueCount + 1);
+      const classWlPos = classWlQueueCount > 0 ? classWlQueueCount : 1;
 
       // If not waitlisted, ensure available seats display is positive
       if (!classIsWl && classAvailableSeats <= 0) {

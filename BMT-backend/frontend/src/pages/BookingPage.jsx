@@ -169,6 +169,13 @@ export default function BookingPage() {
         return allocated.map((s) => s.seatId);
       }
 
+      // Partial / Split Allocation: If some physical berths are available, assign them to the first passengers
+      // and let remaining passengers join the official Waitlist queue (authentic IRCTC split allocation)
+      if (allocated.length > 0) {
+        showToast(`Allocated ${allocated.length} confirmed berth(s); ${formPax.length - allocated.length} passenger(s) in Waitlist Queue`, 'info');
+        return allocated.map((s) => s.seatId);
+      }
+
       // If available seats run out during submission, convert to waitlist automatically
       showToast('Confirmed berths full; transitioning to official Waitlist Queue', 'info');
       return [];

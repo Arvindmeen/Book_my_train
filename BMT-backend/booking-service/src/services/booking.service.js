@@ -104,10 +104,11 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
           throw new BadRequestError('idempotencyKey is required');
      }
 
-     const isWaitlist = !Array.isArray(seatIds) || seatIds.length === 0;
+     const hasPhysicalSeats = Array.isArray(seatIds) && seatIds.length > 0;
+     const isWaitlist = !hasPhysicalSeats;
 
-     if (!isWaitlist && seatIds.length !== passengers.length) {
-          throw new BadRequestError('Number of seats must match number of passengers');
+     if (hasPhysicalSeats && seatIds.length > passengers.length) {
+          throw new BadRequestError('Number of seats cannot exceed number of passengers');
      }
 
      // --- SEGMENT BOOKING: Validate segment params if provided ---
@@ -133,7 +134,18 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
      let bookingSeats = [];
      let totalAmount = 0;
 
-     if (!isWaitlist) {
+     const CLASS_PRICE_MULTIPLIERS = {
+          '1A': 2.2,
+          '2A': 1.45,
+          '3A': 1.0,
+          'SL': 0.65,
+          '2S': 0.35,
+          'EC': 1.85,
+          'CC': 1.0,
+     };
+     const mult = CLASS_PRICE_MULTIPLIERS[travelClass] || 1.0;
+
+     if (hasPhysicalSeats) {
           // --- SEGMENT BOOKING: Pass segment params to get segment-aware seat availability ---
           const seatData = await inventoryClient.getSeats(scheduleId, {
                fromSeq: fromSeq || undefined,
@@ -157,6 +169,13 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
                bookingSeats.push(seat);
                totalAmount += seat.price;
           }
+
+          // Partial / Split Allocation: If more passengers than physical seats, add waitlist fare for unseated passengers
+          const wlPaxCount = passengers.length - seatIds.length;
+          if (wlPaxCount > 0) {
+               const baseFare = bookingSeats[0]?.price ? Math.round(bookingSeats[0].price / mult) : 450;
+               totalAmount += wlPaxCount * Math.round(baseFare * mult);
+          }
      } else {
           // Waitlist booking: calculate fare from base ticket price and class multiplier
           let basePrice = 450;
@@ -166,17 +185,6 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
                     basePrice = seatData.seats[0].price;
                }
           } catch (_) {}
-
-          const CLASS_PRICE_MULTIPLIERS = {
-               '1A': 2.2,
-               '2A': 1.45,
-               '3A': 1.0,
-               'SL': 0.65,
-               '2S': 0.35,
-               'EC': 1.85,
-               'CC': 1.0,
-          };
-          const mult = CLASS_PRICE_MULTIPLIERS[travelClass] || 1.0;
           totalAmount = passengers.length * Math.round(basePrice * mult);
      }
 
@@ -246,7 +254,7 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
                               name: p.name,
                               age: p.age,
                               gender: p.gender,
-                              seatId: isWaitlist ? null : (seatIds[index] || null),
+                              seatId: (hasPhysicalSeats && index < seatIds.length) ? seatIds[index] : null,
                          })),
                     },
                },
@@ -254,7 +262,7 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
           });
 
           // 7. Execute saga Step 1: Hold seats in inventory (only if physical seats exist)
-          if (!isWaitlist) {
+          if (hasPhysicalSeats) {
                await saga.executeHoldSeats(booking, sortedSeatIds, config.LOCK_TTL_SECONDS, fromSeq, toSeq);
           } else {
                await prisma.booking.update({
@@ -274,7 +282,8 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
 
           // Calculate prior waitlist passengers strictly for this specific class on this schedule
           let priorWlCount = 0;
-          if (isWaitlist) {
+          const hasWaitlistedPax = !hasPhysicalSeats || passengers.length > seatIds.length;
+          if (hasWaitlistedPax) {
                try {
                     const priorWlBookings = await prisma.booking.findMany({
                          where: {
@@ -282,11 +291,14 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
                               travelClass: booking.travelClass,
                               id: { not: booking.id },
                               status: { in: ['WAITLISTED', 'CONFIRMING', 'PAYMENT_PENDING', 'SEATS_HELD', 'CONFIRMED'] },
-                              seats: { none: {} },
+                              passengers: { some: { seatId: null } },
                          },
-                         select: { seatCount: true },
+                         include: { passengers: true },
                     });
-                    priorWlCount = priorWlBookings.reduce((sum, b) => sum + (b.seatCount || 0), 0);
+                    priorWlCount = priorWlBookings.reduce((sum, b) => {
+                         const unassigned = b.passengers.filter(p => !p.seatId).length;
+                         return sum + unassigned;
+                    }, 0);
                } catch (_) {}
           }
 
@@ -307,15 +319,19 @@ const createBooking = async (userId, scheduleId, seatIds = [], passengers, idemp
                     price: s.price,
                })),
                passengers: booking.passengers.map((p, idx) => {
-                    const seat = booking.seats.find(s => s.seatId === p.seatId);
+                    const seat = p.seatId ? booking.seats.find(s => s.seatId === p.seatId) : null;
+                    const isPaxWl = !seat;
                     const tc = booking.travelClass || 'SL';
+                    const defaultCoach = tc === '1A' ? 'H1' : tc === '2A' ? 'A1' : tc === '3A' ? 'B1' : tc === '2S' ? 'D1' : tc === 'EC' ? 'E1' : tc === 'CC' ? 'C1' : 'S1';
+                    const wlPosNumber = priorWlCount + (idx - booking.seats.length) + 1;
                     return {
                          name: p.name,
                          age: p.age,
                          gender: p.gender,
-                         seatNumber: seat?.seatNumber || `WL #${priorWlCount + idx + 1}`,
+                         status: isPaxWl ? `WL #${Math.max(1, wlPosNumber)}` : 'CNF',
+                         seatNumber: seat?.seatNumber || `WL #${Math.max(1, wlPosNumber)}`,
                          seatType: seat?.seatType || `${tc} Waitlist Queue`,
-                         coach: isWaitlist ? `WL (${tc})` : (tc === '1A' ? 'H1' : tc === '2A' ? 'A1' : tc === '3A' ? 'B1' : tc === '2S' ? 'D1' : tc === 'EC' ? 'E1' : tc === 'CC' ? 'C1' : 'S1'),
+                         coach: seat ? defaultCoach : `WL (${tc})`,
                     };
                }),
                paymentOrder: {
@@ -730,73 +746,74 @@ const promoteNextWaitlistedBookings = async (scheduleId, releasedSeats) => {
      let seatsPool = [...releasedSeats];
 
      try {
-          // Find earliest active waitlisted bookings on this schedule (FIFO queue)
-          const waitlistBookings = await prisma.booking.findMany({
+          // Find active bookings with passengers waiting for seats (seatId: null) in FIFO order
+          const eligibleBookings = await prisma.booking.findMany({
                where: {
                     scheduleId,
-                    OR: [
-                         { status: 'WAITLISTED', seats: { none: {} } },
-                         { status: 'CONFIRMED', seats: { none: {} } },
-                    ],
+                    status: { in: ['WAITLISTED', 'CONFIRMING', 'PAYMENT_PENDING', 'SEATS_HELD', 'CONFIRMED'] },
+                    passengers: { some: { seatId: null } },
                },
-               include: { passengers: true },
-               orderBy: { createdAt: 'asc' }, // Strict FIFO: earliest waitlist reservation first
+               include: {
+                    passengers: { orderBy: { createdAt: 'asc' } },
+                    seats: true,
+               },
+               orderBy: { createdAt: 'asc' }, // Strict FIFO: earliest reservation first
           });
 
-          for (const wlBooking of waitlistBookings) {
+          for (const wlBooking of eligibleBookings) {
                if (seatsPool.length === 0) break;
 
                const bookingClass = wlBooking.travelClass || 'SL';
-               const matchingSeats = seatsPool.filter(s => !s.travelClass || s.travelClass === bookingClass);
-               const paxCount = wlBooking.passengers.length || wlBooking.seatCount || 1;
+               const unassignedPassengers = wlBooking.passengers.filter(p => !p.seatId);
+               const newlyAssignedSeats = [];
 
-               if (matchingSeats.length >= paxCount) {
-                    const assignedSeats = [];
-                    for (let i = 0; i < paxCount; i++) {
-                         const matchSeat = matchingSeats[i];
-                         const poolIdx = seatsPool.findIndex(s => s.seatId === matchSeat.seatId);
-                         if (poolIdx !== -1) {
-                              assignedSeats.push(seatsPool.splice(poolIdx, 1)[0]);
-                         }
-                    }
-                    const assignedSeatIds = assignedSeats.map(s => s.seatId);
+               for (const pax of unassignedPassengers) {
+                    if (seatsPool.length === 0) break;
 
-                    // 1. Assign seats in inventory to this promoted booking
+                    const matchIdx = seatsPool.findIndex(s => !s.travelClass || s.travelClass === bookingClass);
+                    if (matchIdx === -1) continue;
+
+                    const seat = seatsPool.splice(matchIdx, 1)[0];
+
+                    // 1. Assign seat in inventory
                     try {
                          await inventoryClient.assignPromotedSeats(
                               scheduleId,
-                              assignedSeatIds,
+                              [seat.seatId],
                               wlBooking.userId,
                               wlBooking.id
                          );
                     } catch (invErr) {
-                         logger.error(`Failed to assign promoted seats in inventory for booking ${wlBooking.id}`, { error: invErr.message });
+                         logger.error(`Failed to assign promoted seat in inventory for booking ${wlBooking.id}`, { error: invErr.message });
                          continue;
                     }
 
-                    // 2. Create bookingSeat rows in Prisma for wlBooking
-                    for (let i = 0; i < assignedSeats.length; i++) {
-                         const seat = assignedSeats[i];
-                         await prisma.bookingSeat.create({
-                              data: {
-                                   bookingId: wlBooking.id,
-                                   seatId: seat.seatId,
-                                   seatNumber: seat.seatNumber,
-                                   seatType: seat.seatType,
-                                   price: seat.price,
-                              },
-                         });
+                    // 2. Create bookingSeat row in Prisma for wlBooking
+                    await prisma.bookingSeat.create({
+                         data: {
+                              bookingId: wlBooking.id,
+                              seatId: seat.seatId,
+                              seatNumber: seat.seatNumber,
+                              seatType: seat.seatType,
+                              price: seat.price,
+                         },
+                    });
 
-                         // 3. Update passenger's seatId
-                         if (wlBooking.passengers[i]) {
-                              await prisma.passenger.update({
-                                   where: { id: wlBooking.passengers[i].id },
-                                   data: { seatId: seat.seatId },
-                              });
-                         }
-                    }
+                    // 3. Update passenger's seatId
+                    await prisma.passenger.update({
+                         where: { id: pax.id },
+                         data: { seatId: seat.seatId },
+                    });
 
-                    // 4. Update booking status to CONFIRMED
+                    newlyAssignedSeats.push(seat);
+                    logger.info(`[Waitlist Promotion] Passenger ${pax.name} (PNR: ${wlBooking.pnr}) successfully promoted from WAITLISTED to CONFIRMED with seat ${seat.seatNumber}`);
+               }
+
+               // 4. If all passengers in this booking now have seats, update booking status to CONFIRMED
+               const remainingUnassigned = await prisma.passenger.count({
+                    where: { bookingId: wlBooking.id, seatId: null },
+               });
+               if (remainingUnassigned === 0 && wlBooking.status !== 'CONFIRMED') {
                     await prisma.booking.update({
                          where: { id: wlBooking.id },
                          data: {
@@ -804,10 +821,10 @@ const promoteNextWaitlistedBookings = async (scheduleId, releasedSeats) => {
                               version: { increment: 1 },
                          },
                     });
+               }
 
-                    logger.info(`[Waitlist Promotion] Booking ${wlBooking.id} (PNR: ${wlBooking.pnr}) successfully promoted from WAITLISTED to CONFIRMED with seats: ${assignedSeats.map(s => s.seatNumber).join(', ')}`);
-
-                    // 5. Notify user of confirmation via booking producer
+               // 5. Notify user of confirmation via booking producer
+               if (newlyAssignedSeats.length > 0) {
                     try {
                          const userInfo = await fetchUserForNotification(wlBooking.userId);
                          await bookingProducer.publishBookingConfirmed({
@@ -818,7 +835,7 @@ const promoteNextWaitlistedBookings = async (scheduleId, releasedSeats) => {
                               trainNumber: wlBooking.trainNumber,
                               trainName: wlBooking.trainName,
                               departureDate: wlBooking.departureDate,
-                              seats: assignedSeats.map(s => ({
+                              seats: newlyAssignedSeats.map(s => ({
                                    seatNumber: s.seatNumber,
                                    seatType: s.seatType,
                               })),
@@ -912,21 +929,20 @@ const getBooking = async (bookingId, userId) => {
                price: s.price,
           })),
           passengers: booking.passengers.map((p, idx) => {
-               const seat = booking.seats[idx] || booking.seats.find(s => s.seatId === p.seatId);
-               const coach = isWaitlist
-                    ? `WL (${tc})`
-                    : (tc === '1A' ? 'H1' : tc === '2A' ? 'A1' : tc === '3A' ? 'B1' : tc === '2S' ? 'D1' : tc === 'EC' ? 'E1' : tc === 'CC' ? 'C1' : 'S1');
-               const wlPosNumber = priorWlCount + idx + 1;
+               const seat = p.seatId ? booking.seats.find(s => s.seatId === p.seatId) : null;
+               const isPaxWl = !seat;
+               const defaultCoach = tc === '1A' ? 'H1' : tc === '2A' ? 'A1' : tc === '3A' ? 'B1' : tc === '2S' ? 'D1' : tc === 'EC' ? 'E1' : tc === 'CC' ? 'C1' : 'S1';
+               const wlPosNumber = priorWlCount + (idx - (booking.seats || []).length) + 1;
                return {
                     id: p.id,
                     name: p.name,
                     age: p.age,
                     gender: p.gender,
                     seatId: p.seatId,
-                    status: isWaitlist ? `WL #${wlPosNumber} (${tc})` : (booking.status === 'CONFIRMED' ? 'CNF' : booking.status),
-                    coach,
-                    seat: isWaitlist ? `WL #${wlPosNumber}` : (seat ? `${seat.seatNumber} (${seat.seatType})` : 'To be assigned'),
-                    berth: isWaitlist ? `${tc} Waitlist Queue` : (seat ? seat.seatType : 'Waitlist Queue'),
+                    status: isPaxWl ? `WL #${Math.max(1, wlPosNumber)} (${tc})` : 'CNF',
+                    coach: seat ? defaultCoach : `WL (${tc})`,
+                    seat: isPaxWl ? `WL #${Math.max(1, wlPosNumber)}` : `${seat.seatNumber} (${seat.seatType})`,
+                    berth: isPaxWl ? `${tc} Waitlist Queue` : seat.seatType,
                };
           }),
           createdAt: booking.createdAt,
@@ -1350,9 +1366,9 @@ const getScheduleWaitlist = async (scheduleId, travelClass) => {
           where: {
                scheduleId,
                status: { in: ['WAITLISTED', 'CONFIRMING', 'PAYMENT_PENDING', 'SEATS_HELD', 'CONFIRMED'] },
-               seats: { none: {} },
+               passengers: { some: { seatId: null } },
           },
-          select: { seatCount: true, travelClass: true },
+          include: { passengers: true },
      });
 
      const byClass = {
@@ -1368,7 +1384,7 @@ const getScheduleWaitlist = async (scheduleId, travelClass) => {
      let totalWaitlist = 0;
      for (const b of waitlistBookings) {
           const cls = b.travelClass || 'SL';
-          const cnt = b.seatCount || 0;
+          const cnt = (b.passengers || []).filter(p => !p.seatId).length;
           totalWaitlist += cnt;
           if (!byClass[cls]) {
                byClass[cls] = { waitlistCount: 0, nextWlPosition: 1 };
@@ -1388,11 +1404,11 @@ const getScheduleWaitlist = async (scheduleId, travelClass) => {
                     status: { in: ['CONFIRMED', 'SEATS_HELD', 'PAYMENT_PENDING'] },
                     seats: { some: {} },
                },
-               select: { seatCount: true, travelClass: true },
+               select: { travelClass: true, seats: true },
           });
           for (const b of confirmedBookings) {
                const cls = b.travelClass || 'SL';
-               bookedByClass[cls] = (bookedByClass[cls] || 0) + (b.seatCount || 0);
+               bookedByClass[cls] = (bookedByClass[cls] || 0) + (b.seats ? b.seats.length : 0);
           }
      } catch (_) {}
 
