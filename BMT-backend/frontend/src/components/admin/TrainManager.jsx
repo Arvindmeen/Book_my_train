@@ -3,6 +3,7 @@ import { adminApi } from '../../api/admin.api';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import CustomSelect from '../ui/CustomSelect';
 import Select from '../ui/Select';
 import { SEAT_TYPES } from '../../utils/constants';
 
@@ -476,20 +477,17 @@ export default function TrainManager() {
               required
             />
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Train Type</label>
-              <select
+              <CustomSelect
+                label="Train Type"
                 value={form.trainType}
                 onChange={(e) => {
                   const newType = e.target.value;
                   setForm({ ...form, trainType: newType });
                   setSeatRows(generateStandardRoster(newType, 450));
                 }}
-                className="input-field w-full text-xs font-semibold"
-              >
-                {TRAIN_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+                options={TRAIN_TYPES}
+                searchable={false}
+              />
             </div>
           </div>
 

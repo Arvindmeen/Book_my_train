@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { adminApi } from '../../api/admin.api';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import CustomSelect from '../ui/CustomSelect';
 
 export default function RouteManager() {
   const [trains, setTrains] = useState([]);
@@ -52,6 +53,33 @@ export default function RouteManager() {
     });
   }, []);
 
+  const trainOptions = useMemo(() => {
+    return trains.map((t) => {
+      const bCount = bookings.filter((b) => b && (b.trainNumber === t.trainNumber || b.trainId === t.id)).length;
+      return {
+        value: t.id,
+        label: `#${t.trainNumber} — ${t.trainName}`,
+        subtitle: t.coachName ? `${t.coachName} Coach • ${t.runsOn || 'Daily Service'}` : t.runsOn,
+        badge: bCount > 0 ? `🔥 ${bCount} Bookings` : (t.route ? '✓ Route Configured' : '⚪ Unused Fleet'),
+        badgeColor: bCount > 0
+          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+          : t.route
+          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+          : 'bg-slate-100 text-slate-600 border border-slate-200',
+      };
+    });
+  }, [trains, bookings]);
+
+  const stationOptions = useMemo(() => {
+    return stations.map((s) => ({
+      value: s.id,
+      label: `${s.name} (${s.code})`,
+      subtitle: s.city ? `${s.city}${s.state ? ', ' + s.state : ''}` : undefined,
+      badge: s.code,
+      badgeColor: 'bg-indigo-50 text-indigo-700 font-mono font-black',
+    }));
+  }, [stations]);
+
   const addStop = () => {
     setStops([...stops, { stationId: '', sequenceNumber: stops.length + 1, arrivalTime: '', departureTime: '', distanceFromOrigin: 0 }]);
   };
@@ -95,7 +123,10 @@ export default function RouteManager() {
   return (
     <form onSubmit={handleCreate} className="card">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-slate-900">Create Route</h3>
+        <div>
+          <h3 className="font-serif font-black text-slate-900 text-lg">Create Train Routes</h3>
+          <p className="text-xs text-slate-500 font-medium">Link stations, scheduled arrival/departure halts, and track corridor distances</p>
+        </div>
         <div className="flex gap-2">
           <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
             {trains.length} Trains
@@ -106,43 +137,56 @@ export default function RouteManager() {
         </div>
       </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Train (Prioritizing Used Fleet)</label>
-        <select value={selectedTrain} onChange={(e) => setSelectedTrain(e.target.value)} className="input-field max-w-lg" required>
-          <option value="">{trains.length === 0 ? 'Loading trains...' : `Select a train (${trains.length} available)`}</option>
-          {trains.map((t) => {
-            const bCount = bookings.filter((b) => b && (b.trainNumber === t.trainNumber || b.trainId === t.id)).length;
-            return (
-              <option key={t.id} value={t.id}>
-                {bCount > 0 ? `🔥 [${bCount} Bookings] ` : '⚪ [0 Bookings] '}#{t.trainNumber} — {t.trainName} {t.route ? '✓ (Route Configured)' : '• (No Route)'}
-              </option>
-            );
-          })}
-        </select>
+      <div className="mb-6 max-w-2xl">
+        <CustomSelect
+          label="Select Train Service (Prioritizing Active Fleet)"
+          value={selectedTrain}
+          onChange={(e) => setSelectedTrain(e.target.value)}
+          options={trainOptions}
+          placeholder={trains.length === 0 ? 'Loading fleet roster...' : `Search & select a train (${trains.length} available)...`}
+          searchPlaceholder="Search by train number, name, or route..."
+          required
+        />
       </div>
 
-      <h4 className="text-sm font-medium mb-2">Stops</h4>
-      <div className="space-y-3 mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-sm font-bold text-slate-900">Route Intermediate &amp; Terminal Stops</h4>
+        <span className="text-xs text-slate-500 font-medium">{stops.length} stop{stops.length === 1 ? '' : 's'} configured</span>
+      </div>
+
+      <div className="space-y-3 mb-6">
         {stops.map((stop, i) => (
-          <div key={i} className="flex flex-wrap gap-2 items-end bg-gray-50 rounded-lg p-3">
-            <div className="w-10 text-center text-sm font-bold text-gray-400">{i + 1}</div>
-            <div className="flex-1 min-w-[150px]">
-              <label className="block text-xs text-gray-500 mb-1">Station</label>
-              <select value={stop.stationId} onChange={(e) => updateStop(i, 'stationId', e.target.value)} className="input-field" required>
-                <option value="">Select</option>
-                {stations.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
-              </select>
+          <div key={i} className="flex flex-wrap gap-3 items-end bg-slate-50/90 border border-slate-200/80 rounded-2xl p-4 shadow-2xs">
+            <div className="w-8 text-center text-xs font-black text-slate-400 bg-white py-2 rounded-lg border border-slate-200 shadow-2xs">
+              #{i + 1}
             </div>
-            <Input label="Arrival" type="time" value={stop.arrivalTime} onChange={(e) => updateStop(i, 'arrivalTime', e.target.value)} className="w-32" />
-            <Input label="Departure" type="time" value={stop.departureTime} onChange={(e) => updateStop(i, 'departureTime', e.target.value)} className="w-32" />
+            <div className="flex-1 min-w-[220px]">
+              <CustomSelect
+                label="Station Stop"
+                value={stop.stationId}
+                onChange={(e) => updateStop(i, 'stationId', e.target.value)}
+                options={stationOptions}
+                placeholder="Choose station..."
+                searchPlaceholder="Search station name or code..."
+                required
+              />
+            </div>
+            <Input label="Arrival Time" type="time" value={stop.arrivalTime} onChange={(e) => updateStop(i, 'arrivalTime', e.target.value)} className="w-32" />
+            <Input label="Departure Time" type="time" value={stop.departureTime} onChange={(e) => updateStop(i, 'departureTime', e.target.value)} className="w-32" />
             <Input label="Distance (km)" type="number" value={stop.distanceFromOrigin} onChange={(e) => updateStop(i, 'distanceFromOrigin', e.target.value)} className="w-28" />
             {stops.length > 1 && (
-              <button type="button" onClick={() => removeStop(i)} className="text-red-500 hover:text-red-700 text-xl pb-1">&times;</button>
+              <button
+                type="button"
+                onClick={() => removeStop(i)}
+                className="text-rose-500 hover:text-rose-700 p-2.5 rounded-lg hover:bg-rose-50 text-base font-bold cursor-pointer transition-colors"
+                title="Remove Stop"
+              >
+                &times;
+              </button>
             )}
           </div>
         ))}
       </div>
-
       <div className="flex gap-3">
         <Button type="button" variant="secondary" onClick={addStop}>+ Add Stop</Button>
         <Button type="submit" loading={creating}>Create Route</Button>

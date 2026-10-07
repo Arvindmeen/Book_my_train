@@ -1,7 +1,19 @@
 const TABS = [
   {
+    id: 'Traffic',
+    label: 'Live Traffic',
+    subtitle: 'Corridor density radar',
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-700',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
+  {
     id: 'Trains',
-    label: 'Rail Services',
+    label: 'Create Train',
     subtitle: 'Coaches & timetables',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-700',
@@ -15,20 +27,8 @@ const TABS = [
     ),
   },
   {
-    id: 'Traffic',
-    label: 'Live Traffic',
-    subtitle: 'Corridor density radar',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-700',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-  },
-  {
     id: 'Stations',
-    label: 'Stations',
+    label: 'Create Stations',
     subtitle: 'Platforms & junctions',
     iconBg: 'bg-indigo-100',
     iconColor: 'text-indigo-700',
@@ -40,7 +40,7 @@ const TABS = [
   },
   {
     id: 'Routes',
-    label: 'Train Routes',
+    label: 'Create Train Routes',
     subtitle: 'Stops & distances',
     iconBg: 'bg-teal-100',
     iconColor: 'text-teal-700',
@@ -52,7 +52,7 @@ const TABS = [
   },
   {
     id: 'Schedules',
-    label: 'Train Schedule',
+    label: 'Create Train Schedule',
     subtitle: 'Departure & active runs',
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-700',

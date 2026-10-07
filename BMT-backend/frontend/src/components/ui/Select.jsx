@@ -1,18 +1,18 @@
-import { forwardRef } from 'react';
+import CustomSelect from './CustomSelect';
 
-const Select = forwardRef(function Select({ label, error, options = [], placeholder, className = '', ...props }, ref) {
+export default function Select({ label, error, options = [], placeholder, className = '', value, onChange, disabled, required, ...props }) {
   return (
-    <div className={className}>
-      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-      <select ref={ref} className={`input-field ${error ? 'border-red-500' : ''}`} {...props}>
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
+    <CustomSelect
+      label={label}
+      error={error}
+      options={options}
+      placeholder={placeholder}
+      className={className}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      required={required}
+      {...props}
+    />
   );
-});
-
-export default Select;
+}

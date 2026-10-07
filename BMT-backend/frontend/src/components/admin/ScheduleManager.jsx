@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { adminApi } from '../../api/admin.api';
 import { useToast } from '../ui/Toast';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import CustomSelect from '../ui/CustomSelect';
 import { formatDate } from '../../utils/format';
 
 export default function ScheduleManager() {
@@ -64,6 +65,21 @@ export default function ScheduleManager() {
     }
   };
 
+  const trainOptions = useMemo(() => {
+    return trains.map((t) => {
+      const bCount = bookings.filter((b) => b && (b.trainNumber === t.trainNumber || b.trainId === t.id)).length;
+      return {
+        value: t.id,
+        label: `#${t.trainNumber} — ${t.trainName}`,
+        subtitle: t.coachName ? `${t.coachName} Coach • ${t.runsOn || 'Daily Service'}` : t.runsOn,
+        badge: bCount > 0 ? `🔥 ${bCount} Bookings` : '⚪ 0 Bookings',
+        badgeColor: bCount > 0
+          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+          : 'bg-slate-100 text-slate-600 border border-slate-200',
+      };
+    });
+  }, [trains, bookings]);
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!selectedTrain || !date) { showToast('Select train and date', 'warning'); return; }
@@ -114,28 +130,28 @@ export default function ScheduleManager() {
     <div>
       <form onSubmit={handleCreate} className="card mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-900">Create Schedule</h3>
+          <div>
+            <h3 className="font-serif font-black text-slate-900 text-lg">Create Train Schedule</h3>
+            <p className="text-xs text-slate-500 font-medium">Provision date-specific active runs and inventory windows</p>
+          </div>
           <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
             {trains.length} Trains Registered
           </span>
         </div>
-        <div className="flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[240px]">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Train (Prioritizing Used Fleet)</label>
-            <select value={selectedTrain} onChange={(e) => setSelectedTrain(e.target.value)} className="input-field" required>
-              <option value="">{trains.length === 0 ? 'Loading trains...' : `Select train (${trains.length} available)`}</option>
-              {trains.map((t) => {
-                const bCount = bookings.filter((b) => b && (b.trainNumber === t.trainNumber || b.trainId === t.id)).length;
-                return (
-                  <option key={t.id} value={t.id}>
-                    {bCount > 0 ? `🔥 [${bCount} Bookings] ` : '⚪ [0 Bookings] '}#{t.trainNumber} — {t.trainName}
-                  </option>
-                );
-              })}
-            </select>
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[280px]">
+            <CustomSelect
+              label="Train Service (Prioritizing Active Fleet)"
+              value={selectedTrain}
+              onChange={(e) => setSelectedTrain(e.target.value)}
+              options={trainOptions}
+              placeholder={trains.length === 0 ? 'Loading fleet roster...' : `Search & choose a train (${trains.length} available)...`}
+              searchPlaceholder="Search train number or name..."
+              required
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Departure Date</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={today} className="input-field" required />
           </div>
           <Button type="submit" loading={creating} className="px-5">Create Schedule</Button>
