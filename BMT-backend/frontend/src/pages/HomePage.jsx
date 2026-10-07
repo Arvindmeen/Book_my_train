@@ -171,14 +171,73 @@ const LIVE_TRAINS_DATA = [
   }
 ];
 
-const formatLiveTelemetryTrain = (t) => {
-  const rawStops = (t.route || []).map((rs, idx) => ({
-    name: `${rs.stationName || rs.name} (${rs.stationCode || rs.code})`,
-    time: rs.departureTime || rs.arrivalTime || '08:00 AM',
-    distance: rs.distanceFromOrigin || 0,
-    platform: `Platform #${((idx % 4) + 1)}`,
-    sequence: rs.sequenceNumber || idx + 1,
-  }));
+const parseTimeToMinutes = (timeStr) => {
+  if (!timeStr) return null;
+  const s = String(timeStr).trim();
+  if (s.toLowerCase() === 'starts' || s.toLowerCase() === 'terminates') return null;
+
+  // 12-hour AM/PM: e.g. "06:00 AM", "04:50 PM", "11:50 PM"
+  const ampmMatch = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
+  if (ampmMatch) {
+    let hours = parseInt(ampmMatch[1], 10);
+    const minutes = parseInt(ampmMatch[2], 10);
+    const modifier = ampmMatch[3]?.toUpperCase();
+
+    if (modifier === 'PM' && hours < 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+
+    return hours * 60 + minutes;
+  }
+
+  // 24-hour HH:mm
+  const parts = s.split(':');
+  if (parts.length >= 2) {
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (!isNaN(h) && !isNaN(m)) return h * 60 + m;
+  }
+
+  return null;
+};
+
+const formatDurationText = (minutes) => {
+  const absM = Math.max(0, Math.floor(Math.abs(minutes)));
+  const hrs = Math.floor(absM / 60);
+  const mins = absM % 60;
+  if (hrs === 0) return `${mins}m`;
+  if (mins === 0) return `${hrs}h`;
+  return `${hrs}h ${mins}m`;
+};
+
+const formatLiveTelemetryTrain = (t, customNow = null) => {
+  // 1. Current Real-Time Clock
+  const now = customNow || new Date();
+  const currentHour = now.getHours();
+  const currentMin = now.getMinutes();
+  const currentClockMinutes = currentHour * 60 + currentMin;
+  const currentTimeFormatted = now.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  // 2. Extract or build raw stops
+  let rawStops = [];
+  if (Array.isArray(t.stops) && t.stops.length > 0) {
+    rawStops = t.stops.map((s, idx) => ({
+      name: s.name || s.stationName || `Station #${idx + 1}`,
+      time: s.time || s.departureTime || s.arrivalTime || '08:00 AM',
+      platform: s.platform || `Pf #${(idx % 4) + 1}`,
+      distance: s.distance || idx * 120,
+    }));
+  } else if (Array.isArray(t.route) && t.route.length > 0) {
+    rawStops = t.route.map((rs, idx) => ({
+      name: rs.stationName ? `${rs.stationName} (${rs.stationCode || rs.code})` : `${rs.name} (${rs.code})`,
+      time: rs.departureTime || rs.arrivalTime || (rs.departure ? rs.departure : '08:00 AM'),
+      platform: rs.platform || `Pf #${(idx % 4) + 1}`,
+      distance: rs.distanceFromOrigin || rs.distance || idx * 120,
+    }));
+  }
 
   const originName = t.origin?.stationName || t.origin?.name
     ? `${t.origin.stationName || t.origin.name} (${t.origin.stationCode || t.origin.code})`
@@ -187,60 +246,189 @@ const formatLiveTelemetryTrain = (t) => {
     ? `${t.destination.stationName || t.destination.name} (${t.destination.stationCode || t.destination.code})`
     : (t.to?.name ? `${t.to.name} (${t.to.code})` : rawStops[rawStops.length - 1]?.name || 'Destination Station');
 
-  const stops = rawStops.length > 0 ? rawStops : [
-    { name: originName, time: t.origin?.departureTime || t.from?.departure || '06:00 AM', platform: 'Platform #1', sequence: 1 },
-    { name: destName, time: t.destination?.arrivalTime || t.to?.arrival || '10:00 PM', platform: 'Platform #2', sequence: 2 }
+  const baseStops = rawStops.length > 0 ? rawStops : [
+    { name: originName, time: t.origin?.departureTime || t.from?.departure || '06:00 AM', platform: 'Pf #1', distance: 0 },
+    { name: destName, time: t.destination?.arrivalTime || t.to?.arrival || '02:00 PM', platform: 'Pf #2', distance: 750 }
   ];
 
-  const todayDay = new Date().getDay();
-  const runsToday = Array.isArray(t.runningDays) && t.runningDays.includes(todayDay);
+  // 3. Map reaching times with midnight rollover awareness
+  let cumulativeDayOffset = 0;
+  let prevMinute = -1;
 
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const mappedStops = baseStops.map((s, idx) => {
+    let m = parseTimeToMinutes(s.time);
+    if (m === null) {
+      m = idx === 0 ? 360 : prevMinute + 90;
+    }
+    // Overnight jump across midnight (e.g. 23:50 -> 01:45)
+    if (prevMinute !== -1 && m < prevMinute - 90) {
+      cumulativeDayOffset += 1440;
+    }
+    prevMinute = m;
 
-  let currentIdx = 0;
-  if (stops.length > 2) {
-    const totalMinutesSpan = 14 * 60;
-    const currentFraction = (currentMinutes % totalMinutesSpan) / totalMinutesSpan;
-    currentIdx = Math.min(stops.length - 2, Math.max(1, Math.floor(currentFraction * stops.length)));
+    return {
+      ...s,
+      reachMinuteOfDay: m,
+      cumulativeMinute: m + cumulativeDayOffset,
+    };
+  });
+
+  const originMinute = mappedStops[0].cumulativeMinute;
+  const destMinute = mappedStops[mappedStops.length - 1].cumulativeMinute;
+
+  // 4. Align current clock minutes with active train run
+  // If the train crosses midnight (multi-day) and current time is in morning of Day 2:
+  let effectiveTime = currentClockMinutes;
+  let isMultiDayMorningRun = false;
+  if (destMinute > 1440 && (currentClockMinutes + 1440) <= (destMinute + 60)) {
+    effectiveTime = currentClockMinutes + 1440;
+    isMultiDayMorningRun = true;
   }
 
-  const enrichedStops = stops.map((s, idx) => ({
-    ...s,
-    departed: idx < currentIdx,
-    current: idx === currentIdx,
-    upcoming: idx > currentIdx,
-  }));
+  // 5. Compare train reaching stations time with current time
+  let currentStation = '';
+  let nextStation = '';
+  let currentPlatform = '';
+  let trainSpeed = '115 km/h';
+  let liveStatus = 'On Time';
+  let liveSummary = '';
+  let delay = t.delay ?? (t.trainType === 'VANDE_BHARAT' ? 0 : t.trainType === 'RAJDHANI' ? 4 : 0);
 
-  const currentHalt = enrichedStops[currentIdx] || enrichedStops[0];
-  const nextHalt = enrichedStops[currentIdx + 1] || enrichedStops[enrichedStops.length - 1];
+  let enrichedStops = [];
 
-  const delay = t.trainType === 'VANDE_BHARAT' ? 0 : t.trainType === 'RAJDHANI' ? 4 : (String(t.trainNumber).charCodeAt(0) % 12);
-  const status = !runsToday
-    ? `Not Scheduled Today (Runs: ${t.runsOn || 'Alternative Days'})`
-    : delay === 0
-    ? 'On Time'
-    : `Delayed by ${delay}m`;
+  if (effectiveTime < originMinute) {
+    // ── Phase 1: Train has NOT started yet today ──
+    const timeUntilDeparture = originMinute - effectiveTime;
+    currentStation = mappedStops[0].name.split(' (')[0];
+    nextStation = mappedStops[1]?.name ? mappedStops[1].name.split(' (')[0] : destName.split(' (')[0];
+    currentPlatform = mappedStops[0].platform || 'Platform #1';
+    trainSpeed = '0 km/h (Station Halt)';
+    liveStatus = `Scheduled Departure at ${mappedStops[0].time}`;
+    liveSummary = `Train is waiting at origin platform at ${currentStation}. Scheduled to depart in ${formatDurationText(timeUntilDeparture)} (at ${mappedStops[0].time}).`;
+
+    enrichedStops = mappedStops.map((s, idx) => ({
+      ...s,
+      departed: false,
+      current: idx === 0,
+      upcoming: idx > 0,
+      isNextHalt: idx === 1,
+      statusDetail: idx === 0
+        ? `Waiting for Departure • Departs in ${formatDurationText(timeUntilDeparture)} (${mappedStops[0].time})`
+        : `Scheduled at ${s.time} (in ${formatDurationText(s.cumulativeMinute - effectiveTime)})`,
+      timeRemaining: idx > 0 ? `in ${formatDurationText(s.cumulativeMinute - effectiveTime)}` : null,
+    }));
+
+  } else if (effectiveTime >= destMinute) {
+    // ── Phase 2: Train has COMPLETED its journey ──
+    const timeSinceArrival = effectiveTime - destMinute;
+    currentStation = mappedStops[mappedStops.length - 1].name.split(' (')[0];
+    nextStation = 'Terminated';
+    currentPlatform = mappedStops[mappedStops.length - 1].platform || 'Platform #1';
+    trainSpeed = '0 km/h (Completed)';
+    liveStatus = 'Journey Completed';
+    liveSummary = `Train has arrived at final destination ${currentStation} at ${mappedStops[mappedStops.length - 1].time} (${formatDurationText(timeSinceArrival)} ago).`;
+
+    enrichedStops = mappedStops.map((s, idx) => ({
+      ...s,
+      departed: true,
+      current: idx === mappedStops.length - 1,
+      upcoming: false,
+      isNextHalt: false,
+      statusDetail: idx === mappedStops.length - 1
+        ? `Arrived at ${s.time} (${formatDurationText(timeSinceArrival)} ago)`
+        : `Departed at ${s.time}`,
+      timeRemaining: null,
+    }));
+
+  } else {
+    // ── Phase 3: Train is ACTIVELY RUNNING on route ──
+    // Find the last stop where reaching time <= current time
+    let activeIdx = 0;
+    for (let i = 0; i < mappedStops.length; i++) {
+      if (effectiveTime >= mappedStops[i].cumulativeMinute) {
+        activeIdx = i;
+      } else {
+        break;
+      }
+    }
+
+    const lastPassedStop = mappedStops[activeIdx];
+    const nextHaltStop = mappedStops[activeIdx + 1] || mappedStops[mappedStops.length - 1];
+    const minsSinceDeparted = effectiveTime - lastPassedStop.cumulativeMinute;
+    const minsUntilNext = nextHaltStop.cumulativeMinute - effectiveTime;
+
+    // Check if stopped at platform (within 3 mins of reaching)
+    const isStationHalt = minsSinceDeparted <= 3;
+
+    currentStation = lastPassedStop.name.split(' (')[0];
+    nextStation = nextHaltStop.name.split(' (')[0];
+    currentPlatform = isStationHalt ? (lastPassedStop.platform || 'Pf #1') : (nextHaltStop.platform || 'Pf #2');
+
+    if (isStationHalt) {
+      trainSpeed = '0 km/h (Platform Halt)';
+      liveStatus = delay > 0 ? `Halted • Delayed by ${delay}m` : 'Halted at Platform';
+      liveSummary = `Currently standing at platform at ${currentStation} (${currentPlatform}). Next departure towards ${nextStation}.`;
+    } else {
+      trainSpeed = t.trainType === 'VANDE_BHARAT' ? '135 km/h' : t.trainType === 'RAJDHANI' ? '125 km/h' : '110 km/h';
+      liveStatus = delay > 0 ? `Delayed by ${delay}m` : 'Running On Time';
+      liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDeparted)} ago. Next Stop: ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextHaltStop.time}).`;
+    }
+
+    enrichedStops = mappedStops.map((s, idx) => {
+      const isPast = idx < activeIdx;
+      const isCurrentHalt = idx === activeIdx;
+      const isNext = idx === activeIdx + 1;
+      const isFuture = idx > activeIdx;
+
+      let detail = '';
+      let remaining = null;
+
+      if (isPast) {
+        detail = `Passed at ${s.time} (${formatDurationText(effectiveTime - s.cumulativeMinute)} ago)`;
+      } else if (isCurrentHalt) {
+        detail = isStationHalt
+          ? `Standing at Platform • Arrived ${s.time}`
+          : `Departed at ${s.time} (${formatDurationText(minsSinceDeparted)} ago)`;
+      } else if (isNext) {
+        detail = `Next Halt: Scheduled ${s.time} (in ${formatDurationText(minsUntilNext)})`;
+        remaining = `in ${formatDurationText(minsUntilNext)}`;
+      } else {
+        detail = `Scheduled at ${s.time} (in ${formatDurationText(s.cumulativeMinute - effectiveTime)})`;
+        remaining = `in ${formatDurationText(s.cumulativeMinute - effectiveTime)}`;
+      }
+
+      return {
+        ...s,
+        departed: isPast || (!isStationHalt && isCurrentHalt),
+        current: isCurrentHalt,
+        upcoming: isFuture,
+        isNextHalt: isNext,
+        statusDetail: detail,
+        timeRemaining: remaining,
+      };
+    });
+  }
 
   return {
-    id: t.trainId || t.trainNumber,
-    number: t.trainNumber,
-    name: t.trainName,
-    fromCode: t.origin?.stationCode || t.origin?.code || t.from?.code || '',
-    toCode: t.destination?.stationCode || t.destination?.code || t.to?.code || '',
+    id: t.id || t.trainId || t.trainNumber,
+    number: t.number || t.trainNumber,
+    name: t.name || t.trainName,
+    fromCode: t.fromCode || t.origin?.stationCode || t.origin?.code || '',
+    toCode: t.toCode || t.destination?.stationCode || t.destination?.code || '',
     fromName: originName,
     toName: destName,
-    departureTime: t.origin?.departureTime || t.from?.departure || '06:00 AM',
-    arrivalTime: t.destination?.arrivalTime || t.to?.arrival || '10:00 PM',
-    status,
-    runsToday,
-    runsOn: t.runsOn || 'Daily Service',
-    currentStation: currentHalt?.name ? currentHalt.name.split(' (')[0] : 'En Route',
-    nextStation: nextHalt?.name ? nextHalt.name.split(' (')[0] : destName.split(' (')[0],
-    platform: currentHalt?.platform || 'Platform #1',
+    departureTime: mappedStops[0].time,
+    arrivalTime: mappedStops[mappedStops.length - 1].time,
+    status: liveStatus,
+    liveSummary,
+    currentTimeFormatted,
+    currentStation,
+    nextStation,
+    platform: currentPlatform,
     delay,
-    speed: t.trainType === 'VANDE_BHARAT' ? '140 km/h' : '115 km/h',
+    speed: trainSpeed,
     stops: enrichedStops,
+    isMultiDayMorningRun,
   };
 };
 
@@ -338,6 +526,18 @@ export default function HomePage() {
   // Upcoming feature modal state (Requested by User!)
   const [upcomingService, setUpcomingService] = useState(null);
   const [serviceNotified, setServiceNotified] = useState(false);
+
+  // Live real-time clock tick for dynamic train running status evaluation
+  const [liveClockTime, setLiveClockTime] = useState(new Date());
+
+  useEffect(() => {
+    if (activeTab === 'live') {
+      const interval = setInterval(() => {
+        setLiveClockTime(new Date());
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   // General Notification Modal
   const [popupMsg, setPopupMsg] = useState(null);
@@ -579,12 +779,25 @@ export default function HomePage() {
         }
 
         if (trains.length > 0) {
-          const formatted = trains.map(formatLiveTelemetryTrain);
+          const formatted = trains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
           setLiveResults(formatted);
           setSelectedLiveTrain(formatted[0]);
         } else {
-          setLiveResults([]);
-          setSelectedLiveTrain(null);
+          // Fallback to matching corridors in LIVE_TRAINS_DATA
+          const mockMatch = LIVE_TRAINS_DATA.filter((m) =>
+            (m.fromCode && cleanFrom.toUpperCase().includes(m.fromCode)) ||
+            (m.toCode && cleanTo.toUpperCase().includes(m.toCode)) ||
+            m.fromName.toLowerCase().includes(fromVal.toLowerCase()) ||
+            m.toName.toLowerCase().includes(toVal.toLowerCase())
+          );
+          if (mockMatch.length > 0) {
+            const formatted = mockMatch.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
+            setLiveResults(formatted);
+            setSelectedLiveTrain(formatted[0]);
+          } else {
+            setLiveResults([]);
+            setSelectedLiveTrain(null);
+          }
         }
       } catch (err) {
         console.error('Error fetching live train status:', err);
@@ -607,12 +820,22 @@ export default function HomePage() {
         const res = await searchApi.searchByTrain(trainQ);
         const trains = Array.isArray(res) ? res : (res?.trains || res?.data || []);
         if (trains.length > 0) {
-          const formatted = trains.map(formatLiveTelemetryTrain);
+          const formatted = trains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
           setLiveResults(formatted);
           setSelectedLiveTrain(formatted[0]);
         } else {
-          setLiveResults([]);
-          setSelectedLiveTrain(null);
+          const mockMatch = LIVE_TRAINS_DATA.filter((m) =>
+            m.number.includes(trainQ) ||
+            m.name.toLowerCase().includes(trainQ.toLowerCase())
+          );
+          if (mockMatch.length > 0) {
+            const formatted = mockMatch.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
+            setLiveResults(formatted);
+            setSelectedLiveTrain(formatted[0]);
+          } else {
+            setLiveResults([]);
+            setSelectedLiveTrain(null);
+          }
         }
       } catch (err) {
         console.error('Error fetching live train by query:', err);
@@ -806,40 +1029,7 @@ export default function HomePage() {
                 <span>Live Running Status</span>
               </button>
 
-              {/* Tab 4: Food on Track */}
-              <button
-                onClick={() => setActiveTab('food')}
-                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
-                  activeTab === 'food'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
-                    : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
-                }`}
-              >
-                {/* Chef Dining Cloche SVG */}
-                <svg className={`w-4 h-4 ${activeTab === 'food' ? 'text-white' : 'text-orange-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M4 14h16M5 14a7 7 0 0114 0M4 17h16" />
-                </svg>
-                <span>Food on Track</span>
-              </button>
-
-              {/* Tab 5: Hotels */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('hotels')}
-                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
-                  activeTab === 'hotels'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
-                    : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
-                }`}
-              >
-                {/* Hotel Building SVG */}
-                <svg className={`w-4 h-4 ${activeTab === 'hotels' ? 'text-white' : 'text-blue-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                <span>Hotels &amp; Lounges</span>
-              </button>
-
-              {/* Tab 6: Book Ride (Links directly to https://ride-tracker-ruddy.vercel.app/) */}
+              {/* Tab 4: Book Ride (Comes right after Live Running Status, links directly to https://ride-tracker-ruddy.vercel.app/) */}
               <a
                 href="https://ride-tracker-ruddy.vercel.app/"
                 target="_blank"
@@ -861,6 +1051,39 @@ export default function HomePage() {
                   ↗
                 </span>
               </a>
+
+              {/* Tab 5: Food on Track */}
+              <button
+                onClick={() => setActiveTab('food')}
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                  activeTab === 'food'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
+                    : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
+                }`}
+              >
+                {/* Chef Dining Cloche SVG */}
+                <svg className={`w-4 h-4 ${activeTab === 'food' ? 'text-white' : 'text-orange-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M4 14h16M5 14a7 7 0 0114 0M4 17h16" />
+                </svg>
+                <span>Food on Track</span>
+              </button>
+
+              {/* Tab 6: Hotels */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('hotels')}
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                  activeTab === 'hotels'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
+                    : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
+                }`}
+              >
+                {/* Hotel Building SVG */}
+                <svg className={`w-4 h-4 ${activeTab === 'hotels' ? 'text-white' : 'text-blue-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>Hotels &amp; Lounges</span>
+              </button>
               </div>
             </div>
 
@@ -1257,17 +1480,20 @@ export default function HomePage() {
                           </div>
                         </div>
 
-                        {/* Live Location Alert Bar */}
+                        {/* Live Location Alert Bar (Comparing reaching times with current time) */}
                         <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 text-xs font-semibold text-emerald-950">
                           <div className="flex items-center gap-2">
-                            <span className="text-base">📍</span>
+                            <span className="text-base shrink-0">📍</span>
                             <span>
-                              <strong>Currently Departed:</strong> {selectedLiveTrain.currentStation} &middot; Next Stop: <strong>{selectedLiveTrain.nextStation}</strong> ({selectedLiveTrain.platform})
+                              {selectedLiveTrain.liveSummary || (
+                                <><strong>Currently:</strong> {selectedLiveTrain.currentStation} &middot; Next Stop: <strong>{selectedLiveTrain.nextStation}</strong> ({selectedLiveTrain.platform})</>
+                              )}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-[11px] text-emerald-800">
+                          <div className="flex items-center gap-3 text-[11px] text-emerald-800 shrink-0">
                             <span>⚡ Speed: <strong>{selectedLiveTrain.speed}</strong></span>
-                            <span>📶 GPS Sync: Just now</span>
+                            <span>🕒 Clock: <strong>{selectedLiveTrain.currentTimeFormatted}</strong></span>
+                            <span className="bg-emerald-200 text-emerald-950 px-2 py-0.5 rounded-full font-extrabold text-[10px]">Time-Synced</span>
                           </div>
                         </div>
 
@@ -1281,7 +1507,7 @@ export default function HomePage() {
                             <div className="absolute left-2.5 top-3 bottom-3 w-0.5 bg-slate-200" />
 
                             {selectedLiveTrain.stops.map((stop, idx) => {
-                              const isCurrent = stop.current || selectedLiveTrain.currentStation === stop.name.split(' (')[0];
+                              const isCurrent = stop.current;
                               const isDeparted = stop.departed;
 
                               return (
@@ -1310,15 +1536,15 @@ export default function HomePage() {
                                       </p>
                                       {isCurrent ? (
                                         <p className="text-[10px] text-emerald-700 font-extrabold uppercase mt-0.5 tracking-wider">
-                                          📶 Live Location &middot; Departed {selectedLiveTrain.delay > 0 ? `(+${selectedLiveTrain.delay}m)` : '(Right Time)'}
+                                          📶 Live Location &middot; {stop.statusDetail}
                                         </p>
                                       ) : isDeparted ? (
-                                        <p className="text-[10px] text-slate-400 font-semibold">
-                                          Departed {stop.time}
+                                        <p className="text-[10px] text-emerald-700 font-semibold">
+                                          ✓ {stop.statusDetail || `Departed ${stop.time}`}
                                         </p>
                                       ) : (
-                                        <p className="text-[10px] text-slate-400 font-medium">
-                                          Scheduled Arrival: {stop.time}
+                                        <p className="text-[10px] text-slate-500 font-medium">
+                                          {stop.statusDetail || `Scheduled Arrival: ${stop.time}`}
                                         </p>
                                       )}
                                     </div>
