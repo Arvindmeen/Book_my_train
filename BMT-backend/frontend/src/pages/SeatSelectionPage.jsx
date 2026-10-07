@@ -134,7 +134,8 @@ export default function SeatSelectionPage() {
 
   const classWlInfo = liveWlData?.byClass?.[activeClass];
   const classWlCount = classWlInfo?.waitlistCount ?? 0;
-  const isWaitlist = classAvailableCount === 0 || classWlCount > 0;
+  const bookedInActiveClass = liveWlData?.bookedByClass?.[activeClass] ?? 0;
+  const isWaitlist = classWlCount > 0 || (classAvailableCount === 0 && (bookedInActiveClass > 0 || classSeats.some(s => s.status === 'BOOKED')));
   const nextWlPos = classWlInfo?.nextWlPosition ?? (classWlCount + 1);
 
   const setWaitlistBooking = useBookingStore((s) => s.setWaitlistBooking);

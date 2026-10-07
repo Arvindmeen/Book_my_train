@@ -156,11 +156,104 @@ export default function AdminAuditManager() {
     setTimeout(() => setCopiedPnr(null), 2000);
   };
 
-  const confirmedCount = bookings.filter((b) => b.status === 'CONFIRMED' && (b.seats?.length > 0)).length;
-  const waitlistCount = bookings.filter((b) => b.status === 'WAITLISTED' || (b.seats?.length === 0 && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status))).length;
+  const confirmedPaxCount = bookings
+    .filter((b) => b.status === 'CONFIRMED' && (b.seats?.length > 0))
+    .reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 1), 0);
+
+  const waitlistPaxCount = bookings
+    .filter((b) => b.status === 'WAITLISTED' || (b.seats?.length === 0 && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status)))
+    .reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 1), 0);
+
+  const confirmedBookingCount = bookings.filter((b) => b.status === 'CONFIRMED' && (b.seats?.length > 0)).length;
+  const waitlistBookingCount = bookings.filter((b) => b.status === 'WAITLISTED' || (b.seats?.length === 0 && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status))).length;
+
   const totalRevenue = bookings
     .filter((b) => ['CONFIRMED', 'WAITLISTED'].includes(b.status))
     .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+  // Train-wise and Date-wise passenger & waitlist statistics
+  const trainStats = useMemo(() => {
+    const map = new Map();
+    bookings.forEach((b) => {
+      const trainKey = `${b.trainNumber} - ${b.trainName}`;
+      if (!map.has(trainKey)) {
+        map.set(trainKey, {
+          trainNumber: b.trainNumber,
+          trainName: b.trainName,
+          totalBookings: 0,
+          confirmedPax: 0,
+          waitlistPax: 0,
+          datesMap: new Map(),
+        });
+      }
+      const entry = map.get(trainKey);
+      entry.totalBookings++;
+      const paxCount = b.passengers?.length || b.seatCount || 1;
+      const isWl = (b.seats?.length === 0) || b.status === 'WAITLISTED' || b.status === 'WAITLIST';
+      if (b.status === 'CONFIRMED' && !isWl) {
+        entry.confirmedPax += paxCount;
+      } else if (isWl && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status)) {
+        entry.waitlistPax += paxCount;
+      }
+
+      // Date breakdown
+      const depDate = formatDate(b.departureDate);
+      if (!entry.datesMap.has(depDate)) {
+        entry.datesMap.set(depDate, { date: depDate, cnfPax: 0, wlPax: 0 });
+      }
+      const dEntry = entry.datesMap.get(depDate);
+      if (isWl && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status)) {
+        dEntry.wlPax += paxCount;
+      } else if (b.status === 'CONFIRMED') {
+        dEntry.cnfPax += paxCount;
+      }
+    });
+
+    return Array.from(map.values()).map(t => ({
+      ...t,
+      dates: Array.from(t.datesMap.values()),
+    }));
+  }, [bookings]);
+
+  // Compute authentic sequential waitlist positions strictly scoped to schedule & travel class
+  const getBookingSeatList = (b) => {
+    if (b.seats && b.seats.length > 0) {
+      return b.seats.map((s) => `#${s.seatNumber}`).join(', ');
+    }
+    const isWl = b.status === 'WAITLISTED' || b.status === 'WAITLIST' || !b.seats || b.seats.length === 0;
+    if (!isWl) return '—';
+
+    const hasExplicitWl = b.passengers?.every(p => p.seatNumber && String(p.seatNumber).startsWith('WL #') && !String(p.seatNumber).includes(','));
+    if (hasExplicitWl && b.passengers?.length > 0) {
+      return b.passengers.map(p => p.seatNumber).join(', ');
+    }
+
+    const tc = b.travelClass || 'SL';
+    const sameScheduleWl = bookings
+      .filter(other => {
+        const otherTc = other.travelClass || 'SL';
+        const otherIsWl = other.status === 'WAITLISTED' || (other.seats?.length === 0 && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(other.status));
+        return (
+          (other.scheduleId === b.scheduleId || (other.trainNumber === b.trainNumber && formatDate(other.departureDate) === formatDate(b.departureDate))) &&
+          otherTc === tc &&
+          otherIsWl
+        );
+      })
+      .sort((a, c) => new Date(a.createdAt) - new Date(c.createdAt));
+
+    let priorPax = 0;
+    for (const other of sameScheduleWl) {
+      if (other.id === b.id) break;
+      priorPax += (other.passengers?.length || other.seatCount || 1);
+    }
+
+    const paxCount = b.passengers?.length || b.seatCount || 1;
+    const positions = [];
+    for (let i = 0; i < paxCount; i++) {
+      positions.push(`WL #${priorPax + i + 1}`);
+    }
+    return positions.join(', ');
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -199,7 +292,7 @@ export default function AdminAuditManager() {
         </div>
       </div>
 
-      {/* Summary Metrics Bar */}
+      {/* Summary Metrics Bar: Displays Exact Passenger Counts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
         <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
           <span className="text-slate-400 text-[10px] font-bold block uppercase tracking-wider">TOTAL SYSTEM BOOKINGS</span>
@@ -207,16 +300,18 @@ export default function AdminAuditManager() {
           <span className="text-[10px] text-slate-500 block">Reservations in DB</span>
         </div>
         <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200/80">
-          <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider">CONFIRMED &amp; WAITLIST</span>
+          <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider">CONFIRMED &amp; WAITLIST PASSENGERS</span>
           <div className="flex items-baseline gap-2">
-            <span className="font-black text-xl text-emerald-800">{confirmedCount} <span className="text-xs font-bold">CNF</span></span>
-            {waitlistCount > 0 && (
+            <span className="font-black text-xl text-emerald-800">{confirmedPaxCount} <span className="text-xs font-bold">CNF</span></span>
+            {waitlistPaxCount > 0 && (
               <span className="font-black text-xs text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
-                {waitlistCount} WL
+                {waitlistPaxCount} WL
               </span>
             )}
           </div>
-          <span className="text-[10px] text-emerald-600 block">Active Journeys</span>
+          <span className="text-[10px] text-emerald-600 block">
+            Across {confirmedBookingCount + waitlistBookingCount} active bookings
+          </span>
         </div>
         <div className="bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-200/80">
           <span className="text-indigo-700 text-[10px] font-bold block uppercase tracking-wider">TOTAL PASSENGERS</span>
@@ -231,6 +326,91 @@ export default function AdminAuditManager() {
           <span className="text-[10px] text-purple-600 block">Processed via Gateway</span>
         </div>
       </div>
+
+      {/* Train-Wise Passenger & Waitlist Breakdown Widget */}
+      {trainStats.length > 0 && (
+        <div className="card p-4 sm:p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <span>🚆</span>
+              <span>Train-Wise Live Passenger &amp; Waitlist Breakdown</span>
+            </h3>
+            <span className="text-[10px] font-bold text-slate-400">
+              Click a train to filter ledger
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {trainStats.map((ts) => {
+              const isFiltered = query.toLowerCase().includes(String(ts.trainNumber).toLowerCase());
+              return (
+                <div
+                  key={ts.trainNumber}
+                  onClick={() => setQuery(isFiltered ? '' : String(ts.trainNumber))}
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer relative ${
+                    isFiltered
+                      ? 'border-purple-500 bg-purple-50/40 ring-2 ring-purple-400/40 shadow-xs'
+                      : 'border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[11px] font-black text-slate-600 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                          #{ts.trainNumber}
+                        </span>
+                        <h4 className="font-extrabold text-xs text-slate-900 leading-tight">
+                          {ts.trainName}
+                        </h4>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 shrink-0">
+                      {ts.totalBookings} {ts.totalBookings === 1 ? 'Booking' : 'Bookings'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-black text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md border border-emerald-200">
+                      {ts.confirmedPax} Confirmed
+                    </span>
+                    <span className={`text-xs font-black px-2 py-0.5 rounded-md border ${
+                      ts.waitlistPax > 0
+                        ? 'text-amber-800 bg-amber-100 border-amber-300'
+                        : 'text-slate-500 bg-slate-100 border-slate-200'
+                    }`}>
+                      {ts.waitlistPax > 0 ? `${ts.waitlistPax} in Waitlist` : '0 Waitlist'}
+                    </span>
+                  </div>
+
+                  {/* Travel Date Breakdown */}
+                  {ts.dates && ts.dates.length > 0 && (
+                    <div className="pt-2 border-t border-slate-200/70 space-y-1">
+                      <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Schedule Queue by Travel Date:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ts.dates.map((d, dIdx) => (
+                          <span
+                            key={dIdx}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold bg-white border border-slate-200 px-2 py-0.5 rounded-md text-slate-700 shadow-2xs"
+                          >
+                            <span>📅 {d.date}:</span>
+                            {d.wlPax > 0 ? (
+                              <span className="text-amber-700 font-extrabold">{d.wlPax} WL (Queue #1–#{d.wlPax})</span>
+                            ) : (
+                              <span className="text-emerald-700 font-extrabold">{d.cnfPax} CNF</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Search Bar & Filter Controls */}
       <div className="card p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3">
@@ -335,9 +515,7 @@ export default function AdminAuditManager() {
                   const displayStatus = isWaitlist
                     ? (['CANCELLED', 'CANCELLING', 'FAILED', 'EXPIRED'].includes(b.status) ? b.status : 'WAITLISTED')
                     : b.status;
-                  const seatList = b.seats?.length > 0
-                    ? b.seats.map((s) => `#${s.seatNumber}`).join(', ')
-                    : (b.passengers?.map((p, idx) => p.seatNumber || p.seat || `WL #${idx + 1}`).join(', ') || `WL (${travelCls})`);
+                  const seatList = getBookingSeatList(b);
                   const pnrStr = getPnrDisplay(b);
                   const routeStr = getRouteDisplay(b);
 
@@ -408,7 +586,7 @@ export default function AdminAuditManager() {
                         </span>
                         <div className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">
                           {isWaitlist 
-                            ? `Waitlist Queue (${travelCls})` 
+                            ? `Waitlist Queue (${travelCls}) • ${formatDate(b.departureDate)}` 
                             : (b.seats?.[0]?.coach 
                                 ? `Coach ${b.seats[0].coach} (${travelCls})` 
                                 : `${travelCls} - ${b.seats?.[0]?.seatType ? formatSeatType(b.seats[0].seatType) : 'Confirmed'}`)}

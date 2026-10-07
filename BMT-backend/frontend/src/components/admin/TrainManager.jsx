@@ -20,6 +20,77 @@ const TRAIN_TYPES = [
   { value: 'SPECIAL', label: 'Special Fare Service' },
 ];
 
+const generateStandardRoster = (trainType = 'EXPRESS', baseFare = 450) => {
+  const berths = ['LOWER', 'MIDDLE', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'];
+  const rows = [];
+  if (trainType === 'VANDE_BHARAT' || trainType === 'SHATABDI') {
+    for (let i = 1; i <= 12; i++) {
+      rows.push({
+        seatNumber: i,
+        seatType: i % 2 === 0 ? 'LOWER' : 'UPPER',
+        price: String(Math.round(baseFare * 1.85)),
+        travelClass: 'EC',
+        coach: 'E1',
+      });
+    }
+    for (let i = 13; i <= 64; i++) {
+      rows.push({
+        seatNumber: i,
+        seatType: berths[(i - 13) % berths.length],
+        price: String(Math.round(baseFare * 1.0)),
+        travelClass: 'CC',
+        coach: 'C1',
+      });
+    }
+  } else if (trainType === 'RAJDHANI') {
+    for (let i = 1; i <= 8; i++) {
+      rows.push({
+        seatNumber: i,
+        seatType: i % 2 === 0 ? 'LOWER' : 'UPPER',
+        price: String(Math.round(baseFare * 2.2)),
+        travelClass: '1A',
+        coach: 'H1',
+      });
+    }
+    for (let i = 9; i <= 24; i++) {
+      rows.push({
+        seatNumber: i,
+        seatType: ['LOWER', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'][(i - 9) % 4],
+        price: String(Math.round(baseFare * 1.45)),
+        travelClass: '2A',
+        coach: 'A1',
+      });
+    }
+    for (let i = 25; i <= 64; i++) {
+      rows.push({
+        seatNumber: i,
+        seatType: berths[(i - 25) % berths.length],
+        price: String(Math.round(baseFare * 1.0)),
+        travelClass: '3A',
+        coach: 'B1',
+      });
+    }
+  } else {
+    // Standard Express: 4 1A, 8 2A, 20 3A, 20 SL, 12 2S = 64
+    for (let i = 1; i <= 4; i++) {
+      rows.push({ seatNumber: i, seatType: i % 2 === 0 ? 'LOWER' : 'UPPER', price: String(Math.round(baseFare * 2.2)), travelClass: '1A', coach: 'H1' });
+    }
+    for (let i = 5; i <= 12; i++) {
+      rows.push({ seatNumber: i, seatType: ['LOWER', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'][(i - 5) % 4], price: String(Math.round(baseFare * 1.45)), travelClass: '2A', coach: 'A1' });
+    }
+    for (let i = 13; i <= 32; i++) {
+      rows.push({ seatNumber: i, seatType: berths[(i - 13) % berths.length], price: String(Math.round(baseFare * 1.0)), travelClass: '3A', coach: 'B1' });
+    }
+    for (let i = 33; i <= 52; i++) {
+      rows.push({ seatNumber: i, seatType: berths[(i - 33) % berths.length], price: String(Math.round(baseFare * 0.65)), travelClass: 'SL', coach: 'S1' });
+    }
+    for (let i = 53; i <= 64; i++) {
+      rows.push({ seatNumber: i, seatType: 'LOWER', price: String(Math.round(baseFare * 0.35)), travelClass: '2S', coach: 'D1' });
+    }
+  }
+  return rows;
+};
+
 export default function TrainManager() {
   const [trains, setTrains] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,13 +109,7 @@ export default function TrainManager() {
     runsOn: 'Daily Service',
     runningDays: [0, 1, 2, 3, 4, 5, 6],
   });
-  const [seatRows, setSeatRows] = useState([
-    { seatNumber: 1, seatType: 'LOWER', price: '450' },
-    { seatNumber: 2, seatType: 'MIDDLE', price: '450' },
-    { seatNumber: 3, seatType: 'UPPER', price: '450' },
-    { seatNumber: 4, seatType: 'SIDE_LOWER', price: '480' },
-    { seatNumber: 5, seatType: 'SIDE_UPPER', price: '450' },
-  ]);
+  const [seatRows, setSeatRows] = useState(() => generateStandardRoster('EXPRESS', 450));
 
   const showToast = useToast();
 
@@ -131,6 +196,8 @@ export default function TrainManager() {
         seatNumber: parseInt(r.seatNumber, 10),
         seatType: r.seatType,
         price: parseFloat(r.price),
+        travelClass: r.travelClass || undefined,
+        coach: r.coach || undefined,
       }));
       await adminApi.createTrain({ ...form, seats });
       showToast(`Train ${form.trainNumber} - ${form.trainName} created!`, 'success');
@@ -142,11 +209,7 @@ export default function TrainManager() {
         runsOn: 'Daily Service',
         runningDays: [0, 1, 2, 3, 4, 5, 6],
       });
-      setSeatRows([
-        { seatNumber: 1, seatType: 'LOWER', price: '450' },
-        { seatNumber: 2, seatType: 'MIDDLE', price: '450' },
-        { seatNumber: 3, seatType: 'UPPER', price: '450' },
-      ]);
+      setSeatRows(generateStandardRoster('EXPRESS', 450));
       setShowCreateForm(false);
       fetchTrains(searchQuery);
     } catch (err) {
@@ -308,7 +371,11 @@ export default function TrainManager() {
               <label className="block text-xs font-bold text-slate-700 mb-1">Train Type</label>
               <select
                 value={form.trainType}
-                onChange={(e) => setForm({ ...form, trainType: e.target.value })}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  setForm({ ...form, trainType: newType });
+                  setSeatRows(generateStandardRoster(newType, 450));
+                }}
                 className="input-field w-full text-xs font-semibold"
               >
                 {TRAIN_TYPES.map((t) => (
@@ -361,14 +428,44 @@ export default function TrainManager() {
 
           {/* Seats Builder */}
           <div className="space-y-3 mb-5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                   Seat Inventory ({seatRows.length} Total Seats Configured)
                 </h4>
-                <p className="text-[11px] text-slate-500">Define seat numbers, berth types, and base fare</p>
+                <p className="text-[11px] text-slate-500">Authentic IRCTC berths, coach allocation, and fares</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSeatRows(generateStandardRoster('EXPRESS', 450));
+                    showToast('Loaded 64-seat IRCTC Express roster (1A, 2A, 3A, SL, 2S)', 'info');
+                  }}
+                  className="text-[11px] font-bold px-2 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-md hover:bg-amber-100 transition-colors"
+                >
+                  📋 64 IRCTC Express
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSeatRows(generateStandardRoster('VANDE_BHARAT', 450));
+                    showToast('Loaded 64-seat Vande Bharat roster (EC, CC)', 'info');
+                  }}
+                  className="text-[11px] font-bold px-2 py-1 bg-blue-50 text-blue-900 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                >
+                  ⚡ 64 Vande Bharat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSeatRows(generateStandardRoster('RAJDHANI', 450));
+                    showToast('Loaded 64-seat Rajdhani roster (1A, 2A, 3A)', 'info');
+                  }}
+                  className="text-[11px] font-bold px-2 py-1 bg-rose-50 text-rose-900 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
+                >
+                  👑 64 Rajdhani
+                </button>
                 <Button type="button" variant="secondary" onClick={() => addQuickSeats(10)} className="text-xs py-1 px-2.5">
                   + Add 10 Seats
                 </Button>
@@ -391,6 +488,22 @@ export default function TrainManager() {
                       required
                     />
                   </div>
+                  {row.travelClass && (
+                    <div className="w-14 text-center">
+                      {i === 0 && <span className="block text-[10px] font-bold text-slate-500 mb-1">Class</span>}
+                      <span className="px-1.5 py-1 rounded bg-slate-100 text-slate-700 text-xs font-mono font-bold border border-slate-200 block">
+                        {row.travelClass}
+                      </span>
+                    </div>
+                  )}
+                  {row.coach && (
+                    <div className="w-14 text-center">
+                      {i === 0 && <span className="block text-[10px] font-bold text-slate-500 mb-1">Coach</span>}
+                      <span className="px-1.5 py-1 rounded bg-emerald-50 text-emerald-800 text-xs font-mono font-bold border border-emerald-200 block">
+                        {row.coach}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex-1 min-w-[130px]">
                     <Select
                       label={i === 0 ? 'Type' : undefined}
@@ -399,7 +512,7 @@ export default function TrainManager() {
                       options={seatTypeOptions}
                     />
                   </div>
-                  <div className="w-28">
+                  <div className="w-24">
                     <Input
                       label={i === 0 ? 'Price (₹)' : undefined}
                       type="number"

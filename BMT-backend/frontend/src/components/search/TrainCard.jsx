@@ -111,28 +111,38 @@ export default function TrainCard({ train }) {
         classTotalSeats = seatSummary.classes[c.code];
       }
 
+      // Real booked count in this class
+      const bookedInClass = liveWlData?.bookedByClass?.[c.code] ?? 0;
+
+      // Live class-scoped waitlist tracking
+      const classWlInfo = liveWlData?.byClass?.[c.code];
+      const classWlQueueCount = classWlInfo?.waitlistCount ?? 0;
+
       // Determine real available seats for this class
       let classAvailableSeats = 0;
       if (liveClassAvail?.[c.code]?.available !== undefined) {
         classAvailableSeats = liveClassAvail[c.code].available;
       } else if (liveWlData?.bookedByClass?.[c.code] !== undefined) {
-        const bookedInClass = liveWlData.bookedByClass[c.code] || 0;
         classAvailableSeats = Math.max(0, classTotalSeats - bookedInClass);
+      } else if (availableCount > 0 && totalSeats > 0) {
+        const ratio = classTotalSeats / totalSeats;
+        classAvailableSeats = Math.min(classTotalSeats, Math.max(0, Math.floor(availableCount * ratio)));
       } else {
-        // Fallback proportional availability, strictly bounded without leaking ghost seats
-        if (availableCount > 0 && totalSeats > 0) {
-          const ratio = classTotalSeats / totalSeats;
-          classAvailableSeats = Math.min(classTotalSeats, Math.max(0, Math.floor(availableCount * ratio)));
-        } else {
-          classAvailableSeats = 0;
-        }
+        // When no one has booked this train/class yet, all seats are AVAILABLE!
+        classAvailableSeats = Math.max(0, classTotalSeats - bookedInClass);
       }
 
-      // Live class-scoped waitlist tracking
-      const classWlInfo = liveWlData?.byClass?.[c.code];
-      const classWlQueueCount = classWlInfo?.waitlistCount ?? 0;
-      const classIsWl = classAvailableSeats === 0 || classWlQueueCount > 0;
+      // Authentic Waitlist condition:
+      // A class is ONLY waitlisted if:
+      // 1) There are real waitlisted bookings in the DB for this class (classWlQueueCount > 0), OR
+      // 2) The physical seats in this class have genuinely been exhausted by confirmed bookings (bookedInClass >= classTotalSeats and classTotalSeats > 0)
+      const classIsWl = classWlQueueCount > 0 || (classAvailableSeats === 0 && bookedInClass >= classTotalSeats && classTotalSeats > 0);
       const classWlPos = classWlInfo?.nextWlPosition ?? (classWlQueueCount + 1);
+
+      // If not waitlisted, ensure available seats display is positive
+      if (!classIsWl && classAvailableSeats <= 0) {
+        classAvailableSeats = Math.max(1, classTotalSeats - bookedInClass);
+      }
 
       const statusText = classIsWl
         ? `WL ${classWlPos}`

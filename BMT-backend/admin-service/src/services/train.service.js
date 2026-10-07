@@ -4,6 +4,40 @@ const { BadRequestError, ConflictError, NotFoundError } = require("../utils/erro
 const adminProducer = require('../kafka/producer/admin.producer');
 const logger = require("../config/logger");
 
+const getSeatClassAndCoach = (seatNumber, totalSeats, trainType, trainName) => {
+     const tName = (trainName || '').toLowerCase();
+     const isVandeBharat = tName.includes('vande bharat') || tName.includes('shatabdi');
+     const isRajdhani = tName.includes('rajdhani');
+
+     if (isVandeBharat) {
+          const ecCutoff = Math.max(1, Math.round(totalSeats * 0.20));
+          if (seatNumber <= ecCutoff) {
+               return { travelClass: 'EC', coach: 'E1' };
+          }
+          return { travelClass: 'CC', coach: 'C1' };
+     }
+
+     if (isRajdhani) {
+          const c1AC = Math.max(1, Math.round(totalSeats * 0.15));
+          const c2AC = c1AC + Math.max(1, Math.round(totalSeats * 0.30));
+          if (seatNumber <= c1AC) return { travelClass: '1A', coach: 'H1' };
+          if (seatNumber <= c2AC) return { travelClass: '2A', coach: 'A1' };
+          return { travelClass: '3A', coach: 'B1' };
+     }
+
+     // Express / Mail standard roster
+     const c1AC = Math.max(1, Math.round(totalSeats * 0.06));
+     const c2AC = c1AC + Math.max(1, Math.round(totalSeats * 0.12));
+     const c3AC = c2AC + Math.max(1, Math.round(totalSeats * 0.32));
+     const cSL = c3AC + Math.max(1, Math.round(totalSeats * 0.32));
+
+     if (seatNumber <= c1AC) return { travelClass: '1A', coach: 'H1' };
+     if (seatNumber <= c2AC) return { travelClass: '2A', coach: 'A1' };
+     if (seatNumber <= c3AC) return { travelClass: '3A', coach: 'B1' };
+     if (seatNumber <= cSL) return { travelClass: 'SL', coach: 'S1' };
+     return { travelClass: '2S', coach: 'D1' };
+};
+
 const createTrain = async (data) => {
      const { trainNumber, trainName, coachName, seats, runsOn, runningDays, trainType } = data;
      const existing = await prisma.train.findUnique(
@@ -29,13 +63,16 @@ const createTrain = async (data) => {
                runningDays: runningDays || [0, 1, 2, 3, 4, 5, 6],
                trainType: trainType || 'EXPRESS',
                seats: {
-                    create: seats.map((seat) => ({
-                         seatNumber: seat.seatNumber,
-                         seatType: seat.seatType,
-                         price: seat.price,
-                         travelClass: seat.travelClass || 'SL',
-                         coach: seat.coach || null
-                    }))
+                    create: seats.map((seat) => {
+                         const info = getSeatClassAndCoach(seat.seatNumber, seats.length, trainType, trainName);
+                         return {
+                              seatNumber: seat.seatNumber,
+                              seatType: seat.seatType,
+                              price: seat.price,
+                              travelClass: seat.travelClass || info.travelClass || 'SL',
+                              coach: seat.coach || info.coach || null
+                         };
+                    })
                }
           },
           include: { seats: { orderBy: { seatNumber: 'asc' } } }
@@ -142,6 +179,17 @@ const createRoute = async (data) => {
                     });
                }
 
+               const classSummary = {};
+               (trainWithSeats.seats || []).forEach((s) => {
+                    const cls = s.travelClass || 'SL';
+                    classSummary[cls] = (classSummary[cls] || 0) + 1;
+               });
+
+               const scheduleClasses = {};
+               for (const [cls, count] of Object.entries(classSummary)) {
+                    scheduleClasses[cls] = { totalSeats: count, available: count, locked: 0, booked: 0 };
+               }
+
                provisionedSchedules.push({
                     scheduleId: schedule.id,
                     departureDate: dateStr,
@@ -149,6 +197,7 @@ const createRoute = async (data) => {
                     available: (trainWithSeats.seats || []).length,
                     locked: 0,
                     booked: 0,
+                    classes: scheduleClasses,
                });
 
                await adminProducer.publishScheduleCreated({
@@ -165,6 +214,8 @@ const createRoute = async (data) => {
                          seatNumber: s.seatNumber,
                          seatType: s.seatType,
                          price: s.price,
+                         travelClass: s.travelClass || 'SL',
+                         coach: s.coach || null,
                     })),
                     route: route.routeStations.map((rs) => ({
                          stationId: rs.station.id,
@@ -186,9 +237,12 @@ const createRoute = async (data) => {
      // Direct ES indexing for instant searchability across all stops
      const esUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
      try {
-          const seatSummary = { total: (trainWithSeats.seats || []).length, LOWER: 0, MIDDLE: 0, UPPER: 0, SIDE_LOWER: 0, SIDE_UPPER: 0 };
+          const classSummary = {};
+          const seatSummary = { total: (trainWithSeats.seats || []).length, LOWER: 0, MIDDLE: 0, UPPER: 0, SIDE_LOWER: 0, SIDE_UPPER: 0, classes: classSummary };
           (trainWithSeats.seats || []).forEach((s) => {
                if (seatSummary[s.seatType] !== undefined) seatSummary[s.seatType]++;
+               const cls = s.travelClass || 'SL';
+               classSummary[cls] = (classSummary[cls] || 0) + 1;
           });
 
           const runningDays = Array.isArray(trainWithSeats.runningDays) && trainWithSeats.runningDays.length > 0
