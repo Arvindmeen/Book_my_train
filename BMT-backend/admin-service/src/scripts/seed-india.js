@@ -271,10 +271,13 @@ const STATIONS = [
   { code: 'ALLP', name: 'Alappuzha', city: 'Alappuzha', state: 'Kerala' },
 ];
 
-// Helper: Generates realistic seat configurations
-function generateSeats(basePrice, totalSeats = 64) {
+// Helper: Generates realistic seat configurations partitioned across IRCTC travel classes
+function generateSeats(basePrice, totalSeats = 64, trainType = 'EXPRESS', trainName = '') {
   const seatTypes = ['LOWER', 'MIDDLE', 'UPPER', 'LOWER', 'MIDDLE', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'];
   const seats = [];
+
+  const isVB = /vande bharat|shatabdi/i.test(trainName) || trainType === 'VANDE_BHARAT' || trainType === 'SHATABDI';
+  const isRajdhani = /rajdhani/i.test(trainName) || trainType === 'RAJDHANI';
 
   for (let i = 1; i <= totalSeats; i++) {
     const seatType = seatTypes[(i - 1) % seatTypes.length];
@@ -283,10 +286,38 @@ function generateSeats(basePrice, totalSeats = 64) {
     if (seatType === 'MIDDLE') priceMultiplier = 0.95;
     if (seatType === 'UPPER' || seatType === 'SIDE_UPPER') priceMultiplier = 0.98;
 
+    let travelClass = 'SL';
+    let coach = 'S1';
+    let classMult = 1.0;
+
+    if (isVB) {
+      const ecCap = Math.max(4, Math.round(totalSeats * 0.20));
+      if (i <= ecCap) { travelClass = 'EC'; coach = 'E1'; classMult = 1.85; }
+      else { travelClass = 'CC'; coach = 'C1'; classMult = 1.0; }
+    } else if (isRajdhani) {
+      const cap1A = Math.max(4, Math.round(totalSeats * 0.15));
+      const cap2A = cap1A + Math.max(8, Math.round(totalSeats * 0.30));
+      if (i <= cap1A) { travelClass = '1A'; coach = 'H1'; classMult = 2.2; }
+      else if (i <= cap2A) { travelClass = '2A'; coach = 'A1'; classMult = 1.45; }
+      else { travelClass = '3A'; coach = 'B1'; classMult = 1.0; }
+    } else {
+      const cap1A = Math.max(2, Math.round(totalSeats * 0.06));
+      const cap2A = cap1A + Math.max(4, Math.round(totalSeats * 0.12));
+      const cap3A = cap2A + Math.max(10, Math.round(totalSeats * 0.32));
+      const capSL = cap3A + Math.max(10, Math.round(totalSeats * 0.32));
+      if (i <= cap1A) { travelClass = '1A'; coach = 'H1'; classMult = 2.2; }
+      else if (i <= cap2A) { travelClass = '2A'; coach = 'A1'; classMult = 1.45; }
+      else if (i <= cap3A) { travelClass = '3A'; coach = 'B1'; classMult = 1.0; }
+      else if (i <= capSL) { travelClass = 'SL'; coach = 'S1'; classMult = 0.65; }
+      else { travelClass = '2S'; coach = 'D1'; classMult = 0.35; }
+    }
+
     seats.push({
       seatNumber: i,
       seatType,
-      price: Math.round(basePrice * priceMultiplier),
+      travelClass,
+      coach,
+      price: Math.round(basePrice * classMult * priceMultiplier),
     });
   }
   return seats;
@@ -1910,7 +1941,7 @@ async function seedRealIndianRailways() {
         });
 
         // Generate Seats
-        const seatsData = generateSeats(t.basePrice, t.seatsCount);
+        const seatsData = generateSeats(t.basePrice, t.seatsCount, t.trainType, t.trainName);
         for (const s of seatsData) {
           const createdSeat = await prisma.seat.create({
             data: {
@@ -1918,6 +1949,8 @@ async function seedRealIndianRailways() {
               seatNumber: s.seatNumber,
               seatType: s.seatType,
               price: s.price,
+              travelClass: s.travelClass || 'SL',
+              coach: s.coach || null,
             },
           });
           seats.push(createdSeat);

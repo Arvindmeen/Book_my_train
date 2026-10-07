@@ -32,7 +32,9 @@ const createTrain = async (data) => {
                     create: seats.map((seat) => ({
                          seatNumber: seat.seatNumber,
                          seatType: seat.seatType,
-                         price: seat.price
+                         price: seat.price,
+                         travelClass: seat.travelClass || 'SL',
+                         coach: seat.coach || null
                     }))
                }
           },

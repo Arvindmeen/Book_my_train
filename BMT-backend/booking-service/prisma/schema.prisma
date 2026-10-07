@@ -46,6 +46,7 @@ model Booking {
   status         BookingStatus @default(PENDING)
   totalAmount    Float         @default(0)
   seatCount      Int
+  travelClass    String        @default("SL") // Travel class (e.g. 1A, 2A, 3A, SL, 2S, EC, CC)
   fromStationId  String?       // --- SEGMENT BOOKING: boarding station ID
   toStationId    String?       // --- SEGMENT BOOKING: alighting station ID
   fromSeq        Int?          // --- SEGMENT BOOKING: sequence number of boarding station
@@ -65,6 +66,7 @@ model Booking {
   @@index([pnr])
   @@index([userId])
   @@index([scheduleId])
+  @@index([scheduleId, travelClass])
   @@index([status])
   @@index([lockExpiresAt, status])
   @@map("bookings")

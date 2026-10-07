@@ -70,29 +70,33 @@ export default function PnrPage() {
         pnr: data.pnr || val,
         trainName: `${data.trainNumber} - ${formatTrainName(data.trainName)}`,
         date: depDate,
-        className: 'AC Chair Car / Sleeper',
+        className: data.travelClassName || (data.travelClass === '1A' ? 'AC First Class (1A)' : data.travelClass === '2A' ? 'AC 2 Tier (2A)' : data.travelClass === '3A' ? 'AC 3 Tier (3A)' : data.travelClass === '2S' ? 'Second Sitting (2S)' : 'Sleeper Class (SL)'),
         chartStatus: data.chartStatus || 'CHART PREPARED',
         platform: 'Platform #1',
         from: data.from || 'Origin Station',
         to: data.to || 'Destination Station',
+        travelClass: data.travelClass || 'SL',
         isWaitlist: isWaitlistBooking,
         passengers: (data.passengers || []).length > 0
-          ? data.passengers.map((p, idx) => ({
-              name: p.name,
-              quota: 'General Quota (GN)',
-              bookingStatus: p.status || (isWaitlistBooking ? `WL #${idx + 1}` : 'CNF'),
-              status: p.status || (isWaitlistBooking ? `WL #${idx + 1} (Waitlist)` : 'CNF (Confirmed)'),
-              coach: p.coach || (isWaitlistBooking ? 'WL' : 'B1'),
-              seat: p.seat || (isWaitlistBooking ? `WL #${idx + 1}` : `${p.seatNumber || 14} (Lower)`),
-            }))
+          ? data.passengers.map((p, idx) => {
+              const defaultCoach = data.coach || (data.travelClass === '1A' ? 'H1' : data.travelClass === '2A' ? 'A1' : data.travelClass === '3A' ? 'B1' : data.travelClass === '2S' ? 'D1' : 'S1');
+              return {
+                name: p.name,
+                quota: 'General Quota (GN)',
+                bookingStatus: p.status || (isWaitlistBooking ? `WL #${idx + 1}` : 'CNF'),
+                status: p.status || (isWaitlistBooking ? `WL #${idx + 1} (${data.travelClass || 'SL'})` : 'CNF (Confirmed)'),
+                coach: p.coach || (isWaitlistBooking ? `WL (${data.travelClass || 'SL'})` : defaultCoach),
+                seat: p.seat || (isWaitlistBooking ? `WL #${idx + 1}` : `${p.seatNumber || (idx + 1)} (Allocated)`),
+              };
+            })
           : [
               {
                 name: 'Passenger 1',
                 quota: 'General Quota (GN)',
                 bookingStatus: isWaitlistBooking ? 'WL #1' : 'CNF',
-                status: isWaitlistBooking ? 'WL #1 (Waitlist)' : 'CNF (Confirmed)',
-                coach: isWaitlistBooking ? 'WL' : 'B1',
-                seat: isWaitlistBooking ? 'WL #1' : '14 (Lower)',
+                status: isWaitlistBooking ? `WL #1 (${data.travelClass || 'SL'})` : 'CNF (Confirmed)',
+                coach: isWaitlistBooking ? `WL (${data.travelClass || 'SL'})` : (data.coach || 'S1'),
+                seat: isWaitlistBooking ? 'WL #1' : '14 (Allocated)',
               }
             ]
       });

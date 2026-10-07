@@ -30,13 +30,25 @@ export const BOOKING_STATUS_COLORS = {
 
 export const MAX_SEATS_PER_BOOKING = 6;
 
-// Authentic Indian Railways (IRCTC) Travel Classes
+// Authentic Indian Railways (IRCTC) Travel Classes in standard booking order:
+// 1AC -> 2AC -> 3AC -> Sleeper -> General (2S)
 export const IRCTC_CLASSES = [
-  { code: 'SL', name: 'Sleeper', fullLabel: 'Sleeper Class (SL)', priceMultiplier: 0.7, defaultBerths: ['LOWER', 'MIDDLE', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'] },
-  { code: '3A', name: 'AC 3 Tier', fullLabel: 'AC 3 Tier (3A)', priceMultiplier: 1.0, defaultBerths: ['LOWER', 'MIDDLE', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'] },
-  { code: '2A', name: 'AC 2 Tier', fullLabel: 'AC 2 Tier (2A)', priceMultiplier: 1.45, defaultBerths: ['LOWER', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'] },
-  { code: '1A', name: 'AC First Class', fullLabel: 'AC First Class (1A)', priceMultiplier: 2.2, defaultBerths: ['LOWER', 'UPPER'] },
-  { code: '2S', name: 'Second Sitting', fullLabel: 'Second Sitting (2S)', priceMultiplier: 0.35, defaultBerths: ['WINDOW', 'MIDDLE', 'AISLE'] },
+  { code: '1A', name: '1AC', displayTitle: '1AC', fullLabel: 'AC First Class (1A)', coachPrefix: 'H', priceMultiplier: 2.2, defaultBerths: ['LOWER', 'UPPER'], defaultRatio: 0.06 },
+  { code: '2A', name: '2AC', displayTitle: '2AC', fullLabel: 'AC 2 Tier (2A)', coachPrefix: 'A', priceMultiplier: 1.45, defaultBerths: ['LOWER', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'], defaultRatio: 0.12 },
+  { code: '3A', name: '3AC', displayTitle: '3AC', fullLabel: 'AC 3 Tier (3A)', coachPrefix: 'B', priceMultiplier: 1.0, defaultBerths: ['LOWER', 'MIDDLE', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'], defaultRatio: 0.32 },
+  { code: 'SL', name: 'Sleeper', displayTitle: 'Sleeper', fullLabel: 'Sleeper Class (SL)', coachPrefix: 'S', priceMultiplier: 0.65, defaultBerths: ['LOWER', 'MIDDLE', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'], defaultRatio: 0.32 },
+  { code: '2S', name: 'General', displayTitle: 'General (2S)', fullLabel: 'Second Sitting / General (2S)', coachPrefix: 'D', priceMultiplier: 0.35, defaultBerths: ['WINDOW', 'MIDDLE', 'AISLE'], defaultRatio: 0.18 },
+];
+
+export const CHAIR_CAR_CLASSES = [
+  { code: 'EC', name: 'Exec Chair Car', displayTitle: 'Exec CC (EC)', fullLabel: 'Executive Chair Car (EC)', coachPrefix: 'E', priceMultiplier: 1.85, defaultBerths: ['WINDOW', 'AISLE'], defaultRatio: 0.20 },
+  { code: 'CC', name: 'AC Chair Car', displayTitle: 'Chair Car (CC)', fullLabel: 'AC Chair Car (CC)', coachPrefix: 'C', priceMultiplier: 1.0, defaultBerths: ['WINDOW', 'MIDDLE', 'AISLE'], defaultRatio: 0.80 },
+];
+
+export const RAJDHANI_CLASSES = [
+  { code: '1A', name: '1AC', displayTitle: '1AC', fullLabel: 'AC First Class (1A)', coachPrefix: 'H', priceMultiplier: 2.2, defaultBerths: ['LOWER', 'UPPER'], defaultRatio: 0.15 },
+  { code: '2A', name: '2AC', displayTitle: '2AC', fullLabel: 'AC 2 Tier (2A)', coachPrefix: 'A', priceMultiplier: 1.45, defaultBerths: ['LOWER', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'], defaultRatio: 0.30 },
+  { code: '3A', name: '3AC', displayTitle: '3AC', fullLabel: 'AC 3 Tier (3A)', coachPrefix: 'B', priceMultiplier: 1.0, defaultBerths: ['LOWER', 'MIDDLE', 'UPPER', 'SIDE_LOWER', 'SIDE_UPPER'], defaultRatio: 0.55 },
 ];
 
 export const BERTH_PREFERENCE_OPTIONS = [

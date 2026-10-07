@@ -250,10 +250,12 @@ export default function BookingDetailPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {booking.passengers.map((p, i) => {
+                      const travelCls = booking.travelClass || 'SL';
                       const isPassengerWl = isWaitlist || p.status?.startsWith('WL');
-                      const passStatus = p.status || (isWaitlist ? `WL #${i + 1}` : 'CNF');
-                      const coach = p.coach || (isWaitlist ? 'WL' : (booking.seats?.[i]?.seatType?.startsWith('1A') ? 'H1' : booking.seats?.[i]?.seatType?.startsWith('2A') ? 'A1' : booking.seats?.[i]?.seatType?.startsWith('3A') ? 'B1' : 'S1'));
-                      const berth = p.seat || (booking.seats?.[i] ? `Seat #${booking.seats[i].seatNumber} (${formatSeatType(booking.seats[i].seatType)})` : (isWaitlist ? `WL #${i + 1} (Waitlist Queue)` : 'Assigned'));
+                      const passStatus = p.status || (isWaitlist ? `WL #${i + 1} (${travelCls})` : 'CNF');
+                      const defaultCoach = booking.seats?.[i]?.coach || (travelCls === '1A' ? 'H1' : travelCls === '2A' ? 'A1' : travelCls === '3A' ? 'B1' : travelCls === '2S' ? 'D1' : 'S1');
+                      const coach = p.coach || (isWaitlist ? `WL (${travelCls})` : defaultCoach);
+                      const berth = p.seat || (booking.seats?.[i] ? `Seat #${booking.seats[i].seatNumber} (${formatSeatType(booking.seats[i].seatType)})` : (isWaitlist ? `WL #${i + 1} (${travelCls} Queue)` : 'Assigned'));
 
                       return (
                         <tr key={p.id || i} className="hover:bg-slate-50/50">

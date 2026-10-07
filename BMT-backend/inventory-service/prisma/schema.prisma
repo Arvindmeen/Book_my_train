@@ -45,6 +45,8 @@ model SeatInventory {
   seatNumber          Int
   seatType            String
   price               Float
+  travelClass         String     @default("SL") // 1A, 2A, 3A, SL, 2S, EC, CC
+  coach               String?    // e.g. H1, A1, B1, S1, D1, E1, C1
   status              SeatStatus @default(AVAILABLE)
   lockedBy            String?
   lockedAt            DateTime?
@@ -59,6 +61,7 @@ model SeatInventory {
   @@unique([scheduleId, seatId])
   @@unique([scheduleId, seatNumber])
   @@index([scheduleId, status])
+  @@index([scheduleId, travelClass])
   @@index([lockExpiresAt, status])
   @@index([bookingId])
   @@map("seat_inventories")

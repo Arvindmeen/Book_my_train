@@ -45,16 +45,19 @@ const indexTrainRoute = async (routeEvent) => {
      const { train, routeStations } = data;
      if (!train || !routeStations) return;
 
-     const seatSummary = { total: 0, LOWER: 0, MIDDLE: 0, UPPER: 0, SIDE_LOWER: 0, SIDE_UPPER: 0 };
+     const seatSummary = { total: 0, LOWER: 0, MIDDLE: 0, UPPER: 0, SIDE_LOWER: 0, SIDE_UPPER: 0, classes: {} };
      (train.seats || []).forEach((s) => {
           seatSummary.total++;
           if (seatSummary[s.seatType] !== undefined) seatSummary[s.seatType]++;
+          const cls = s.travelClass || 'SL';
+          seatSummary.classes[cls] = (seatSummary.classes[cls] || 0) + 1;
      });
 
      const doc = {
           trainId: train.id,
           trainNumber: train.trainNumber,
           trainName: cleanTrainName(train.trainName || train.name),
+          trainType: train.trainType || 'EXPRESS',
           runsOn: train.runsOn || 'Daily Service',
           runningDays: train.runningDays || [0, 1, 2, 3, 4, 5, 6],
           route: (routeStations || []).map((rs) => {
@@ -330,6 +333,7 @@ const searchTrains = async (from, to, date) => {
                     trainId: src.trainId,
                     trainNumber: src.trainNumber,
                     trainName: cleanTrainName(src.trainName),
+                    trainType: src.trainType || 'EXPRESS',
                     runsOn: src.runsOn || 'Daily Service',
                     runningDays,
                     runsOnSelectedDate: operatesOnTargetDay,

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { inventoryApi } from '../api/inventory.api';
 import { bookingApi } from '../api/booking.api';
 import { useBookingStore } from '../store/booking.store';
@@ -10,22 +10,29 @@ import SeatGrid from '../components/seats/SeatGrid';
 import SeatLegend from '../components/seats/SeatLegend';
 import SelectionSummary from '../components/seats/SelectionSummary';
 import Spinner from '../components/ui/Spinner';
-import { MAX_SEATS_PER_BOOKING } from '../utils/constants';
+import { MAX_SEATS_PER_BOOKING, IRCTC_CLASSES, RAJDHANI_CLASSES, CHAIR_CAR_CLASSES } from '../utils/constants';
 
 export default function SeatSelectionPage() {
   const { scheduleId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const showToast = useToast();
+
   const selectedTrain = useBookingStore((s) => s.selectedTrain);
   const selectedSeats = useBookingStore((s) => s.selectedSeats);
   const toggleSeat = useBookingStore((s) => s.toggleSeat);
   const setSelectedTrain = useBookingStore((s) => s.setSelectedTrain);
+  const setSelectedClass = useBookingStore((s) => s.setSelectedClass);
+  const storeSelectedClass = useBookingStore((s) => s.selectedClass);
   const fromStation = useBookingStore((s) => s.fromStation);
   const toStation = useBookingStore((s) => s.toStation);
 
+  const initialClass = searchParams.get('class') || storeSelectedClass || '3A';
+  const [activeClass, setActiveClass] = useState(initialClass);
+
   const [availability, setAvailability] = useState(null);
   const [seats, setSeats] = useState([]);
-  const [liveWlCount, setLiveWlCount] = useState(null);
+  const [liveWlData, setLiveWlData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState(null);
 
@@ -46,9 +53,9 @@ export default function SeatSelectionPage() {
         ]);
 
         if (wlRes.status === 'fulfilled') {
-          const count = wlRes.value?.data?.waitlistCount ?? wlRes.value?.waitlistCount;
-          if (typeof count === 'number') {
-            setLiveWlCount(count);
+          const wlData = wlRes.value?.data || wlRes.value;
+          if (wlData) {
+            setLiveWlData(wlData);
           }
         }
 
@@ -91,6 +98,45 @@ export default function SeatSelectionPage() {
     fetchData();
   }, [scheduleId]);
 
+  // Train type detection for class tabs
+  const isVandeBharat = (selectedTrain?.trainName || availability?.trainName || '').toLowerCase().includes('vande bharat') ||
+                        (selectedTrain?.trainName || availability?.trainName || '').toLowerCase().includes('shatabdi');
+  const isRajdhani = (selectedTrain?.trainName || availability?.trainName || '').toLowerCase().includes('rajdhani');
+
+  const availableClassOptions = useMemo(() => {
+    if (isVandeBharat) return CHAIR_CAR_CLASSES;
+    if (isRajdhani) return RAJDHANI_CLASSES;
+    return IRCTC_CLASSES; // 1AC, 2AC, 3AC, Sleeper, General (2S)
+  }, [isVandeBharat, isRajdhani]);
+
+  // When active class changes, ensure store has the updated class
+  const handleSelectClass = (classCode) => {
+    setActiveClass(classCode);
+    setSearchParams({ class: classCode });
+    const clsObj = availableClassOptions.find((c) => c.code === classCode);
+    const fare = (selectedTrain?.basePrice || 450) * (clsObj?.priceMultiplier || 1);
+    setSelectedClass(classCode, Math.round(fare));
+  };
+
+  // Filter seats belonging to currently active travel class
+  const classSeats = useMemo(() => {
+    const list = seats.filter((s) => s.travelClass === activeClass);
+    // If no seats explicitly tagged with activeClass, fallback to all seats
+    return list.length > 0 ? list : seats;
+  }, [seats, activeClass]);
+
+  const classAvailableCount = useMemo(() => {
+    if (availability?.classes?.[activeClass]?.available !== undefined) {
+      return availability.classes[activeClass].available;
+    }
+    return classSeats.filter((s) => s.status === 'AVAILABLE' && (!s.segmentStatus || s.segmentStatus === 'AVAILABLE')).length;
+  }, [availability, activeClass, classSeats]);
+
+  const classWlInfo = liveWlData?.byClass?.[activeClass];
+  const classWlCount = classWlInfo?.waitlistCount ?? 0;
+  const isWaitlist = classAvailableCount === 0 || classWlCount > 0;
+  const nextWlPos = classWlInfo?.nextWlPosition ?? (classWlCount + 1);
+
   const setWaitlistBooking = useBookingStore((s) => s.setWaitlistBooking);
   const [waitlistPax, setWaitlistPax] = useState(1);
 
@@ -101,10 +147,10 @@ export default function SeatSelectionPage() {
     }
   };
 
-  const isWaitlist = Boolean(availability && availability.available === 0);
-  const nextWlPos = (liveWlCount !== null ? liveWlCount : (availability?.booked > availability?.totalSeats ? availability.booked - availability.totalSeats : 0)) + 1;
-
-  const waitlistFare = seats.length > 0 && seats[0]?.price ? seats[0].price : 450;
+  const currentClassDef = availableClassOptions.find((c) => c.code === activeClass) || availableClassOptions[0];
+  const waitlistFare = classSeats.length > 0 && classSeats[0]?.price 
+    ? classSeats[0].price 
+    : Math.round((selectedTrain?.basePrice || 450) * (currentClassDef?.priceMultiplier || 1));
 
   const handleProceedWaitlist = () => {
     setWaitlistBooking({
@@ -112,11 +158,12 @@ export default function SeatSelectionPage() {
       paxCount: waitlistPax,
       fare: waitlistFare,
       wlPos: nextWlPos,
+      classCode: activeClass,
     });
     navigate('/booking');
   };
 
-  const filteredSeats = filter ? seats.filter((s) => s.seatType === filter) : seats;
+  const filteredSeats = filter ? classSeats.filter((s) => s.seatType === filter) : classSeats;
 
   if (loading) {
     return (
@@ -141,7 +188,57 @@ export default function SeatSelectionPage() {
         {/* Availability Summary */}
         <AvailabilitySummary availability={availability} train={selectedTrain} />
 
-        {/* ─── WAITLIST RESERVATION BOX (When 0 Seats Available) ─── */}
+        {/* IRCTC Travel Class Selector Tabs: 1AC, 2AC, 3AC, Sleeper, General */}
+        <div className="card p-4 sm:p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <span>🎟️</span>
+              <span>Select Coach / Travel Class</span>
+            </h4>
+            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              Live Coach Status &amp; Waitlist
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+            {availableClassOptions.map((c) => {
+              const isSelected = activeClass === c.code;
+              const cSeats = seats.filter((s) => s.travelClass === c.code);
+              const cAvail = availability?.classes?.[c.code]?.available ?? (cSeats.filter((s) => s.status === 'AVAILABLE' && (!s.segmentStatus || s.segmentStatus === 'AVAILABLE')).length);
+              const cWl = liveWlData?.byClass?.[c.code]?.waitlistCount ?? 0;
+              const cIsWl = cAvail === 0 || cWl > 0;
+              const cNextWl = liveWlData?.byClass?.[c.code]?.nextWlPosition ?? 1;
+
+              return (
+                <button
+                  key={c.code}
+                  type="button"
+                  onClick={() => handleSelectClass(c.code)}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/30 shadow-sm'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-1 mb-0.5">
+                    <span className="font-black text-sm text-slate-900">{c.displayTitle || c.code}</span>
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase font-mono">{c.code}</span>
+                  </div>
+                  <p className="text-[11px] font-semibold text-slate-500 truncate mb-1">
+                    {c.name}
+                  </p>
+                  <div>
+                    <span className={`text-xs font-black ${cIsWl ? 'text-amber-700' : 'text-emerald-700'}`}>
+                      {cIsWl ? `WL #${cNextWl}` : `${cAvail} Berths Available`}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ─── WAITLIST RESERVATION BOX (When 0 Seats Available in selected class) ─── */}
         {isWaitlist && (
           <div className="card p-6 md:p-8 bg-gradient-to-br from-amber-500/10 via-amber-50/60 to-orange-50/80 border-2 border-amber-300 rounded-3xl shadow-xl shadow-amber-900/5 animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -149,17 +246,17 @@ export default function SeatSelectionPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="px-3 py-1 bg-amber-500 text-white font-black text-xs uppercase tracking-wider rounded-full shadow-xs flex items-center gap-1.5">
                     <span>⚡</span>
-                    <span>Indian Railways Waitlist (WL) Reservation</span>
+                    <span>Indian Railways {currentClassDef.displayTitle || currentClassDef.name} ({activeClass}) Waitlist</span>
                   </span>
                   <span className="text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full">
-                    Confirmed Berths Full
+                    {activeClass} Berths Full
                   </span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  All Berths Reserved &mdash; Book in Official Waitlist Queue
+                  {currentClassDef.name} ({activeClass}) Berths Reserved &mdash; Book in {activeClass} Waitlist Queue
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-                  All physical berths for this service are currently confirmed. You can book an authentic <strong>Waitlist (WL) Ticket</strong>. As passengers cancel or charts are prepared, your ticket will automatically be cleared and assigned confirmed berths.
+                  All physical berths for {currentClassDef.name} ({activeClass}) are currently confirmed. You can book an authentic <strong>{activeClass} Waitlist Ticket</strong>. As passengers in {activeClass} cancel or charts are prepared, your ticket will automatically be cleared and assigned confirmed berths in coach {currentClassDef.coachPrefix || 'B'}1.
                 </p>
 
                 {/* AI Prediction & Queue Position */}
@@ -169,8 +266,8 @@ export default function SeatSelectionPage() {
                     <span className="text-xs sm:text-sm font-black text-emerald-700">82% High Confirmation Chance</span>
                   </div>
                   <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-amber-200 px-3 py-1.5 rounded-xl shadow-xs">
-                    <span className="text-xs font-bold text-slate-500">Next Position:</span>
-                    <span className="text-xs sm:text-sm font-black text-amber-800">WL #{nextWlPos}</span>
+                    <span className="text-xs font-bold text-slate-500">Next Position in {activeClass}:</span>
+                    <span className="text-xs sm:text-sm font-black text-amber-800">{activeClass} WL #{nextWlPos}</span>
                   </div>
                 </div>
               </div>

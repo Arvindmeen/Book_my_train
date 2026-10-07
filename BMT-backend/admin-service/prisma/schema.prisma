@@ -57,15 +57,18 @@ enum SeatType {
 }
 
 model Seat {
-  id         String   @id @default(uuid())
-  trainId    String
-  seatNumber Int // 1, 2, 3...
-  seatType   SeatType // LOWER, MIDDLE, UPPER etc
-  price      Float // Price for this seat type
+  id          String   @id @default(uuid())
+  trainId     String
+  seatNumber  Int // 1, 2, 3...
+  seatType    SeatType // LOWER, MIDDLE, UPPER etc
+  price       Float // Price for this seat type
+  travelClass String   @default("SL") // 1A, 2A, 3A, SL, 2S, EC, CC
+  coach       String?  // e.g. H1, A1, B1, S1, D1, E1, C1
 
   train Train @relation(fields: [trainId], references: [id], onDelete: Cascade)
 
   @@unique([trainId, seatNumber])
+  @@index([trainId, travelClass])
   @@map("seats")
 }
 

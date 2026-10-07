@@ -4,6 +4,7 @@ import { useBookingStore } from '../../store/booking.store';
 import { useSearchStore } from '../../store/search.store';
 import { useAuthStore } from '../../store/auth.store';
 import { bookingApi } from '../../api/booking.api';
+import { inventoryApi } from '../../api/inventory.api';
 import { formatSeatType, formatTrainName, formatTime, calculateDurationFromDistance } from '../../utils/format';
 import { predictWaitlist } from '../../utils/aiPrediction';
 import { getTrainSegmentRoute } from '../../utils/trainRoutes';
@@ -17,7 +18,8 @@ export default function TrainCard({ train }) {
 
   const [activePrediction, setActivePrediction] = useState(null);
   const [showRoute, setShowRoute] = useState(false);
-  const [liveWlCount, setLiveWlCount] = useState(null);
+  const [liveWlData, setLiveWlData] = useState(null);
+  const [liveClassAvail, setLiveClassAvail] = useState(null);
 
   const cleanName = formatTrainName(train.trainName);
   const segmentRoute = getTrainSegmentRoute(train);
@@ -34,16 +36,26 @@ export default function TrainCard({ train }) {
   const schedule = train.schedule;
   const seatSummary = train.seatSummary || {};
 
-  // Fetch real-time active waitlist count for this train schedule
+  // Fetch real-time active waitlist & class availability for this train schedule
   useEffect(() => {
     let isMounted = true;
     if (schedule?.scheduleId) {
       bookingApi.getScheduleWaitlist(schedule.scheduleId)
         .then((res) => {
           if (!isMounted) return;
-          const count = res?.data?.waitlistCount ?? res?.waitlistCount;
-          if (typeof count === 'number') {
-            setLiveWlCount(count);
+          const data = res?.data || res;
+          if (data) {
+            setLiveWlData(data);
+          }
+        })
+        .catch(() => {});
+
+      inventoryApi.getAvailability(schedule.scheduleId)
+        .then((res) => {
+          if (!isMounted) return;
+          const data = res?.data || res;
+          if (data?.classes) {
+            setLiveClassAvail(data.classes);
           }
         })
         .catch(() => {});
@@ -53,15 +65,6 @@ export default function TrainCard({ train }) {
     };
   }, [schedule?.scheduleId]);
 
-  const handleCheckAvailability = () => {
-    if (!isAuthenticated) {
-      navigate(`/login?redirect=${encodeURIComponent(`/seats/${schedule.scheduleId}`)}`);
-      return;
-    }
-    setSelectedTrain(train, schedule.scheduleId);
-    navigate(`/seats/${schedule.scheduleId}`);
-  };
-
   const isVandeBharat = train.trainName?.toLowerCase().includes('vande bharat');
   const isRajdhani = train.trainName?.toLowerCase().includes('rajdhani');
   const isShatabdi = train.trainName?.toLowerCase().includes('shatabdi');
@@ -69,65 +72,67 @@ export default function TrainCard({ train }) {
   const availableCount = schedule?.available ?? 0;
   const bookedCount = schedule?.booked ?? 0;
   const totalSeats = train.totalSeats || 64;
-  const isWaitlist = availableCount === 0;
 
   // Base fare determination
   const baseFare = train.basePrice || train.schedule?.basePrice || (train.seats?.[0]?.price) || 450;
 
-  // Authentic IRCTC Classes determination with respective seat availability & waitlist per class
+  // Authentic IRCTC Classes in order: 1AC -> 2AC -> 3AC -> Sleeper -> General (2S)
   const availableClasses = useMemo(() => {
     let classList = [];
     if (isVandeBharat || isShatabdi) {
       classList = [
-        { code: 'CC', name: 'AC Chair Car', mult: 1.0, ratio: 0.80 },
-        { code: 'EC', name: 'Exec Chair Car', mult: 1.85, ratio: 0.20 },
+        { code: 'EC', name: 'Exec Chair Car', displayTitle: 'EC', mult: 1.85, defaultSeats: 12 },
+        { code: 'CC', name: 'AC Chair Car', displayTitle: 'CC', mult: 1.0, defaultSeats: 52 },
       ];
     } else if (isRajdhani) {
       classList = [
-        { code: '3A', name: 'AC 3 Tier', mult: 1.0, ratio: 0.55 },
-        { code: '2A', name: 'AC 2 Tier', mult: 1.45, ratio: 0.30 },
-        { code: '1A', name: 'AC First Class', mult: 2.2, ratio: 0.15 },
+        { code: '1A', name: 'AC First Class', displayTitle: '1A', mult: 2.2, defaultSeats: 8 },
+        { code: '2A', name: 'AC 2 Tier', displayTitle: '2A', mult: 1.45, defaultSeats: 16 },
+        { code: '3A', name: 'AC 3 Tier', displayTitle: '3A', mult: 1.0, defaultSeats: 40 },
       ];
     } else {
       classList = [
-        { code: 'SL', name: 'Sleeper', mult: 0.65, ratio: 0.40 },
-        { code: '3A', name: 'AC 3 Tier', mult: 1.0, ratio: 0.25 },
-        { code: '2A', name: 'AC 2 Tier', mult: 1.45, ratio: 0.15 },
-        { code: '1A', name: 'AC First Class', mult: 2.2, ratio: 0.08 },
-        { code: '2S', name: 'Second Sitting', mult: 0.35, ratio: 0.12 },
+        { code: '1A', name: 'AC First Class', displayTitle: '1A', mult: 2.2, defaultSeats: 4 },
+        { code: '2A', name: 'AC 2 Tier', displayTitle: '2A', mult: 1.45, defaultSeats: 8 },
+        { code: '3A', name: 'AC 3 Tier', displayTitle: '3A', mult: 1.0, defaultSeats: 20 },
+        { code: 'SL', name: 'Sleeper', displayTitle: 'SL', mult: 0.65, defaultSeats: 20 },
+        { code: '2S', name: 'General (2S)', displayTitle: '2S', mult: 0.35, defaultSeats: 12 },
       ];
     }
 
-    // Live waitlist queue depth on this schedule
-    const totalWlOnSchedule = liveWlCount !== null
-      ? liveWlCount
-      : (bookedCount > totalSeats ? (bookedCount - totalSeats) : 0);
-
-    // Distribute available seats proportionally across classes so each class has its own real count
-    let distributedAvailable = [];
-    if (availableCount > 0) {
-      let allocatedSoFar = 0;
-      distributedAvailable = classList.map((c, i) => {
-        if (i === classList.length - 1) {
-          // Last class takes remainder so sum matches availableCount exactly
-          return Math.max(0, availableCount - allocatedSoFar);
-        }
-        const classSeats = Math.round(availableCount * c.ratio);
-        allocatedSoFar += classSeats;
-        return Math.max(0, classSeats);
-      });
-    } else {
-      distributedAvailable = classList.map(() => 0);
-    }
-
-    return classList.map((c, idx) => {
+    return classList.map((c) => {
       const price = Math.round(baseFare * c.mult);
-      const classAvailableSeats = distributedAvailable[idx] ?? 0;
-      const classIsWl = classAvailableSeats === 0 || isWaitlist;
 
-      // Authentic sequential waitlist position:
-      // When train/class is waitlisted, next ticket to be issued will be (current waitlist queue + 1)
-      const classWlPos = classIsWl ? Math.max(1, totalWlOnSchedule + 1) : 1;
+      // Determine physical capacity for this class
+      let classTotalSeats = c.defaultSeats;
+      if (liveClassAvail?.[c.code]?.totalSeats !== undefined) {
+        classTotalSeats = liveClassAvail[c.code].totalSeats;
+      } else if (seatSummary?.classes?.[c.code] !== undefined) {
+        classTotalSeats = seatSummary.classes[c.code];
+      }
+
+      // Determine real available seats for this class
+      let classAvailableSeats = 0;
+      if (liveClassAvail?.[c.code]?.available !== undefined) {
+        classAvailableSeats = liveClassAvail[c.code].available;
+      } else if (liveWlData?.bookedByClass?.[c.code] !== undefined) {
+        const bookedInClass = liveWlData.bookedByClass[c.code] || 0;
+        classAvailableSeats = Math.max(0, classTotalSeats - bookedInClass);
+      } else {
+        // Fallback proportional availability, strictly bounded without leaking ghost seats
+        if (availableCount > 0 && totalSeats > 0) {
+          const ratio = classTotalSeats / totalSeats;
+          classAvailableSeats = Math.min(classTotalSeats, Math.max(0, Math.floor(availableCount * ratio)));
+        } else {
+          classAvailableSeats = 0;
+        }
+      }
+
+      // Live class-scoped waitlist tracking
+      const classWlInfo = liveWlData?.byClass?.[c.code];
+      const classWlQueueCount = classWlInfo?.waitlistCount ?? 0;
+      const classIsWl = classAvailableSeats === 0 || classWlQueueCount > 0;
+      const classWlPos = classWlInfo?.nextWlPosition ?? (classWlQueueCount + 1);
 
       const statusText = classIsWl
         ? `WL ${classWlPos}`
@@ -136,21 +141,40 @@ export default function TrainCard({ train }) {
       return {
         ...c,
         price,
+        totalSeats: classTotalSeats,
         availableSeats: classAvailableSeats,
         isWaitlist: classIsWl,
         wlPos: classWlPos,
         statusText,
       };
     });
-  }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, bookedCount, totalSeats, isWaitlist, liveWlCount]);
+  }, [isVandeBharat, isShatabdi, isRajdhani, baseFare, availableCount, totalSeats, seatSummary, liveWlData, liveClassAvail]);
 
   const [selectedClassCode, setSelectedClassCode] = useState(() => {
-    return availableClasses[1]?.code || availableClasses[0]?.code || '3A';
+    // Default to 3A or SL or first class
+    return '3A';
   });
 
   const currentSelectedClass = useMemo(() => {
     return availableClasses.find((c) => c.code === selectedClassCode) || availableClasses[0];
   }, [availableClasses, selectedClassCode]);
+
+  const handleCheckAvailability = () => {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(`/seats/${schedule?.scheduleId}`)}`);
+      return;
+    }
+    if (!schedule?.scheduleId) return;
+    setSelectedTrain(
+      train,
+      schedule.scheduleId,
+      currentSelectedClass.code,
+      currentSelectedClass.price,
+      currentSelectedClass.isWaitlist,
+      currentSelectedClass.wlPos
+    );
+    navigate(`/seats/${schedule.scheduleId}?class=${currentSelectedClass.code}`);
+  };
 
   const handleBookNow = (targetClass) => {
     const cls = targetClass || currentSelectedClass;
@@ -397,9 +421,12 @@ export default function TrainCard({ train }) {
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
                   }`}
                 >
-                  <div className="flex items-baseline justify-between gap-1 mb-1.5">
+                  <div className="flex items-baseline justify-between gap-1 mb-0.5">
                     <span className="font-black text-sm text-slate-900 tracking-tight">{cls.code}</span>
                     <span className="font-extrabold text-xs text-slate-700 font-mono">&#8377; {cls.price}</span>
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 mb-1 truncate">
+                    {cls.name}
                   </div>
 
                   <div>

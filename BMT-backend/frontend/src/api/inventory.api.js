@@ -8,6 +8,7 @@ export const inventoryApi = {
     const qs = new URLSearchParams();
     if (params.status) qs.set('status', params.status);
     if (params.seatType) qs.set('seatType', params.seatType);
+    if (params.travelClass) qs.set('travelClass', params.travelClass);
     if (params.fromSeq) qs.set('fromSeq', params.fromSeq);  // --- SEGMENT BOOKING
     if (params.toSeq) qs.set('toSeq', params.toSeq);        // --- SEGMENT BOOKING
     const qStr = qs.toString();

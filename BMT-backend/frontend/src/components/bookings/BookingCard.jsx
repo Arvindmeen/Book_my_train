@@ -43,8 +43,12 @@ export default function BookingCard({ booking, onCancel }) {
             <span className="text-slate-300">&bull;</span>
             <span className="font-semibold text-slate-700">{formatDate(booking.departureDate)}</span>
             <span className="text-slate-300">&bull;</span>
+            <span className="font-semibold text-slate-800 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-[10px]">
+              {booking.travelClass || 'SL'}
+            </span>
+            <span className="text-slate-300">&bull;</span>
             <span className={isWaitlist ? 'font-bold text-amber-700' : ''}>
-              {booking.seatCount} Passenger{booking.seatCount !== 1 ? 's' : ''} {isWaitlist ? '(WL Queue)' : '(Confirmed Berths)'}
+              {booking.seatCount} Passenger{booking.seatCount !== 1 ? 's' : ''} {isWaitlist ? `(WL ${booking.travelClass || 'SL'})` : '(Confirmed)'}
             </span>
           </p>
 

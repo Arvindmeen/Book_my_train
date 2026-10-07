@@ -12,11 +12,12 @@ exports.getScheduleAvailability = asyncHandler(async (req, res) => {
 
 exports.getScheduleSeats = asyncHandler(async (req, res) => {
      const { scheduleId } = req.params;
-     const { status, seatType, fromSeq, toSeq } = req.query; // --- SEGMENT BOOKING: added fromSeq/toSeq
+     const { status, seatType, travelClass, fromSeq, toSeq } = req.query; // --- SEGMENT BOOKING: added fromSeq/toSeq
 
      const filters = {};
      if (status) filters.status = status.toUpperCase();
      if (seatType) filters.seatType = seatType.toUpperCase();
+     if (travelClass) filters.travelClass = travelClass.toUpperCase();
      if (fromSeq) filters.fromSeq = fromSeq; // --- SEGMENT BOOKING
      if (toSeq) filters.toSeq = toSeq;       // --- SEGMENT BOOKING
 

@@ -330,13 +330,14 @@ export default function AdminAuditManager() {
                 bookings.map((b) => {
                   const passengerCount = b.passengers?.length || b.seatCount || 1;
                   const firstPassenger = b.passengers?.[0];
+                  const travelCls = b.travelClass || 'SL';
                   const isWaitlist = (b.seats?.length === 0) || b.status === 'WAITLISTED' || b.status === 'WAITLIST';
                   const displayStatus = isWaitlist
                     ? (['CANCELLED', 'CANCELLING', 'FAILED', 'EXPIRED'].includes(b.status) ? b.status : 'WAITLISTED')
                     : b.status;
                   const seatList = b.seats?.length > 0
                     ? b.seats.map((s) => `#${s.seatNumber}`).join(', ')
-                    : (b.passengers?.map((p) => p.seatNumber || p.seat || 'WL').join(', ') || 'WL Queue');
+                    : (b.passengers?.map((p, idx) => p.seatNumber || p.seat || `WL #${idx + 1}`).join(', ') || `WL (${travelCls})`);
                   const pnrStr = getPnrDisplay(b);
                   const routeStr = getRouteDisplay(b);
 
@@ -403,10 +404,14 @@ export default function AdminAuditManager() {
                         <span className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
                           isWaitlist ? 'text-amber-800 bg-amber-100 border border-amber-300' : 'text-slate-800 bg-slate-100'
                         }`}>
-                          {isWaitlist ? seatList : `Seat ${seatList}`}
+                          {isWaitlist ? `${seatList} (${travelCls})` : `Seat ${seatList}`}
                         </span>
                         <div className="text-[10px] text-slate-400 uppercase font-bold mt-0.5">
-                          {isWaitlist ? 'Waitlist Queue (WL)' : (b.seats?.[0]?.seatType ? formatSeatType(b.seats[0].seatType) : 'Standard Berth')}
+                          {isWaitlist 
+                            ? `Waitlist Queue (${travelCls})` 
+                            : (b.seats?.[0]?.coach 
+                                ? `Coach ${b.seats[0].coach} (${travelCls})` 
+                                : `${travelCls} - ${b.seats?.[0]?.seatType ? formatSeatType(b.seats[0].seatType) : 'Confirmed'}`)}
                         </div>
                       </td>
 
@@ -527,7 +532,9 @@ export default function AdminAuditManager() {
                             <td className={`py-2 px-3 font-semibold ${
                               seat ? 'text-emerald-800' : 'text-amber-800'
                             }`}>
-                              {seat ? `Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})` : (p.seatNumber || p.seat || `Waitlist (WL #${idx + 1})`)}
+                              {seat 
+                                ? `Coach ${seat.coach || (selectedBooking.travelClass === '1A' ? 'H1' : selectedBooking.travelClass === '2A' ? 'A1' : selectedBooking.travelClass === '3A' ? 'B1' : selectedBooking.travelClass === '2S' ? 'D1' : 'S1')}, Seat #${seat.seatNumber} (${formatSeatType(seat.seatType)})` 
+                                : (p.seatNumber || p.seat || `Waitlist (${selectedBooking.travelClass || 'WL'} #${idx + 1})`)}
                             </td>
                             <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
                               {seat?.price ? formatCurrency(seat.price) : '—'}

@@ -13,6 +13,7 @@ export default function PaymentButton({ passengers, scheduleId, seatIds, disable
   const reset = useBookingStore((s) => s.reset);
   const fromStation = useBookingStore((s) => s.fromStation);  // --- SEGMENT BOOKING
   const toStation = useBookingStore((s) => s.toStation);      // --- SEGMENT BOOKING
+  const selectedClass = useBookingStore((s) => s.selectedClass) || '3A';
   const navigate = useNavigate();
   const showToast = useToast();
 
@@ -32,6 +33,7 @@ export default function PaymentButton({ passengers, scheduleId, seatIds, disable
       const res = await bookingApi.create({
         scheduleId,
         seatIds: finalSeatIds,
+        travelClass: selectedClass,
         passengers,
         idempotencyKey,
         tripShield: Boolean(tripShield),

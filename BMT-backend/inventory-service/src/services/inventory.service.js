@@ -5,6 +5,38 @@ const { retryTransaction } = require('../utils/retryTransaction');
 const { BadRequestError, NotFoundError, ConflictError, ForbiddenError } = require('../utils/error');
 const { config } = require('../config');
 
+// ─── IRCTC Class Partition Helper ──────────────────────────────────────────
+function getSeatClassAndCoach(seatNumber, totalSeats = 64, trainType = 'EXPRESS', trainName = '') {
+  const isVB = /vande bharat|shatabdi/i.test(trainName) || trainType === 'VANDE_BHARAT' || trainType === 'SHATABDI';
+  const isRajdhani = /rajdhani/i.test(trainName) || trainType === 'RAJDHANI';
+
+  if (isVB) {
+    const ecCap = Math.max(4, Math.round(totalSeats * 0.20));
+    if (seatNumber <= ecCap) return { travelClass: 'EC', coach: 'E1' };
+    return { travelClass: 'CC', coach: 'C1' };
+  }
+
+  if (isRajdhani) {
+    const cap1A = Math.max(4, Math.round(totalSeats * 0.15));
+    const cap2A = cap1A + Math.max(8, Math.round(totalSeats * 0.30));
+    if (seatNumber <= cap1A) return { travelClass: '1A', coach: 'H1' };
+    if (seatNumber <= cap2A) return { travelClass: '2A', coach: 'A1' };
+    return { travelClass: '3A', coach: 'B1' };
+  }
+
+  // Standard Express / Mail: 1A (~6%), 2A (~12%), 3A (~32%), SL (~32%), 2S (~18%)
+  const cap1A = Math.max(2, Math.round(totalSeats * 0.06));
+  const cap2A = cap1A + Math.max(4, Math.round(totalSeats * 0.12));
+  const cap3A = cap2A + Math.max(10, Math.round(totalSeats * 0.32));
+  const capSL = cap3A + Math.max(10, Math.round(totalSeats * 0.32));
+
+  if (seatNumber <= cap1A) return { travelClass: '1A', coach: 'H1' };
+  if (seatNumber <= cap2A) return { travelClass: '2A', coach: 'A1' };
+  if (seatNumber <= cap3A) return { travelClass: '3A', coach: 'B1' };
+  if (seatNumber <= capSL) return { travelClass: 'SL', coach: 'S1' };
+  return { travelClass: '2S', coach: 'D1' };
+}
+
 // ─── Kafka Event Handlers ───────────────────────────────────────────────────
 
 const initializeInventory = async (eventData) => {
@@ -57,15 +89,20 @@ const initializeInventory = async (eventData) => {
           // Check if seats already exist
           const existingSeatsCount = await tx.seatInventory.count({ where: { scheduleId } });
           if (existingSeatsCount === 0) {
-               const seatData = seats.map(seat => ({
-                    scheduleInventoryId: schedule.id,
-                    scheduleId,
-                    seatId: seat.seatId,
-                    seatNumber: seat.seatNumber,
-                    seatType: seat.seatType,
-                    price: seat.price,
-                    status: 'AVAILABLE',
-               }));
+               const seatData = seats.map(seat => {
+                    const info = getSeatClassAndCoach(seat.seatNumber, totalSeats, 'EXPRESS', trainName);
+                    return {
+                         scheduleInventoryId: schedule.id,
+                         scheduleId,
+                         seatId: seat.seatId,
+                         seatNumber: seat.seatNumber,
+                         seatType: seat.seatType,
+                         price: seat.price,
+                         travelClass: seat.travelClass || info.travelClass,
+                         coach: seat.coach || info.coach,
+                         status: 'AVAILABLE',
+                    };
+               });
 
                await tx.seatInventory.createMany({ data: seatData });
           }
@@ -243,6 +280,31 @@ const getAvailability = async (scheduleId) => {
      const schedule = await prisma.scheduleInventory.findUnique({ where: { scheduleId } });
      if (!schedule) throw new NotFoundError('Schedule not found in inventory');
 
+     // Aggregate seats by travelClass
+     const seats = await prisma.seatInventory.findMany({
+          where: { scheduleId },
+          select: { seatNumber: true, travelClass: true, coach: true, status: true },
+     });
+
+     const classMap = {
+          '1A': { totalSeats: 0, available: 0, locked: 0, booked: 0 },
+          '2A': { totalSeats: 0, available: 0, locked: 0, booked: 0 },
+          '3A': { totalSeats: 0, available: 0, locked: 0, booked: 0 },
+          'SL': { totalSeats: 0, available: 0, locked: 0, booked: 0 },
+          '2S': { totalSeats: 0, available: 0, locked: 0, booked: 0 },
+     };
+
+     for (const s of seats) {
+          const tc = s.travelClass || getSeatClassAndCoach(s.seatNumber, schedule.totalSeats, 'EXPRESS', schedule.trainName).travelClass;
+          if (!classMap[tc]) {
+               classMap[tc] = { totalSeats: 0, available: 0, locked: 0, booked: 0 };
+          }
+          classMap[tc].totalSeats++;
+          if (s.status === 'AVAILABLE') classMap[tc].available++;
+          else if (s.status === 'LOCKED') classMap[tc].locked++;
+          else if (s.status === 'BOOKED') classMap[tc].booked++;
+     }
+
      return {
           scheduleId: schedule.scheduleId,
           trainId: schedule.trainId,
@@ -254,6 +316,7 @@ const getAvailability = async (scheduleId) => {
           available: schedule.available,
           locked: schedule.locked,
           booked: schedule.booked,
+          classes: classMap,
      };
 };
 
@@ -273,12 +336,28 @@ const getSeats = async (scheduleId, filters = {}) => {
                seatNumber: true,
                seatType: true,
                price: true,
+               travelClass: true,
+               coach: true,
                status: true,
                lockedBy: true,
                lockExpiresAt: true,
                bookingId: true,
           },
      });
+
+     // Populate class & coach if missing
+     seats = seats.map(s => {
+          const info = getSeatClassAndCoach(s.seatNumber, schedule.totalSeats, 'EXPRESS', schedule.trainName);
+          return {
+               ...s,
+               travelClass: s.travelClass || info.travelClass,
+               coach: s.coach || info.coach,
+          };
+     });
+
+     if (filters.travelClass) {
+          seats = seats.filter(s => s.travelClass === filters.travelClass);
+     }
 
      // --- SEGMENT BOOKING: If segment specified, compute per-seat segment availability ---
      if (filters.fromSeq && filters.toSeq) {

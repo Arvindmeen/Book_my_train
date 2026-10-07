@@ -146,9 +146,15 @@ export default function BookingPage() {
         seatParams.fromSeq = fromStation.sequenceNumber;
         seatParams.toSeq = toStation.sequenceNumber;
       }
+      if (selectedClass) {
+        seatParams.travelClass = selectedClass;
+      }
 
       const res = await inventoryApi.getSeats(scheduleId, seatParams);
-      const allSeats = res?.data?.seats || res?.seats || [];
+      let allSeats = res?.data?.seats || res?.seats || [];
+      if (selectedClass) {
+        allSeats = allSeats.filter((s) => !s.travelClass || s.travelClass === selectedClass);
+      }
       const availableSeats = allSeats.filter((s) => {
         if (seatParams.fromSeq && seatParams.toSeq && s.segmentStatus) {
           return s.segmentStatus === 'AVAILABLE';

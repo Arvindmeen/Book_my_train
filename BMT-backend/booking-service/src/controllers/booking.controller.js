@@ -4,16 +4,27 @@ const bookingService = require('../services/booking.service');
 
 exports.createBooking = asyncHandler(async (req, res) => {
      const userId = req.user.id;
-     const { scheduleId, seatIds = [], passengers, idempotencyKey, fromStationId, toStationId, fromSeq, toSeq, tripShield } = req.body; // --- SEGMENT BOOKING: added segment params
+     const {
+          scheduleId,
+          seatIds = [],
+          passengers,
+          idempotencyKey,
+          fromStationId,
+          toStationId,
+          fromSeq,
+          toSeq,
+          tripShield,
+          travelClass, // Travel class (e.g. 1A, 2A, 3A, SL, 2S, EC, CC)
+     } = req.body;
 
      if (!scheduleId || !passengers || !Array.isArray(passengers) || passengers.length === 0 || !idempotencyKey) {
           throw new BadRequestError('scheduleId, passengers (non-empty array), and idempotencyKey are required');
      }
 
-     // --- SEGMENT BOOKING: Pass segment params & tripShield to service ---
+     // Pass segment params, tripShield & travelClass to service
      const result = await bookingService.createBooking(
           userId, scheduleId, seatIds, passengers, idempotencyKey,
-          fromStationId, toStationId, fromSeq, toSeq, tripShield
+          fromStationId, toStationId, fromSeq, toSeq, tripShield, travelClass
      );
 
      res.status(201).json({ success: true, data: result });
@@ -81,7 +92,8 @@ exports.getPnrStatus = asyncHandler(async (req, res) => {
 
 exports.getScheduleWaitlist = asyncHandler(async (req, res) => {
      const { scheduleId } = req.params;
-     const result = await bookingService.getScheduleWaitlist(scheduleId);
+     const { travelClass } = req.query;
+     const result = await bookingService.getScheduleWaitlist(scheduleId, travelClass);
      res.status(200).json({ success: true, data: result });
 });
 
