@@ -124,7 +124,7 @@ export default function AdminTabs({ active, onChange }) {
             >
               <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                 <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all shrink-0 aspect-square ${
                     isActive
                       ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-sm ring-2 ring-emerald-300'
                       : `${tab.iconBg} ${tab.iconColor} group-hover:scale-105`

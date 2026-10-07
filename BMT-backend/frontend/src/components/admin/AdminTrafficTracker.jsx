@@ -186,6 +186,8 @@ export default function AdminTrafficTracker() {
       return {
         id: `corridor-${idx + 1}`,
         rawKey: c.id,
+        clusterA: c.clusterA,
+        clusterB: c.clusterB,
         route: c.route,
         zone: c.zone,
         distanceKm,
@@ -373,44 +375,50 @@ export default function AdminTrafficTracker() {
       </div>
 
       {/* Network Overview Stat Cards (100% Real Database Data) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 min-[460px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
         
         {/* Card 1: Real Total Booked Commuters */}
-        <div className="card p-4 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Booked Commuters</span>
-            <span className="text-emerald-600 text-xs font-bold flex items-center gap-1">
+        <div className="card p-4 sm:p-4.5 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 truncate">Total Booked Commuters</span>
+            <span className="shrink-0 text-emerald-700 bg-emerald-50 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Real DB
             </span>
           </div>
-          <div className="text-2xl font-black text-slate-900">
-            {loading ? '...' : <AnimatedCounter value={networkStats.totalBookedPassengers} suffix=" Travellers" />}
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              {loading ? '...' : <AnimatedCounter value={networkStats.totalBookedPassengers} />}
+            </span>
+            <span className="text-xs font-bold text-slate-500">Travellers</span>
           </div>
-          <span className="text-[11px] font-semibold text-emerald-700 mt-1 inline-block">
+          <span className="text-[11px] font-semibold text-emerald-700 mt-1 block truncate">
             {networkStats.confirmedCount} Confirmed &bull; {networkStats.waitlistCount} Waitlist
           </span>
-          <div className="w-full bg-slate-100 rounded-full h-1 mt-2.5 overflow-hidden">
+          <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
             <div
-              className="bg-emerald-500 h-1 rounded-full transition-all duration-1000 ease-out"
+              className="bg-emerald-500 h-1.5 rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${Math.min(100, Math.max(networkStats.totalBookedPassengers * 6, 10))}%` }}
             />
           </div>
         </div>
 
         {/* Card 2: Real Overall Network Load */}
-        <div className="card p-4 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Overall Network Load</span>
-            <span className="text-amber-600 text-xs font-bold flex items-center gap-1">
+        <div className="card p-4 sm:p-4.5 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 truncate">Overall Network Load</span>
+            <span className="shrink-0 text-amber-700 bg-amber-50 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
               Real Capacity
             </span>
           </div>
-          <div className="text-2xl font-black text-slate-900">
-            {loading ? '...' : <AnimatedCounter value={networkStats.networkLoadNum} decimals={1} suffix="%" />}
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              {loading ? '...' : <AnimatedCounter value={networkStats.networkLoadNum} decimals={1} suffix="%" />}
+            </span>
+            <span className="text-xs font-bold text-amber-700">Network Load</span>
           </div>
-          <span className="text-[11px] font-medium text-slate-500 mt-1 inline-block truncate">
+          <span className="text-[11px] font-medium text-slate-500 mt-1 block truncate">
             {networkStats.totalBookedSeats} of {networkStats.totalFleetSeats.toLocaleString('en-IN')} Coach Seats Booked
           </span>
           <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
@@ -422,41 +430,47 @@ export default function AdminTrafficTracker() {
         </div>
 
         {/* Card 3: Active Express Fleet */}
-        <div className="card p-4 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Active Express Fleet</span>
-            <span className="text-indigo-600 text-xs font-bold">In Operation</span>
+        <div className="card p-4 sm:p-4.5 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 truncate">Active Express Fleet</span>
+            <span className="shrink-0 text-indigo-700 bg-indigo-50 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              In Operation
+            </span>
           </div>
-          <div className="text-2xl font-black text-indigo-700">
-            {loading ? '...' : (
-              <>
-                <AnimatedCounter value={networkStats.totalFleet} /> Directional Trains
-              </>
-            )}
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-black text-indigo-700 tracking-tight">
+              {loading ? '...' : <AnimatedCounter value={networkStats.totalFleet} />}
+            </span>
+            <span className="text-xs font-bold text-indigo-900">Directional Trains</span>
           </div>
-          <span className="text-[11px] font-medium text-slate-500 mt-1 inline-block">
+          <span className="text-[11px] font-medium text-slate-500 mt-1 block truncate">
             {networkStats.totalSchedules} Provisioned Schedules in DB
           </span>
-          <div className="w-full bg-slate-100 rounded-full h-1 mt-2.5 overflow-hidden">
-            <div className="bg-indigo-500 h-1 rounded-full transition-all duration-1000 ease-out" style={{ width: '92%' }} />
+          <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
+            <div className="bg-indigo-500 h-1.5 rounded-full transition-all duration-1000 ease-out" style={{ width: '92%' }} />
           </div>
         </div>
 
         {/* Card 4: Schedule Punctuality Rate */}
-        <div className="card p-4 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Schedule Active Rate</span>
-            <span className="text-emerald-600 text-xs font-bold">Timetable Radar</span>
+        <div className="card p-4 sm:p-4.5 bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all group min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 truncate">Schedule Active Rate</span>
+            <span className="shrink-0 text-emerald-700 bg-emerald-50 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              Timetable Radar
+            </span>
           </div>
-          <div className="text-2xl font-black text-emerald-700">
-            {loading ? '...' : <AnimatedCounter value={networkStats.punctualityNum} decimals={1} suffix="%" />}
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-2xl sm:text-3xl font-black text-emerald-700 tracking-tight">
+              {loading ? '...' : <AnimatedCounter value={networkStats.punctualityNum} decimals={1} suffix="%" />}
+            </span>
+            <span className="text-xs font-bold text-emerald-800">On Time Rate</span>
           </div>
-          <span className="text-[11px] font-semibold text-slate-500 mt-1 inline-block">
+          <span className="text-[11px] font-semibold text-slate-500 mt-1 block truncate">
             Active services running on schedule
           </span>
-          <div className="w-full bg-slate-100 rounded-full h-1 mt-2.5 overflow-hidden">
+          <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2.5 overflow-hidden">
             <div
-              className="bg-emerald-600 h-1 rounded-full transition-all duration-1000 ease-out"
+              className="bg-emerald-600 h-1.5 rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${Math.min(100, networkStats.punctualityNum)}%` }}
             />
           </div>
@@ -465,8 +479,8 @@ export default function AdminTrafficTracker() {
       </div>
 
       {/* Filter Tabs for Corridors */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pt-2">
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto scrollbar-none">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-2xl overflow-x-auto scrollbar-none max-w-full">
           {availableZones.map((zone) => {
             const count = zone === 'ALL'
               ? corridors.length
@@ -476,15 +490,15 @@ export default function AdminTrafficTracker() {
               <button
                 key={zone}
                 onClick={() => setFilterZone(zone)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   filterZone === zone
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80 font-black'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                 }`}
               >
                 <span>{zone === 'ALL' ? 'All Corridors' : `${zone} Zone`}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  filterZone === zone ? 'bg-slate-100 text-slate-800' : 'bg-slate-200/70 text-slate-500'
+                  filterZone === zone ? 'bg-slate-100 text-slate-800 font-bold' : 'bg-slate-200/70 text-slate-500'
                 }`}>
                   {count}
                 </span>
@@ -492,9 +506,10 @@ export default function AdminTrafficTracker() {
             );
           })}
         </div>
-        <span className="text-xs text-slate-500 font-medium">
-          Showing {filteredCorridors.length} Real Express Corridors
-        </span>
+        <div className="text-xs text-slate-500 font-semibold flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Showing {filteredCorridors.length} Real Express Corridors</span>
+        </div>
       </div>
 
       {/* Corridor Breakdown Grid */}
@@ -513,88 +528,170 @@ export default function AdminTrafficTracker() {
             const isCritical = c.capacity >= 90;
             const isHigh = c.capacity >= 50 && c.capacity < 90;
 
+            const zoneTheme = c.zone === 'Northern'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              : c.zone === 'Western'
+              ? 'bg-blue-50 text-blue-800 border-blue-200'
+              : c.zone === 'Eastern' || c.zone === 'South Eastern'
+              ? 'bg-purple-50 text-purple-800 border-purple-200'
+              : 'bg-amber-50 text-amber-800 border-amber-200';
+
             return (
               <div
                 key={c.id}
                 onClick={() => setSelectedCorridor(c)}
-                className={`card p-5 bg-white border rounded-2xl transition-all duration-200 hover:shadow-md cursor-pointer relative group ${
+                className={`card p-4 sm:p-5 bg-white border rounded-3xl transition-all duration-200 hover:shadow-card-hover cursor-pointer relative group flex flex-col justify-between space-y-3.5 ${
                   isCritical
-                    ? 'border-rose-200 ring-1 ring-rose-100/70 hover:border-rose-300'
+                    ? 'border-rose-300 ring-2 ring-rose-100/80 hover:border-rose-400'
                     : isHigh
-                    ? 'border-amber-200 hover:border-amber-300'
-                    : 'border-slate-200 hover:border-emerald-300'
+                    ? 'border-amber-300 ring-1 ring-amber-100/70 hover:border-amber-400'
+                    : 'border-slate-200/90 hover:border-emerald-400'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      {c.zone} &bull; {c.distance}
+                {/* Top Row: Zone Badge + Distance + Capacity Status Pill */}
+                <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border shrink-0 ${zoneTheme}`}>
+                      {c.zone} Zone
                     </span>
-                    <h3 className="font-bold text-sm text-slate-900 mt-0.5 leading-snug group-hover:text-emerald-700 transition-colors">
-                      {c.route}
-                    </h3>
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 border border-slate-200/60">
+                      <span>🛤️</span>
+                      <span>{c.distance}</span>
+                    </span>
                   </div>
+
                   <span
-                    className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full whitespace-nowrap ${
+                    className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                       isCritical
                         ? 'bg-rose-100 text-rose-800 border border-rose-200'
                         : isHigh
                         ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        : c.bookedPax > 0
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
                     }`}
                   >
-                    {c.status} ({c.capacity}%)
+                    <span className={`h-1.5 w-1.5 rounded-full ${isCritical ? 'bg-rose-500 animate-ping' : isHigh ? 'bg-amber-500 animate-pulse' : c.bookedPax > 0 ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                    <span>{c.status} ({c.capacity}%)</span>
                   </span>
                 </div>
 
-                {/* Capacity Progress Bar (Actual Database Seats Booked) */}
-                <div className="space-y-1 mb-4">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-slate-500">Seat Occupancy Telemetry</span>
-                    <span className="text-slate-900 font-bold">
-                      {c.bookedPax} of {c.corridorSeats} seats booked ({c.capacity}%)
+                {/* Route Visual Header */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/15 to-emerald-600/20 border border-emerald-200/80 flex items-center justify-center text-base shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                    🚆
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <h3 className="font-serif font-black text-sm sm:text-base text-slate-900 group-hover:text-emerald-800 transition-colors leading-tight">
+                        {c.clusterA || c.route.split('⇄')[0]?.trim()}
+                      </h3>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70 shrink-0">
+                        ⇄ Dual Line
+                      </span>
+                      <h3 className="font-serif font-black text-sm sm:text-base text-slate-900 group-hover:text-emerald-800 transition-colors leading-tight">
+                        {c.clusterB || c.route.split('⇄')[1]?.trim()}
+                      </h3>
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                      Main Trunk Line Corridor &bull; Speed limit: {c.avgSpeed}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Seat Occupancy Progress & Telemetry */}
+                <div className="space-y-1.5 bg-slate-50/80 p-3 rounded-2xl border border-slate-200/70">
+                  <div className="flex items-center justify-between text-xs font-semibold gap-2">
+                    <span className="text-slate-500 text-[10px] font-extrabold uppercase tracking-wider">
+                      Seat Occupancy Telemetry
+                    </span>
+                    <span className="text-slate-900 font-black text-xs">
+                      {c.bookedPax} / {c.corridorSeats} seats{' '}
+                      <span className={`ml-1 font-black ${isCritical ? 'text-rose-600' : isHigh ? 'text-amber-600' : 'text-emerald-600'}`}>
+                        ({c.capacity}%)
+                      </span>
                     </span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden relative">
+                  <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden relative">
                     <div
                       className={`h-2 rounded-full transition-all duration-1000 ease-out ${
-                        isCritical ? 'bg-rose-500' : isHigh ? 'bg-amber-500' : 'bg-emerald-500'
+                        isCritical
+                          ? 'bg-gradient-to-r from-rose-500 to-red-600'
+                          : isHigh
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-500'
                       }`}
-                      style={{ width: `${Math.max(c.capacity, c.bookedPax > 0 ? 5 : 0)}%` }}
+                      style={{ width: `${Math.min(100, Math.max(c.capacity, c.bookedPax > 0 ? 5 : 0))}%` }}
                     />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-0.5">
+                    <span>
+                      <strong className="text-emerald-700 font-bold">{c.confirmedPax}</strong> Confirmed &bull;{' '}
+                      <strong className={c.waitlistCount > 0 ? 'text-rose-600 font-bold' : 'text-slate-600'}>
+                        {c.waitlistCount}
+                      </strong> Waitlist
+                    </span>
+                    <span className="text-slate-400 text-[10px]">
+                      {Math.max(0, c.corridorSeats - c.bookedPax)} seats available
+                    </span>
                   </div>
                 </div>
 
-                {/* Active Trains Tag Cloud */}
-                <div className="mb-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
-                    Active Rail Services ({c.activeTrains.length}):
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                    {c.activeTrains.map((t) => (
-                      <span key={t} className="text-[11px] font-semibold bg-slate-50 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200/80 hover:bg-emerald-50 hover:text-emerald-800 transition-colors">
+                {/* 3 Telemetry Matrix Pills */}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Track Speed</span>
+                    <span className="text-xs font-black text-slate-800">⚡ {c.avgSpeed}</span>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Fleet Size</span>
+                    <span className="text-xs font-black text-slate-800">🚆 {c.trainsList.length} Express</span>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Waitlist</span>
+                    <span className={`text-xs font-black ${c.waitlistCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                      {c.waitlistCount > 0 ? `${c.waitlistCount} WL` : '0 WL'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Active Rail Services Tags */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                      Active Rail Services ({c.activeTrains.length}):
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-bold">Live DB Fleet</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {c.activeTrains.slice(0, 3).map((t) => (
+                      <span
+                        key={t}
+                        className="text-[11px] font-semibold bg-slate-50 text-slate-800 px-2 py-0.5 rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 transition-colors"
+                      >
                         🚆 {t}
                       </span>
                     ))}
+                    {c.activeTrains.length > 3 && (
+                      <span className="text-[11px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg border border-slate-200">
+                        +{c.activeTrains.length - 3} more
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Real Dispatch Guidance */}
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
-                  <div className="flex items-center gap-1 font-bold text-slate-800">
-                    <span>💡</span> Dispatch Guidance:
-                  </div>
-                  <p className="text-slate-600 pl-4">{c.recommendation}</p>
-                  <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 pt-1 border-t border-slate-200/60 mt-1.5">
-                    <span>
-                      Waitlist Backlog: <strong className="text-rose-600">{c.waitlistCount} pax</strong>
-                    </span>
-                    <span className="text-emerald-700 font-bold flex items-center gap-1">
-                      <span>{c.avgSpeed}</span>
-                      <span>&bull;</span>
-                      <span>{c.trend}</span>
+                {/* Dispatch Guidance & Tap-to-Inspect Action */}
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                      <span>💡</span>
+                      <span>Dispatch Guidance:</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-700 group-hover:text-emerald-800 flex items-center gap-1 transition-transform group-hover:translate-x-0.5">
+                      Inspect Telemetry &rarr;
                     </span>
                   </div>
+                  <p className="text-slate-600 pl-4 leading-relaxed">{c.recommendation}</p>
                 </div>
 
               </div>
@@ -669,7 +766,7 @@ export default function AdminTrafficTracker() {
           onClick={() => setSelectedCorridor(null)}
         >
           <div
-            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 space-y-5 animate-scale-in"
+            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-4 sm:p-6 space-y-4 sm:space-y-5 animate-scale-in max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">

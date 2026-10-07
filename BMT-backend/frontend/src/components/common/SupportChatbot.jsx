@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const FAQS = [
@@ -33,10 +33,11 @@ export default function SupportChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFaq, setSelectedFaq] = useState(null);
 
-  // Hide chatbot on seat selection and booking checkout flow so it never blocks action buttons
-  const isBookingFlow = location.pathname.startsWith('/seats') || 
-                        location.pathname.startsWith('/booking');
-  if (isBookingFlow) return null;
+  // Hide chatbot on seat selection, booking checkout flow, and admin panel so it never blocks action buttons
+  const isExcluded = location.pathname.startsWith('/seats') || 
+                     location.pathname.startsWith('/booking') ||
+                     location.pathname.startsWith('/admin');
+  if (isExcluded) return null;
 
   const handleClose = () => {
     setIsOpen(false);

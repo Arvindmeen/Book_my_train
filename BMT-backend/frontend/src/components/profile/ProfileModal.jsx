@@ -108,13 +108,13 @@ export default function ProfileModal({
   const isEffectiveAdmin = Boolean(isAdmin || user?.role === 'ADMIN' || user?.isAdmin === true);
   const isOnAdminPage = location.pathname === '/admin' || location.pathname.startsWith('/admin');
 
-  // Mode: either 'admin' or 'passenger'
-  const [viewMode, setViewMode] = useState(isOnAdminPage ? 'admin' : 'passenger');
+  // Mode: administrators get dedicated 'admin' console; regular users get 'passenger' navigation
+  const [viewMode, setViewMode] = useState(isEffectiveAdmin || isOnAdminPage ? 'admin' : 'passenger');
 
   // Sync mode whenever modal opens or route changes
   useEffect(() => {
     if (isOpen) {
-      setViewMode(isOnAdminPage ? 'admin' : (isEffectiveAdmin ? 'admin' : 'passenger'));
+      setViewMode(isEffectiveAdmin || isOnAdminPage ? 'admin' : 'passenger');
     }
   }, [isOpen, isOnAdminPage, isEffectiveAdmin]);
 
@@ -222,40 +222,7 @@ export default function ProfileModal({
           </button>
         </div>
 
-        {/* Mode Switcher for Administrators (Admin Console vs Passenger View) */}
-        {isEffectiveAdmin && (
-          <div className="flex-shrink-0 grid grid-cols-2 gap-1.5 p-1 bg-slate-100/90 rounded-2xl mt-3 border border-slate-200/80">
-            <button
-              type="button"
-              onClick={() => setViewMode('admin')}
-              className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                viewMode === 'admin'
-                  ? 'bg-white text-emerald-900 shadow-sm border border-emerald-200/70 font-black'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <span>Admin Modules</span>
-            </button>
 
-            <button
-              type="button"
-              onClick={() => setViewMode('passenger')}
-              className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                viewMode === 'passenger'
-                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>Passenger View</span>
-            </button>
-          </div>
-        )}
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto pr-1 overscroll-contain space-y-3.5 pt-3 scrollbar-thin scrollbar-thumb-emerald-200">
@@ -393,16 +360,7 @@ export default function ProfileModal({
 
               {/* Quick Admin Actions */}
               <div className="pt-2 border-t border-slate-150 space-y-1.5">
-                <div
-                  onClick={() => { onClose(); navigate('/'); }}
-                  className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-slate-100/80 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer text-xs font-semibold"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-base">🚆</span>
-                    <span>Switch to Passenger Railway Portal</span>
-                  </div>
-                  <span className="text-slate-400">&rarr;</span>
-                </div>
+
 
                 <div
                   onClick={() => { onClose(); navigate('/profile'); }}
