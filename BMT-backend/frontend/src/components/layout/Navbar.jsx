@@ -1,4 +1,4 @@
-﻿import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import { useState, useEffect, useRef } from 'react';
 import ProfileModal from '../profile/ProfileModal';
@@ -54,6 +54,8 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path;
   const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true;
+  const isOnAdmin = location.pathname === '/admin' || location.pathname.startsWith('/admin');
+  const currentAdminTab = new URLSearchParams(location.search).get('tab') || 'Traffic';
 
   return (
     <nav
@@ -94,64 +96,94 @@ export default function Navbar() {
                 {/* 1. Dashboard */}
                 <Link
                   to="/"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     isActive('/')
                       ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
                   <span>Dashboard</span>
                 </Link>
 
-                {/* 2. Rail Services */}
+                {/* 2. Live Traffic */}
                 <Link
-                  to="/admin?tab=Trains"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                    location.pathname === '/admin' && (location.search.includes('tab=Trains') || (!location.search.includes('Traffic') && !location.search.includes('Routes') && !location.search.includes('Stations') && !location.search.includes('Schedules') && !location.search.includes('Audit') && !location.search.includes('System')))
+                  to="/admin?tab=Traffic"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isOnAdmin && (currentAdminTab === 'Traffic' || (!location.search.includes('tab=')))
                       ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span>Live Traffic</span>
+                </Link>
+
+                {/* 3. Create Train */}
+                <Link
+                  to="/admin?tab=Trains"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isOnAdmin && currentAdminTab === 'Trains'
+                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <rect x="4" y="3" width="16" height="15" rx="3" strokeWidth="2.2" />
                     <circle cx="8" cy="14" r="1.5" fill="currentColor" />
                     <circle cx="16" cy="14" r="1.5" fill="currentColor" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M8 7h8M4 11h16M7 18l-2 3M17 18l2 3" />
                   </svg>
-                  <span>Rail Services</span>
+                  <span>Create Train</span>
                 </Link>
 
-                {/* 3. Create Route (Train Route Creation & Stop Sequences) */}
+                {/* 4. Create Stations */}
+                <Link
+                  to="/admin?tab=Stations"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isOnAdmin && currentAdminTab === 'Stations'
+                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <span>Create Stations</span>
+                </Link>
+
+                {/* 5. Create Train Routes */}
                 <Link
                   to="/admin?tab=Routes"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                    location.pathname === '/admin' && location.search.includes('Routes')
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isOnAdmin && currentAdminTab === 'Routes'
                       ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
-                  <span>Create Route</span>
+                  <span>Create Routes</span>
                 </Link>
 
-                {/* 4. Live Traffic */}
+                {/* 6. Create Train Schedule */}
                 <Link
-                  to="/admin?tab=Traffic"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                    location.pathname === '/admin' && location.search.includes('Traffic')
+                  to="/admin?tab=Schedules"
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isOnAdmin && currentAdminTab === 'Schedules'
                       ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Live Traffic</span>
+                  <span>Create Schedule</span>
                 </Link>
               </>
             ) : (
@@ -408,9 +440,18 @@ export default function Navbar() {
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
+              className={`p-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+                isAdmin && isOnAdmin
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs font-bold'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
               aria-label="Toggle Navigation Menu"
             >
+              {isAdmin && isOnAdmin && (
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded">
+                  Admin
+                </span>
+              )}
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
