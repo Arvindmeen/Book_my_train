@@ -16,9 +16,34 @@ export default function ScheduleManager() {
 
   const [filterQuery, setFilterQuery] = useState('');
 
+  const [bookings, setBookings] = useState([]);
+
   useEffect(() => {
-    adminApi.getTrains().then((res) => {
-      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    Promise.allSettled([
+      adminApi.getTrains(),
+      adminApi.getBookings('ALL', 1, 500),
+    ]).then(([trainsRes, bookingsRes]) => {
+      let list = [];
+      if (trainsRes.status === 'fulfilled') {
+        const val = trainsRes.value;
+        list = Array.isArray(val?.data) ? val.data : Array.isArray(val) ? val : [];
+      }
+      let bList = [];
+      if (bookingsRes.status === 'fulfilled') {
+        const bVal = bookingsRes.value;
+        const bRaw = bVal?.data !== undefined ? bVal.data : bVal;
+        bList = Array.isArray(bRaw?.bookings) ? bRaw.bookings : Array.isArray(bRaw) ? bRaw : [];
+        setBookings(bList);
+      }
+      // Sort: used trains first, 0-booked after
+      list.sort((t1, t2) => {
+        const bCount1 = bList.filter((b) => b && (b.trainNumber === t1.trainNumber || b.trainId === t1.id)).length;
+        const bCount2 = bList.filter((b) => b && (b.trainNumber === t2.trainNumber || b.trainId === t2.id)).length;
+        if (bCount1 > 0 && bCount2 === 0) return -1;
+        if (bCount1 === 0 && bCount2 > 0) return 1;
+        if (bCount1 > 0 && bCount2 > 0) return bCount2 - bCount1;
+        return String(t1.trainNumber).localeCompare(String(t2.trainNumber));
+      });
       setTrains(list);
     }).catch((err) => {
       showToast(err.message || 'Failed to fetch trains', 'error');
@@ -68,14 +93,22 @@ export default function ScheduleManager() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const filteredSchedules = schedules.filter((s) => {
-    if (!filterQuery) return true;
-    const q = filterQuery.toLowerCase();
-    const trainNum = String(s.train?.trainNumber || s.trainId || '').toLowerCase();
-    const trainName = String(s.train?.trainName || '').toLowerCase();
-    const dateStr = String(s.departureDate || '').toLowerCase();
-    return trainNum.includes(q) || trainName.includes(q) || dateStr.includes(q);
-  });
+  const filteredSchedules = [...schedules]
+    .filter((s) => {
+      if (!filterQuery) return true;
+      const q = filterQuery.toLowerCase();
+      const trainNum = String(s.train?.trainNumber || s.trainId || '').toLowerCase();
+      const trainName = String(s.train?.trainName || '').toLowerCase();
+      const dateStr = String(s.departureDate || '').toLowerCase();
+      return trainNum.includes(q) || trainName.includes(q) || dateStr.includes(q);
+    })
+    .sort((s1, s2) => {
+      const b1 = bookings.filter((b) => b && (b.trainNumber === s1.train?.trainNumber || b.trainId === s1.trainId)).length;
+      const b2 = bookings.filter((b) => b && (b.trainNumber === s2.train?.trainNumber || b.trainId === s2.trainId)).length;
+      if (b1 > 0 && b2 === 0) return -1;
+      if (b1 === 0 && b2 > 0) return 1;
+      return b2 - b1;
+    });
 
   return (
     <div>
@@ -88,10 +121,17 @@ export default function ScheduleManager() {
         </div>
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[240px]">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Train</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Train (Prioritizing Used Fleet)</label>
             <select value={selectedTrain} onChange={(e) => setSelectedTrain(e.target.value)} className="input-field" required>
               <option value="">{trains.length === 0 ? 'Loading trains...' : `Select train (${trains.length} available)`}</option>
-              {trains.map((t) => <option key={t.id} value={t.id}>#{t.trainNumber} — {t.trainName}</option>)}
+              {trains.map((t) => {
+                const bCount = bookings.filter((b) => b && (b.trainNumber === t.trainNumber || b.trainId === t.id)).length;
+                return (
+                  <option key={t.id} value={t.id}>
+                    {bCount > 0 ? `🔥 [${bCount} Bookings] ` : '⚪ [0 Bookings] '}#{t.trainNumber} — {t.trainName}
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div>

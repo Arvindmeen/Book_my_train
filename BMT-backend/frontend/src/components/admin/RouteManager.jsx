@@ -12,9 +12,33 @@ export default function RouteManager() {
   const [stops, setStops] = useState([{ stationId: '', sequenceNumber: 1, arrivalTime: '', departureTime: '', distanceFromOrigin: 0 }]);
   const showToast = useToast();
 
+  const [bookings, setBookings] = useState([]);
+
   useEffect(() => {
-    adminApi.getTrains().then((res) => {
-      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    Promise.allSettled([
+      adminApi.getTrains(),
+      adminApi.getBookings('ALL', 1, 500),
+    ]).then(([trainsRes, bookingsRes]) => {
+      let list = [];
+      if (trainsRes.status === 'fulfilled') {
+        const val = trainsRes.value;
+        list = Array.isArray(val?.data) ? val.data : Array.isArray(val) ? val : [];
+      }
+      let bList = [];
+      if (bookingsRes.status === 'fulfilled') {
+        const bVal = bookingsRes.value;
+        const bRaw = bVal?.data !== undefined ? bVal.data : bVal;
+        bList = Array.isArray(bRaw?.bookings) ? bRaw.bookings : Array.isArray(bRaw) ? bRaw : [];
+        setBookings(bList);
+      }
+      list.sort((t1, t2) => {
+        const bCount1 = bList.filter((b) => b && (b.trainNumber === t1.trainNumber || b.trainId === t1.id)).length;
+        const bCount2 = bList.filter((b) => b && (b.trainNumber === t2.trainNumber || b.trainId === t2.id)).length;
+        if (bCount1 > 0 && bCount2 === 0) return -1;
+        if (bCount1 === 0 && bCount2 > 0) return 1;
+        if (bCount1 > 0 && bCount2 > 0) return bCount2 - bCount1;
+        return String(t1.trainNumber).localeCompare(String(t2.trainNumber));
+      });
       setTrains(list);
     }).catch((err) => {
       showToast(err.message || 'Failed to fetch trains', 'error');
@@ -83,14 +107,17 @@ export default function RouteManager() {
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Train</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Train (Prioritizing Used Fleet)</label>
         <select value={selectedTrain} onChange={(e) => setSelectedTrain(e.target.value)} className="input-field max-w-lg" required>
           <option value="">{trains.length === 0 ? 'Loading trains...' : `Select a train (${trains.length} available)`}</option>
-          {trains.map((t) => (
-            <option key={t.id} value={t.id}>
-              #{t.trainNumber} — {t.trainName} {t.route ? '✓ (Route Configured)' : '• (No Route)'}
-            </option>
-          ))}
+          {trains.map((t) => {
+            const bCount = bookings.filter((b) => b && (b.trainNumber === t.trainNumber || b.trainId === t.id)).length;
+            return (
+              <option key={t.id} value={t.id}>
+                {bCount > 0 ? `🔥 [${bCount} Bookings] ` : '⚪ [0 Bookings] '}#{t.trainNumber} — {t.trainName} {t.route ? '✓ (Route Configured)' : '• (No Route)'}
+              </option>
+            );
+          })}
         </select>
       </div>
 

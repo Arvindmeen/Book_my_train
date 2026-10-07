@@ -93,9 +93,10 @@ const generateStandardRoster = (trainType = 'EXPRESS', baseFare = 450) => {
 
 export default function TrainManager() {
   const [trains, setTrains] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'WITH_ROUTE' | 'DAILY' | 'SPECIAL'
+  const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'ACTIVE_BOOKINGS' | 'ZERO_BOOKED' | 'WITH_ROUTE' | 'DAILY' | 'SPECIAL'
   const [expandedTrainId, setExpandedTrainId] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -116,8 +117,20 @@ export default function TrainManager() {
   const fetchTrains = async (query = '') => {
     setLoading(true);
     try {
-      const res = await adminApi.getTrains(query);
-      setTrains(res.data || []);
+      const [trainsRes, bookingsRes] = await Promise.allSettled([
+        adminApi.getTrains(query),
+        adminApi.getBookings('ALL', 1, 500),
+      ]);
+      if (trainsRes.status === 'fulfilled') {
+        const val = trainsRes.value;
+        setTrains(val?.data || val || []);
+      }
+      if (bookingsRes.status === 'fulfilled') {
+        const bVal = bookingsRes.value;
+        const bRaw = bVal?.data !== undefined ? bVal.data : bVal;
+        const bList = Array.isArray(bRaw?.bookings) ? bRaw.bookings : Array.isArray(bRaw) ? bRaw : [];
+        setBookings(bList);
+      }
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -219,19 +232,112 @@ export default function TrainManager() {
     }
   };
 
-  // Filtered Trains based on quick chips
+  // Map trainNumber to live booking metrics from database
+  const trainUsageMap = useMemo(() => {
+    const map = new Map();
+    bookings.forEach((b) => {
+      if (!b) return;
+      const tNum = String(b.trainNumber || '');
+      if (!tNum) return;
+      const cur = map.get(tNum) || {
+        totalBookings: 0,
+        confirmedBookings: 0,
+        waitlistBookings: 0,
+        bookedSeats: 0,
+        totalPassengers: 0,
+        revenue: 0,
+      };
+      cur.totalBookings += 1;
+      const paxCount = b.passengers?.length || b.seatCount || 1;
+      cur.totalPassengers += paxCount;
+
+      if (b.status === 'CONFIRMED') {
+        cur.confirmedBookings += 1;
+        cur.bookedSeats += (b.seats?.length || paxCount);
+        cur.revenue += Number(b.totalAmount) || 0;
+      } else if (
+        b.status === 'WAITLISTED' ||
+        b.status === 'WAITLIST' ||
+        b.status === 'PENDING' ||
+        b.status === 'SEATS_HELD'
+      ) {
+        cur.waitlistBookings += paxCount;
+      }
+      map.set(tNum, cur);
+    });
+    return map;
+  }, [bookings]);
+
+  // Aggregate used vs 0-booked train counts
+  const { usedTrainsCount, zeroBookedCount } = useMemo(() => {
+    let used = 0;
+    let zero = 0;
+    trains.forEach((t) => {
+      const u = trainUsageMap.get(String(t.trainNumber));
+      if (u && (u.totalBookings > 0 || u.bookedSeats > 0 || u.waitlistBookings > 0)) {
+        used++;
+      } else {
+        zero++;
+      }
+    });
+    return { usedTrainsCount: used, zeroBookedCount: zero };
+  }, [trains, trainUsageMap]);
+
+  // Filtered & Sorted Trains based on usage
+  // User Requirement: "in admin all train data show based on there uses , is 0 booked train come after some used train in admin"
   const filteredTrains = useMemo(() => {
-    if (filterType === 'WITH_ROUTE') {
-      return trains.filter((t) => t.route?.routeStations?.length >= 2);
-    }
-    if (filterType === 'DAILY') {
-      return trains.filter((t) => !t.runningDays || t.runningDays.length === 7 || t.runsOn?.toLowerCase().includes('daily'));
-    }
-    if (filterType === 'SPECIAL') {
-      return trains.filter((t) => t.runningDays && t.runningDays.length < 7 && !t.runsOn?.toLowerCase().includes('daily'));
-    }
-    return trains;
-  }, [trains, filterType]);
+    let list = trains.filter((t) => {
+      if (filterType === 'ACTIVE_BOOKINGS') {
+        const u = trainUsageMap.get(String(t.trainNumber));
+        return u && (u.totalBookings > 0 || u.bookedSeats > 0 || u.waitlistBookings > 0);
+      }
+      if (filterType === 'ZERO_BOOKED') {
+        const u = trainUsageMap.get(String(t.trainNumber));
+        return !u || (u.totalBookings === 0 && u.bookedSeats === 0 && u.waitlistBookings === 0);
+      }
+      if (filterType === 'WITH_ROUTE') {
+        return t.route?.routeStations?.length >= 2;
+      }
+      if (filterType === 'DAILY') {
+        return !t.runningDays || t.runningDays.length === 7 || t.runsOn?.toLowerCase().includes('daily');
+      }
+      if (filterType === 'SPECIAL') {
+        return t.runningDays && t.runningDays.length < 7 && !t.runsOn?.toLowerCase().includes('daily');
+      }
+      return true;
+    });
+
+    // Sort: Used trains (with bookings/seats) come FIRST, ordered by usage descending.
+    // Trains with 0 bookings strictly come AFTER all used trains!
+    return [...list].sort((a, b) => {
+      const uA = trainUsageMap.get(String(a.trainNumber));
+      const uB = trainUsageMap.get(String(b.trainNumber));
+
+      const bookedSeatsA = uA?.bookedSeats || 0;
+      const bookedSeatsB = uB?.bookedSeats || 0;
+      const bookingsA = uA?.totalBookings || 0;
+      const bookingsB = uB?.totalBookings || 0;
+      const waitlistA = uA?.waitlistBookings || 0;
+      const waitlistB = uB?.waitlistBookings || 0;
+
+      const scoreA = bookedSeatsA * 100 + waitlistA * 50 + bookingsA * 10;
+      const scoreB = bookedSeatsB * 100 + waitlistB * 50 + bookingsB * 10;
+
+      // Primary check: Used trains first, 0-booked trains after
+      if (scoreA > 0 && scoreB === 0) return -1;
+      if (scoreA === 0 && scoreB > 0) return 1;
+
+      // Both used: Sort descending by booked seats, then waitlist, then total bookings
+      if (scoreA > 0 && scoreB > 0) {
+        if (bookedSeatsB !== bookedSeatsA) return bookedSeatsB - bookedSeatsA;
+        if (waitlistB !== waitlistA) return waitlistB - waitlistA;
+        return bookingsB - bookingsA;
+      }
+
+      // Both 0-booked: Keep clean train number ordering
+      return String(a.trainNumber).localeCompare(String(b.trainNumber));
+    });
+  }, [trains, filterType, trainUsageMap]);
 
   return (
     <div className="space-y-6">
@@ -305,9 +411,11 @@ export default function TrainManager() {
 
         {/* Quick Filter Badges */}
         <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/80 text-xs">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Filter:</span>
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Filter Fleet:</span>
           {[
-            { id: 'ALL', label: `All Trains (${trains.length})` },
+            { id: 'ALL', label: `All Fleet (${trains.length})` },
+            { id: 'ACTIVE_BOOKINGS', label: `🔥 Active / Used Trains (${usedTrainsCount})` },
+            { id: 'ZERO_BOOKED', label: `⚪ 0-Booked Fleet (${zeroBookedCount})` },
             { id: 'WITH_ROUTE', label: `With Route (${trains.filter((t) => t.route?.routeStations?.length >= 2).length})` },
             { id: 'DAILY', label: 'Daily Services' },
             { id: 'SPECIAL', label: 'Alternative Days' },
@@ -550,20 +658,34 @@ export default function TrainManager() {
 
       {/* Main Results / Train Cards Section */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-100">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-serif font-black text-slate-900 text-lg">Active Trains &amp; Fleet</h3>
             <span className="text-xs font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
               {filteredTrains.length} {filteredTrains.length === 1 ? 'train' : 'trains'}
             </span>
+            <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              {usedTrainsCount} Used / Active
+            </span>
+            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+              {zeroBookedCount} 0-Booked Fleet
+            </span>
           </div>
 
-          {searchQuery && (
-            <p className="text-xs text-slate-500">
-              Showing matches for <span className="font-bold text-slate-800">"{searchQuery}"</span>
-            </p>
-          )}
+          <div className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+            <span className="text-slate-400">Sorted by:</span>
+            <span className="font-extrabold text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded border border-emerald-200/60">
+              Highest Real Bookings First &bull; 0-Booked Trains Below
+            </span>
+          </div>
         </div>
+
+        {searchQuery && (
+          <p className="text-xs text-slate-500">
+            Showing matches for <span className="font-bold text-slate-800">"{searchQuery}"</span>
+          </p>
+        )}
 
         {loading ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-slate-200/90 shadow-card">
@@ -585,12 +707,13 @@ export default function TrainManager() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {filteredTrains.map((train) => {
+            {filteredTrains.map((train, rankIdx) => {
               const routeStations = train.route?.routeStations || [];
               const hasRoute = routeStations.length >= 2;
               const firstStop = hasRoute ? routeStations[0] : null;
               const lastStop = hasRoute ? routeStations[routeStations.length - 1] : null;
               const isExpanded = expandedTrainId === train.id;
+              const usage = trainUsageMap.get(String(train.trainNumber));
 
               return (
                 <div
@@ -637,6 +760,53 @@ export default function TrainManager() {
                       })}
                     </div>
                   </div>
+
+                  {/* Real DB Usage Telemetry Strip */}
+                  {usage && (usage.totalBookings > 0 || usage.bookedSeats > 0 || usage.waitlistBookings > 0) ? (
+                    <div className="px-4 py-2 bg-gradient-to-r from-emerald-50 via-teal-50/50 to-emerald-50 border-b border-emerald-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="flex h-2.5 w-2.5 relative">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600" />
+                        </span>
+                        <span className="font-extrabold text-emerald-950">
+                          Active Service Bookings:
+                        </span>
+                        <span className="font-mono font-bold text-emerald-900 bg-white px-2 py-0.5 rounded border border-emerald-300 shadow-2xs">
+                          {usage.bookedSeats} Seats Booked ({usage.confirmedBookings} Confirmed)
+                        </span>
+                        {usage.waitlistBookings > 0 && (
+                          <span className="font-mono font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                            {usage.waitlistBookings} Waitlist
+                          </span>
+                        )}
+                        <span className="text-[11px] text-slate-600 font-medium">
+                          &bull; {usage.totalPassengers} Passenger{usage.totalPassengers === 1 ? '' : 's'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-emerald-900 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                          ₹{usage.revenue.toLocaleString('en-IN')} Revenue
+                        </span>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300 shadow-2xs">
+                          Used Train #{rankIdx + 1}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-4 py-1.5 bg-slate-50/70 border-b border-slate-150 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                        <span className="font-medium text-slate-600 text-[11px]">
+                          0 Bookings &bull; Unused Fleet Capacity
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        All {train.totalSeats || train.seats?.length || 64} Seats Available
+                      </span>
+                    </div>
+                  )}
 
                   {/* Compact Journey Corridor Strip (Always station names, no code/numbers) */}
                   <div className="px-4 py-2.5 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/70 border-b border-slate-100">

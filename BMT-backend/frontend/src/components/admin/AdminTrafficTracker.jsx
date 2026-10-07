@@ -208,6 +208,16 @@ export default function AdminTrafficTracker() {
       };
     });
 
+    // Sort corridors by usage: corridors with real bookings come first, 0 booked come after
+    corridorList.sort((a, b) => {
+      const usageA = (a.bookedPax || 0) * 100 + (a.waitlistCount || 0);
+      const usageB = (b.bookedPax || 0) * 100 + (b.waitlistCount || 0);
+      if (usageA > 0 && usageB === 0) return -1;
+      if (usageA === 0 && usageB > 0) return 1;
+      if (usageA > 0 && usageB > 0) return usageB - usageA;
+      return a.route.localeCompare(b.route);
+    });
+
     // Real passenger counts per station from database bookings
     const stationPaxMap = new Map();
     safeBookings.forEach((b) => {

@@ -149,10 +149,8 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Administration Tab Selector */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-2 shadow-xs">
-          <AdminTabs active={tab} onChange={handleTabChange} />
-        </div>
+        {/* Administration Operations Management Directory (Image 1 Style Card Grid) */}
+        <AdminTabs active={tab} onChange={handleTabChange} />
 
         {/* Active Tab Component */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-card p-6">
