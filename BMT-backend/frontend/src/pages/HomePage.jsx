@@ -261,8 +261,8 @@ const PROMOTION_OFFERS = [
 const TRAVEL_SERVICES = [
   { id: 'food', name: 'Food on Track', category: 'E-Catering', icon: '🍴', desc: 'Hot meals from Domino’s & Haldiram’s delivered at coach seat.', badge: 'Seat Delivery', color: 'orange', action: 'food' },
   { id: 'hotels', name: 'Hotels & Pod Lounges', category: 'Station Stays', icon: '🏨', desc: 'Hourly executive lounges and soundproof pods near platforms.', badge: '200+ Hubs', color: 'blue', action: 'hotels' },
+  { id: 'cabs', name: 'Platform Cabs & Auto', category: 'Transfers', icon: '🚖', desc: 'Pre-book verified platform exit pickup with zero-surge fares on Ride Tracker.', badge: 'Zero Surge', color: 'amber', action: 'ride' },
   { id: 'flights', name: 'Connecting Flights', category: 'Air Connect', icon: '✈️', desc: 'Synchronized rail-air combo ticketing with zero layover stress.', badge: 'Rail-Air Combo', color: 'emerald', action: 'flights' },
-  { id: 'cabs', name: 'Platform Cabs & Auto', category: 'Transfers', icon: '🚖', desc: 'Pre-book verified platform exit pickup with zero-surge fares.', badge: 'Zero Surge', color: 'amber', action: 'upcoming' },
   { id: 'porter', name: 'Coolie / Porter Booking', category: 'Station Assist', icon: '🧳', desc: 'Pre-book verified railway porters with fixed transparent tariffs.', badge: 'Fixed Tariff', color: 'purple', action: 'upcoming' },
   { id: 'wheelchair', name: 'Wheelchair Assistance', category: 'Accessibility', icon: '♿', desc: 'Free station attendants and buggy escorts for senior citizens.', badge: 'Free Assist', color: 'teal', action: 'upcoming' },
   { id: 'insurance', name: 'Trip Protection & Refund', category: 'Protection', icon: '🛡️', desc: '100% instant refund on waitlist/tatkal with zero penalty.', badge: '100% Refund', color: 'rose', action: 'upcoming' },
@@ -747,17 +747,17 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Elevated Multi-Service Hub Card */}
-          <div className="glass-card rounded-3xl shadow-card p-3 md:p-5 max-w-4xl mx-auto border border-slate-150 animate-fade-in-up relative z-30">
+          {/* Elevated Multi-Service Hub Card (Increased width to max-w-5xl lg:max-w-6xl so all 6 tabs fit seamlessly) */}
+          <div className="glass-card rounded-3xl shadow-card p-3 md:p-5 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto border border-slate-150 animate-fade-in-up relative z-30">
             
             {/* Horizontal Service Tab Switcher with Real Icons & High-Contrast Active Styling */}
             <div className="min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none border-b border-slate-150 pb-2.5">
-              <div className="flex w-max min-w-full items-center justify-start md:justify-center gap-2 md:gap-3 px-1">
+              <div className="flex w-max min-w-full items-center justify-start md:justify-center gap-2 md:gap-2.5 px-1">
               
               {/* Tab 1: Book Tickets */}
               <button
                 onClick={() => setActiveTab('search')}
-                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   activeTab === 'search'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -776,7 +776,7 @@ export default function HomePage() {
               {/* Tab 2: Check PNR */}
               <button
                 onClick={() => setActiveTab('pnr')}
-                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'pnr'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -793,7 +793,7 @@ export default function HomePage() {
               {/* Tab 3: Live Running Status */}
               <button
                 onClick={() => setActiveTab('live')}
-                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'live'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -809,7 +809,7 @@ export default function HomePage() {
               {/* Tab 4: Food on Track */}
               <button
                 onClick={() => setActiveTab('food')}
-                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'food'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -826,7 +826,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('hotels')}
-                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
                   activeTab === 'hotels'
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
                     : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
@@ -839,22 +839,28 @@ export default function HomePage() {
                 <span>Hotels &amp; Lounges</span>
               </button>
 
-              {/* Tab 6: Flights */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('flights')}
-                className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 ${
-                  activeTab === 'flights'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 scale-102'
-                    : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900'
+              {/* Tab 6: Book Ride (Links directly to https://ride-tracker-ruddy.vercel.app/) */}
+              <a
+                href="https://ride-tracker-ruddy.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setActiveTab('ride')}
+                className={`flex shrink-0 items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  activeTab === 'ride'
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30 scale-102 font-extrabold'
+                    : 'bg-amber-50/90 text-amber-900 hover:bg-amber-100 hover:text-amber-950 border border-amber-200/80 shadow-xs'
                 }`}
+                title="Book Station Cabs & Auto via Ride Tracker (https://ride-tracker-ruddy.vercel.app/)"
               >
-                {/* Airplane SVG */}
-                <svg className={`w-4 h-4 ${activeTab === 'flights' ? 'text-white' : 'text-sky-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                {/* Taxi / Cab Vector SVG */}
+                <svg className={`w-4 h-4 ${activeTab === 'ride' ? 'text-slate-950' : 'text-amber-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h.01M16 17h.01M5 11l1.5-4.5A2 2 0 018.4 5h7.2a2 2 0 011.9 1.5L19 11M5 11h14M5 11v6a1 1 0 001 1h1a1 1 0 001-1v-1h8v1a1 1 0 001 1h1a1 1 0 001-1v-6" />
                 </svg>
-                <span>Flights</span>
-              </button>
+                <span>Book Ride</span>
+                <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${activeTab === 'ride' ? 'bg-slate-950 text-white' : 'bg-amber-200 text-amber-950'}`}>
+                  ↗
+                </span>
+              </a>
               </div>
             </div>
 
@@ -1702,94 +1708,99 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* TAB 6: Connecting Flights */}
-              {activeTab === 'flights' && (
-                <div className="bg-white rounded-2xl p-5 md:p-6 border border-slate-100 shadow-xs space-y-5 animate-scale-in">
-                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                    <div>
-                      <h3 className="font-bold text-lg text-slate-900">Multi-Modal Rail + Flight Connect</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Combine express trains with domestic flights for faster journeys with guaranteed layover connections.</p>
+              {/* TAB 6: Book Ride & Platform Cabs (Ride Tracker Integration) */}
+              {(activeTab === 'ride' || activeTab === 'flights') && (
+                <div className="bg-white rounded-2xl p-5 md:p-6 border border-amber-200/80 shadow-xs space-y-5 animate-scale-in">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-gradient-to-r from-amber-50 via-amber-100/40 to-orange-50 p-4 sm:p-5 rounded-2xl border border-amber-200/80">
+                    <div className="flex items-start sm:items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-2xl shadow-md shadow-amber-500/20 shrink-0">
+                        🚖
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-black text-lg text-slate-900">Platform Cabs &amp; Auto &bull; Ride Tracker</h3>
+                          <span className="text-[10px] font-black uppercase bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300">
+                            Zero Surge Guarantee
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
+                          Pre-book verified platform exit pickup with live GPS tracking on Ride Tracker. Fixed government meter fares, zero surge pricing, and verified drivers waiting at the exit.
+                        </p>
+                      </div>
                     </div>
-                    <Link to="/services" className="text-xs font-bold text-emerald-700 hover:underline">
-                      Explore Rail-Air Combos &rarr;
-                    </Link>
+
+                    <a
+                      href="https://ride-tracker-ruddy.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2 shrink-0 group"
+                    >
+                      <span>Open Ride Tracker App</span>
+                      <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                    </a>
                   </div>
 
-                  {/* Flight Search Form */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  {/* Interactive Quick Ride Launcher Form */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Departure Hub</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Station Pickup</label>
                       <input
                         type="text"
-                        value={flightFrom}
-                        onChange={(e) => setFlightFrom(e.target.value)}
-                        placeholder="Origin Rail/Air City"
+                        defaultValue="Chandausi Junction (CH)"
+                        placeholder="Railway Station / Platform Gate"
                         className="input-field text-xs font-semibold text-slate-800"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Destination</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Drop Location</label>
                       <input
                         type="text"
-                        value={flightTo}
-                        onChange={(e) => setFlightTo(e.target.value)}
-                        placeholder="Final Airport / City"
+                        defaultValue="City Center / Hotel"
+                        placeholder="Drop Destination / Address"
                         className="input-field text-xs font-semibold text-slate-800"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Travel Date</label>
-                      <input
-                        type="date"
-                        value={flightDate}
-                        onChange={(e) => setFlightDate(e.target.value)}
-                        className="input-field text-xs font-semibold text-slate-800"
-                      />
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Vehicle Type</label>
+                      <select className="input-field text-xs font-semibold text-slate-800">
+                        <option>Platform Auto (3-Wheeler) &bull; ₹30 Base</option>
+                        <option>Station Mini Cab &bull; ₹60 Base</option>
+                        <option>Station Prime Sedan &bull; ₹90 Base</option>
+                        <option>Electric Buggy Shuttle &bull; Free Assist</option>
+                      </select>
                     </div>
                     <div className="flex items-end">
-                      <button
-                        type="button"
-                        onClick={() => setFlightSearchActive(true)}
-                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5"
+                      <a
+                        href="https://ride-tracker-ruddy.vercel.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 text-center"
                       >
-                        <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h.01M16 17h.01M5 11l1.5-4.5A2 2 0 018.4 5h7.2a2 2 0 011.9 1.5L19 11M5 11h14M5 11v6a1 1 0 001 1h1a1 1 0 001-1v-1h8v1a1 1 0 001 1h1a1 1 0 001-1v-6" />
                         </svg>
-                        <span>Find Combos</span>
-                      </button>
+                        <span>Find Available Rides &rarr;</span>
+                      </a>
                     </div>
                   </div>
 
-                  {/* Popular Combos */}
-                  <div className="space-y-3 pt-2">
-                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Recommended Rail-Air Synchronized Routes</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all flex justify-between items-center">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-slate-900">Delhi &rarr; Amritsar (Train) + Flight to Srinagar</span>
-                            <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Save ₹1,200</span>
-                          </div>
-                          <p className="text-xs text-slate-500">6h Total Duration • Free airport rail-shuttle transfer included</p>
-                        </div>
-                        <Link to="/services" className="px-3.5 py-1.5 bg-slate-900 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition-colors shrink-0 ml-3">
-                          Select
-                        </Link>
-                      </div>
-
-                      <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all flex justify-between items-center">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-slate-900">Mumbai &rarr; Goa (Vande Bharat) + Flight to Kochi</span>
-                            <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Save ₹850</span>
-                          </div>
-                          <p className="text-xs text-slate-500">4h 30m Duration • Priority baggage check-in guarantee</p>
-                        </div>
-                        <Link to="/services" className="px-3.5 py-1.5 bg-slate-900 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition-colors shrink-0 ml-3">
-                          Select
-                        </Link>
-                      </div>
+                  {/* Feature Highlights */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                      <span className="text-amber-600 font-bold">✓</span>
+                      <span className="font-semibold text-slate-700 text-[11px]">Zero Surge Pricing</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span className="font-semibold text-slate-700 text-[11px]">Verified Police Drivers</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                      <span className="text-blue-600 font-bold">✓</span>
+                      <span className="font-semibold text-slate-700 text-[11px]">Live GPS Ride Tracking</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                      <span className="text-indigo-600 font-bold">✓</span>
+                      <span className="font-semibold text-slate-700 text-[11px]">Direct UPI / Cash</span>
                     </div>
                   </div>
                 </div>
@@ -1798,7 +1809,7 @@ export default function HomePage() {
           </div>
 
           {/* Dedicated High-Speed Train Track (Engine leading in front, 4 coaches trailing behind!) */}
-          <div className="w-full max-w-4xl mx-auto mt-5 pointer-events-none relative z-0">
+          <div className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-5 pointer-events-none relative z-0">
             <div className="relative h-8 border-b border-dashed border-emerald-300/80 overflow-hidden">
               <div className="animate-train-glide absolute bottom-0.5 flex items-end">
                 {/* Coach 4 (Tail Guard Coach with Red Blinking Beacon) */}
@@ -1947,7 +1958,7 @@ export default function HomePage() {
               Complete Rail Travel Ecosystem
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Everything for a seamless journey: hot meals, station pod stays, connecting flights, coolie bookings &amp; more.
+              Everything for a seamless journey: hot meals, station pod stays, platform cabs &amp; auto, connecting flights, coolie bookings &amp; more.
             </p>
           </div>
           <Link
@@ -1963,21 +1974,35 @@ export default function HomePage() {
           {TRAVEL_SERVICES.map((s) => (
             <div
               key={s.id}
-              className="p-3.5 sm:p-4 bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-card-hover rounded-2xl transition-all duration-300 group flex flex-col justify-between"
+              onClick={() => {
+                if (s.id === 'cabs' || s.action === 'ride') {
+                  window.open('https://ride-tracker-ruddy.vercel.app/', '_blank', 'noopener,noreferrer');
+                }
+              }}
+              className={`p-3.5 sm:p-4 bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-card-hover rounded-2xl transition-all duration-300 group flex flex-col justify-between ${
+                s.id === 'cabs' || s.action === 'ride' ? 'cursor-pointer hover:border-amber-400 ring-0 hover:ring-2 hover:ring-amber-200/50' : ''
+              }`}
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-2xl p-2 rounded-xl bg-slate-50 border border-slate-150 group-hover:scale-105 transition-transform">
                     {s.icon}
                   </span>
-                  <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
+                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                    s.id === 'cabs' || s.action === 'ride'
+                      ? 'text-amber-800 bg-amber-50 border border-amber-200/80'
+                      : 'text-emerald-700 bg-emerald-50 border border-emerald-200/70'
+                  }`}>
                     {s.badge}
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-700 transition-colors leading-tight">
-                    {s.name}
+                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-emerald-700 transition-colors leading-tight flex items-center gap-1.5">
+                    <span>{s.name}</span>
+                    {(s.id === 'cabs' || s.action === 'ride') && (
+                      <span className="text-[10px] text-amber-600 font-bold">↗</span>
+                    )}
                   </h3>
                   <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-snug">
                     {s.desc}
@@ -1988,7 +2013,12 @@ export default function HomePage() {
               <div className="pt-3 mt-2 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (s.id === 'cabs' || s.action === 'ride') {
+                      window.open('https://ride-tracker-ruddy.vercel.app/', '_blank', 'noopener,noreferrer');
+                      return;
+                    }
                     if (s.action === 'food') {
                       setActiveTab('food');
                       window.scrollTo({ top: 120, behavior: 'smooth' });
@@ -2003,9 +2033,13 @@ export default function HomePage() {
                       setServiceNotified(false);
                     }
                   }}
-                  className="w-full py-1.5 bg-slate-100 group-hover:bg-emerald-600 group-hover:text-white text-slate-700 font-bold text-xs rounded-xl transition-all text-center"
+                  className={`w-full py-1.5 font-bold text-xs rounded-xl transition-all text-center ${
+                    s.id === 'cabs' || s.action === 'ride'
+                      ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs'
+                      : 'bg-slate-100 group-hover:bg-emerald-600 group-hover:text-white text-slate-700'
+                  }`}
                 >
-                  {s.action === 'food' ? 'Order Food' : s.action === 'hotels' ? 'View Stays' : s.action === 'flights' ? 'Find Flights' : 'Explore Service'}
+                  {s.id === 'cabs' || s.action === 'ride' ? 'Book Ride ↗' : s.action === 'food' ? 'Order Food' : s.action === 'hotels' ? 'View Stays' : s.action === 'flights' ? 'Find Flights' : 'Explore Service'}
                 </button>
               </div>
             </div>

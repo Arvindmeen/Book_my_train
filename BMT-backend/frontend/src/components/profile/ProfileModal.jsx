@@ -498,7 +498,7 @@ export default function ProfileModal({
                       <span className="font-serif text-sm font-semibold text-slate-800 group-hover:text-emerald-800 block leading-tight">
                         Travel Services
                       </span>
-                      <span className="text-[10px] text-slate-500">Food on Track, Hotels &amp; Flights</span>
+                      <span className="text-[10px] text-slate-500">Food on Track, Hotels &amp; Platform Cabs</span>
                     </div>
                   </div>
                   <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-emerald-600 group-hover:border-emerald-600 transition-all text-xs font-bold">

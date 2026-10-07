@@ -152,9 +152,14 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/services" className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white">
+                <a
+                  href="https://ride-tracker-ruddy.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-600 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group max-sm:min-h-9 max-sm:w-full max-sm:rounded-lg max-sm:px-2 max-sm:hover:bg-white"
+                >
                   <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
-                  <span>Connecting Flights &amp; Cabs</span>
+                  <span>Platform Cabs &amp; Auto (Ride Tracker) ↗</span>
                 </a>
               </li>
             </ul>

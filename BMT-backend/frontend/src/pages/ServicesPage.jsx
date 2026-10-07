@@ -29,6 +29,20 @@ const ALL_SERVICES = [
     accentColor: 'text-blue-700'
   },
   {
+    id: 'cabs',
+    title: 'Platform Cabs & Auto',
+    badge: 'Ride Tracker Live',
+    icon: '🚖',
+    desc: 'Pre-book verified station taxis or auto-rickshaws waiting at platform exits. Zero-surge guarantee and live GPS tracking powered by Ride Tracker.',
+    features: ['Fixed rate platform pickup', 'Driver details 30m prior to arrival', 'Zero surge guarantee', 'Direct integration with UPI'],
+    buttonText: 'Book Ride on Ride Tracker ↗',
+    color: 'from-amber-600 to-yellow-600',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    accentColor: 'text-amber-700',
+    externalUrl: 'https://ride-tracker-ruddy.vercel.app/'
+  },
+  {
     id: 'flights',
     title: 'Connecting Flight Tickets',
     badge: 'Rail-Air Combo',
@@ -40,19 +54,6 @@ const ALL_SERVICES = [
     bgColor: 'bg-emerald-50',
     borderColor: 'border-emerald-200',
     accentColor: 'text-emerald-700'
-  },
-  {
-    id: 'cabs',
-    title: 'Station Cabs & Metro Connect',
-    badge: 'Zero Surge Pricing',
-    icon: '🚖',
-    desc: 'Pre-book verified station taxis or auto-rickshaws waiting at platform exits. Direct metro cards and QR tickets supported.',
-    features: ['Fixed rate platform pickup', 'Driver details 30m prior to arrival', 'Zero surge guarantee', 'Direct integration with UPI'],
-    buttonText: 'Book Station Taxi',
-    color: 'from-amber-600 to-yellow-600',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
-    accentColor: 'text-amber-700'
   },
   {
     id: 'porter',
@@ -168,13 +169,18 @@ export default function ServicesPage() {
 
               <div className="pt-3 mt-3 border-t border-slate-100">
                 <button
+                  type="button"
                   onClick={() => {
+                    if (s.externalUrl) {
+                      window.open(s.externalUrl, '_blank', 'noopener,noreferrer');
+                      return;
+                    }
                     setSelectedService(s);
                     setNotified(false);
                   }}
-                  className={`w-full py-2 rounded-xl text-white font-bold text-xs bg-gradient-to-r ${s.color} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center`}
+                  className={`w-full py-2 rounded-xl text-white font-bold text-xs bg-gradient-to-r ${s.color} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center cursor-pointer`}
                 >
-                  {s.buttonText} &rarr;
+                  {s.buttonText}
                 </button>
               </div>
             </div>
