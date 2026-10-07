@@ -116,13 +116,13 @@ export default function AdminTabs({ active, onChange }) {
               key={tab.id}
               type="button"
               onClick={() => onChange(tab.id)}
-              className={`p-4 rounded-xl border text-left group transition-all duration-200 active:scale-95 cursor-pointer relative flex flex-col justify-between ${
+              className={`p-3 sm:p-4 rounded-xl border text-left group transition-all duration-200 active:scale-95 cursor-pointer relative flex flex-col justify-between ${
                 isActive
                   ? 'bg-gradient-to-b from-emerald-50/90 to-teal-50/60 border-emerald-500 shadow-md ring-2 ring-emerald-500/25'
                   : 'bg-slate-50 hover:bg-emerald-50/60 border-slate-200/90 hover:border-emerald-300 shadow-xs'
               }`}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
                     isActive

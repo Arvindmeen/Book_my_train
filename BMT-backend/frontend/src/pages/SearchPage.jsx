@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import SearchForm from '../components/search/SearchForm';
 import TrainList from '../components/search/TrainList';
 import { useSearchStore } from '../store/search.store';
@@ -100,10 +100,10 @@ export default function SearchPage() {
               </div>
 
               {/* Filter Pills */}
-              <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 w-full sm:w-auto scrollbar-none text-xs font-bold">
                 <button
                   onClick={() => setFilterType('ALL')}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
+                  className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     filterType === 'ALL'
                       ? 'bg-slate-900 text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -113,7 +113,7 @@ export default function SearchPage() {
                 </button>
                 <button
                   onClick={() => setFilterType('VANDE')}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
+                  className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     filterType === 'VANDE'
                       ? 'bg-indigo-600 text-white shadow-xs'
                       : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
@@ -123,7 +123,7 @@ export default function SearchPage() {
                 </button>
                 <button
                   onClick={() => setFilterType('RAJDHANI')}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
+                  className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     filterType === 'RAJDHANI'
                       ? 'bg-rose-600 text-white shadow-xs'
                       : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
@@ -133,7 +133,7 @@ export default function SearchPage() {
                 </button>
                 <button
                   onClick={() => setFilterType('SHATABDI')}
-                  className={`px-3 py-1.5 rounded-xl transition-all ${
+                  className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     filterType === 'SHATABDI'
                       ? 'bg-amber-600 text-white shadow-xs'
                       : 'bg-amber-50 text-amber-700 hover:bg-amber-100'

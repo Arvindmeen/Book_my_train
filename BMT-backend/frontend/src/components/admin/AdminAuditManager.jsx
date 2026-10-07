@@ -416,13 +416,13 @@ export default function AdminAuditManager() {
       <div className="card p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">🔍</span>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by PNR, Passenger Name, Train #, or Train Name..."
-              className="input-field w-full pl-10 text-xs font-medium"
+              placeholder="Search PNR, Passenger, Train # or Name..."
+              className="input-field w-full pl-10 pr-16 text-xs font-semibold py-2.5"
             />
             {query && (
               <button
@@ -435,19 +435,25 @@ export default function AdminAuditManager() {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto text-xs font-bold scrollbar-none">
-            {['ALL', 'CONFIRMED', 'WAITLISTED', 'PAYMENT_PENDING', 'CANCELLED'].map((st) => (
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto text-xs font-bold scrollbar-none w-full sm:w-auto">
+            {[
+              { id: 'ALL', label: 'All Bookings' },
+              { id: 'CONFIRMED', label: '✓ Confirmed' },
+              { id: 'WAITLISTED', label: '⏳ Waitlisted' },
+              { id: 'PAYMENT_PENDING', label: '💳 Pending' },
+              { id: 'CANCELLED', label: '✕ Cancelled' },
+            ].map((st) => (
               <button
-                key={st}
+                key={st.id}
                 type="button"
-                onClick={() => setFilterStatus(st)}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                  filterStatus === st
-                    ? 'bg-white text-slate-900 shadow-xs'
+                onClick={() => setFilterStatus(st.id)}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap text-center shrink-0 ${
+                  filterStatus === st.id
+                    ? 'bg-white text-slate-900 shadow-xs font-black'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                {st === 'ALL' ? 'All Bookings' : st}
+                {st.label}
               </button>
             ))}
           </div>

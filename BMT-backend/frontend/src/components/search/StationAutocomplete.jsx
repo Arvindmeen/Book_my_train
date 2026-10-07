@@ -133,11 +133,11 @@ export default function StationAutocomplete({ label, value, onChange, placeholde
           onBlur={handleBlur}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
-          className="input-field pl-10 pr-9 font-medium text-slate-800 focus:bg-white"
+          className="input-field pl-10 pr-9 py-2.5 font-semibold text-xs sm:text-sm text-slate-800 focus:bg-white"
           autoComplete="off"
         />
         {loading && (
-          <div className="absolute right-3">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <div className="animate-spin h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full" />
           </div>
         )}

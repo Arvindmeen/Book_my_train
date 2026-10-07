@@ -138,8 +138,8 @@ export default function ScheduleManager() {
             {trains.length} Trains Registered
           </span>
         </div>
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[280px]">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <div className="flex-1 min-w-0">
             <CustomSelect
               label="Train Service (Prioritizing Active Fleet)"
               value={selectedTrain}
@@ -150,11 +150,13 @@ export default function ScheduleManager() {
               required
             />
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <label className="block text-xs font-bold text-slate-700 mb-1.5">Departure Date</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={today} className="input-field" required />
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={today} className="input-field w-full py-2.5 font-semibold text-center sm:text-left" required />
           </div>
-          <Button type="submit" loading={creating} className="px-5">Create Schedule</Button>
+          <Button type="submit" loading={creating} className="px-6 py-2.5 w-full sm:w-auto flex items-center justify-center whitespace-nowrap">
+            Create Schedule
+          </Button>
         </div>
       </form>
 
@@ -167,19 +169,19 @@ export default function ScheduleManager() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-72">
             <input
               type="text"
-              placeholder="Filter by train no, name or date..."
+              placeholder="Filter by train #, name, or date..."
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
-              className="input-field text-xs py-1.5 px-3 w-64"
+              className="input-field text-xs py-2 pl-3 pr-16 w-full font-medium"
             />
             {filterQuery && (
               <button
                 type="button"
                 onClick={() => setFilterQuery('')}
-                className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded bg-slate-100"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
               >
                 Clear
               </button>

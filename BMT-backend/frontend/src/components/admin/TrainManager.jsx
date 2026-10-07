@@ -378,10 +378,10 @@ export default function TrainManager() {
         </div>
 
         {/* Search Bar Embedded in Hero */}
-        <form onSubmit={handleSearchSubmit} className="mt-5 relative z-10 flex flex-col sm:flex-row items-stretch gap-2.5">
+        <form onSubmit={handleSearchSubmit} className="mt-5 relative z-10 flex flex-col sm:flex-row items-stretch gap-2">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -389,45 +389,48 @@ export default function TrainManager() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search train by Name (e.g. Rajdhani), Number (e.g. 12431), or Station (e.g. NDLS)..."
-              className="w-full pl-11 pr-24 py-3 rounded-xl bg-slate-50/90 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all shadow-inner"
+              placeholder="Search train by Name, # (e.g. 12431), or Station..."
+              className="w-full pl-10 pr-16 py-2.5 rounded-xl bg-slate-50/90 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-inner"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute inset-y-0 right-20 my-auto h-7 px-2 text-xs font-semibold text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="absolute inset-y-0 right-3 my-auto h-6 px-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 Clear
               </button>
             )}
-            <button
-              type="submit"
-              className="absolute inset-y-1.5 right-1.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <span>Search</span>
-            </button>
           </div>
+          <button
+            type="submit"
+            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 w-full sm:w-auto"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Search Fleet</span>
+          </button>
         </form>
 
         {/* Quick Filter Badges */}
-        <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-slate-200/80 text-xs">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Filter Fleet:</span>
+        <div className="mt-3.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-3 border-t border-slate-200/80 text-xs w-full">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">Filter:</span>
           {[
-            { id: 'ALL', label: `All Fleet (${trains.length})` },
-            { id: 'ACTIVE_BOOKINGS', label: `🔥 Active / Used Trains (${usedTrainsCount})` },
-            { id: 'ZERO_BOOKED', label: `⚪ 0-Booked Fleet (${zeroBookedCount})` },
+            { id: 'ALL', label: `All (${trains.length})` },
+            { id: 'ACTIVE_BOOKINGS', label: `🔥 Active (${usedTrainsCount})` },
+            { id: 'ZERO_BOOKED', label: `⚪ 0-Booked (${zeroBookedCount})` },
             { id: 'WITH_ROUTE', label: `With Route (${trains.filter((t) => t.route?.routeStations?.length >= 2).length})` },
             { id: 'DAILY', label: 'Daily Services' },
-            { id: 'SPECIAL', label: 'Alternative Days' },
+            { id: 'SPECIAL', label: 'Alternative' },
           ].map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setFilterType(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 text-center ${
                 filterType === tab.id
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'bg-emerald-600 text-white shadow-xs font-black'
                   : 'bg-slate-100 text-slate-600 hover:text-emerald-800 hover:bg-emerald-50 border border-slate-200/70'
               }`}
             >

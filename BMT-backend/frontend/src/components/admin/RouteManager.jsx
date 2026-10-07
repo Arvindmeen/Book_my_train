@@ -156,34 +156,39 @@ export default function RouteManager() {
 
       <div className="space-y-3 mb-6">
         {stops.map((stop, i) => (
-          <div key={i} className="flex flex-wrap gap-3 items-end bg-slate-50/90 border border-slate-200/80 rounded-2xl p-4 shadow-2xs">
-            <div className="w-8 text-center text-xs font-black text-slate-400 bg-white py-2 rounded-lg border border-slate-200 shadow-2xs">
-              #{i + 1}
+          <div key={i} className="bg-slate-50/90 border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-2xs space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 flex items-center justify-center text-xs font-black text-slate-500 bg-white rounded-xl border border-slate-200 shadow-2xs shrink-0">
+                #{i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <CustomSelect
+                  label="Station Stop"
+                  value={stop.stationId}
+                  onChange={(e) => updateStop(i, 'stationId', e.target.value)}
+                  options={stationOptions}
+                  placeholder="Choose station..."
+                  searchPlaceholder="Search station name or code..."
+                  required
+                />
+              </div>
+              {stops.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeStop(i)}
+                  className="text-rose-500 hover:text-rose-700 p-2 rounded-xl hover:bg-rose-50 text-base font-bold cursor-pointer transition-colors shrink-0 self-end mb-0.5"
+                  title="Remove Stop"
+                >
+                  &times;
+                </button>
+              )}
             </div>
-            <div className="flex-1 min-w-[220px]">
-              <CustomSelect
-                label="Station Stop"
-                value={stop.stationId}
-                onChange={(e) => updateStop(i, 'stationId', e.target.value)}
-                options={stationOptions}
-                placeholder="Choose station..."
-                searchPlaceholder="Search station name or code..."
-                required
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 border-t border-slate-150">
+              <Input label="Arrival Time" type="time" value={stop.arrivalTime} onChange={(e) => updateStop(i, 'arrivalTime', e.target.value)} className="w-full" />
+              <Input label="Departure Time" type="time" value={stop.departureTime} onChange={(e) => updateStop(i, 'departureTime', e.target.value)} className="w-full" />
+              <Input label="Distance (km)" type="number" value={stop.distanceFromOrigin} onChange={(e) => updateStop(i, 'distanceFromOrigin', e.target.value)} className="w-full" />
             </div>
-            <Input label="Arrival Time" type="time" value={stop.arrivalTime} onChange={(e) => updateStop(i, 'arrivalTime', e.target.value)} className="w-32" />
-            <Input label="Departure Time" type="time" value={stop.departureTime} onChange={(e) => updateStop(i, 'departureTime', e.target.value)} className="w-32" />
-            <Input label="Distance (km)" type="number" value={stop.distanceFromOrigin} onChange={(e) => updateStop(i, 'distanceFromOrigin', e.target.value)} className="w-28" />
-            {stops.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeStop(i)}
-                className="text-rose-500 hover:text-rose-700 p-2.5 rounded-lg hover:bg-rose-50 text-base font-bold cursor-pointer transition-colors"
-                title="Remove Stop"
-              >
-                &times;
-              </button>
-            )}
           </div>
         ))}
       </div>

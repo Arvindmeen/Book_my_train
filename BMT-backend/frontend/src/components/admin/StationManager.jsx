@@ -63,11 +63,34 @@ export default function StationManager() {
       </form>
 
       <div className="card">
-        <div className="flex items-center justify-between mb-4 gap-3">
-          <h3 className="font-semibold">Stations</h3>
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="input-field max-w-[200px]" />
-            <Button type="submit" variant="secondary">Search</Button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-slate-900">Stations Directory</h3>
+            <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+              {stations.length} Listed
+            </span>
+          </div>
+          <form onSubmit={handleSearch} className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-60">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search station name or code..."
+                className="input-field w-full text-xs py-2 pl-3 pr-8 font-medium"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(''); fetchStations(1); }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <Button type="submit" variant="secondary" className="px-4 py-2 text-xs font-bold whitespace-nowrap">
+              Search
+            </Button>
           </form>
         </div>
 
