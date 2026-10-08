@@ -221,7 +221,7 @@ export default function BookingPage() {
             {isWaitlist ? (
               <span className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">
                 <span>⚡</span>
-                <span>Waitlist Queue (WL #{waitlistPosition})</span>
+                <span>Waitlist Position #{waitlistPosition}</span>
               </span>
             ) : (
               <span className="text-xs font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full uppercase flex items-center gap-1">

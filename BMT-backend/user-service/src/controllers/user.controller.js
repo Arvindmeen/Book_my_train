@@ -26,8 +26,21 @@ exports.updateProfile = asyncHandler(async(req, res) =>{
           throw new BadRequestError("User Id is missing");
      }
 
-     const { firstName, lastName, email } = req.body;
-     const user = await userService.updateProfile(userId, { firstName, lastName, email });
+     const { 
+          firstName, lastName, email,
+          phone, gender, dateOfBirth,
+          city, state, pincode, address,
+          profilePicture, berthPreference, foodPreference,
+          emergencyContactName, emergencyContactPhone, irctcUsername
+     } = req.body;
+
+     const user = await userService.updateProfile(userId, { 
+          firstName, lastName, email,
+          phone, gender, dateOfBirth,
+          city, state, pincode, address,
+          profilePicture, berthPreference, foodPreference,
+          emergencyContactName, emergencyContactPhone, irctcUsername
+     });
      return res.status(200).json({
           success: true,
           message: "User profile updated successfully",

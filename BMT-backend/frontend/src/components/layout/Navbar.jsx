@@ -336,9 +336,13 @@ export default function Navbar() {
                       >
                         <div className="flex items-center justify-between gap-2.5">
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 via-teal-600 to-indigo-600 flex items-center justify-center text-sm font-black text-white shadow-sm ring-2 ring-emerald-100 group-hover:ring-emerald-400 transition-all flex-shrink-0">
-                              {getUserInitials(user)}
-                            </div>
+                            {user?.profilePicture ? (
+                              <img src={user.profilePicture} alt={user.firstName || 'Profile'} className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-300 flex-shrink-0 shadow-sm" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 via-teal-600 to-indigo-600 flex items-center justify-center text-sm font-black text-white shadow-sm ring-2 ring-emerald-100 group-hover:ring-emerald-400 transition-all flex-shrink-0">
+                                {getUserInitials(user)}
+                              </div>
+                            )}
                             <div className="min-w-0 flex-1">
                               <p className="font-bold text-sm text-slate-900 truncate group-hover:text-emerald-800 transition-colors flex items-center gap-1.5">
                                 <span>{user?.firstName} {user?.lastName}</span>
@@ -379,15 +383,6 @@ export default function Navbar() {
                         >
                           <span className="text-base">🍴</span>
                           <span>Food &amp; Lounge Services</span>
-                        </Link>
-
-                        <Link
-                          to="/profile"
-                          onClick={() => setProfileMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-emerald-50 text-emerald-800 transition-colors w-full text-left text-xs font-bold"
-                        >
-                          <span className="text-base">👤</span>
-                          <span>My Profile</span>
                         </Link>
 
                         {/* Admin Link strictly for Administrator */}

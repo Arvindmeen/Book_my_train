@@ -98,7 +98,7 @@ export default function BookingDetailPage() {
             </div>
             <div>
               <p className="font-extrabold text-amber-950 text-base">
-                Waitlisted Ticket (WL Queue)
+                Waitlisted Ticket
               </p>
               <p className="text-xs text-amber-800 mt-0.5">
                 Your reservation is placed in the official Indian Railways Waitlist queue. Physical berths will be automatically assigned upon chart preparation or cancellation clearance.
@@ -217,7 +217,7 @@ export default function BookingDetailPage() {
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <span className="text-xs font-black text-amber-900 uppercase tracking-wider block">
-                    Status: Indian Railways Waitlist (WL)
+                    Status: Waitlisted Ticket
                   </span>
                   <p className="text-xs text-amber-800 mt-0.5">
                     Physical berth numbers will be allocated automatically upon chart preparation or ticket cancellations.

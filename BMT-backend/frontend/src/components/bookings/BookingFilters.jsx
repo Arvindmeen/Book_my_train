@@ -1,7 +1,7 @@
 const FILTERS = [
   { label: 'All Bookings', value: '' },
   { label: 'Confirmed', value: 'CONFIRMED' },
-  { label: 'Waitlisted (WL)', value: 'WAITLISTED' },
+  { label: 'Waitlisted', value: 'WAITLISTED' },
   { label: 'Pending Payment', value: 'PAYMENT_PENDING' },
   { label: 'Cancelled', value: 'CANCELLED' },
   { label: 'Failed', value: 'FAILED' },

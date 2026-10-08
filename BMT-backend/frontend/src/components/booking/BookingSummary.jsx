@@ -37,7 +37,7 @@ export default function BookingSummary({ train, seats, totalPrice, departureDate
                   {String(s.seatNumber).startsWith('WL') ? s.seatNumber : `#${s.seatNumber}`}
                 </td>
                 <td className="py-3 font-semibold text-slate-600">
-                  {s.seatType === 'Waitlist' ? 'Waitlist Queue (WL)' : formatSeatType(s.seatType)}
+                  {s.seatType === 'Waitlist' ? 'Waitlist Queue' : formatSeatType(s.seatType)}
                 </td>
                 <td className="py-3 text-right font-bold text-slate-800">{formatCurrency(s.price)}</td>
               </tr>

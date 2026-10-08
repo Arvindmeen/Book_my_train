@@ -91,14 +91,11 @@ export const useAuthStore = create((set, get) => ({
 
   updateProfile: async (updatedFields) => {
     const currentUser = get().user || {};
-    const { firstName, lastName, email } = updatedFields;
 
     let backendUser = null;
     try {
-      if (firstName !== undefined || lastName !== undefined || email !== undefined) {
-        const res = await authApi.updateProfile({ firstName, lastName, email });
-        backendUser = res.data?.user || res.data;
-      }
+      const res = await authApi.updateProfile(updatedFields);
+      backendUser = res.data?.user || res.data;
     } catch (err) {
       console.warn('Backend update failed, persisting locally:', err);
     }

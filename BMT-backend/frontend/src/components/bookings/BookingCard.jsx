@@ -48,7 +48,7 @@ export default function BookingCard({ booking, onCancel }) {
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className={isWaitlist ? 'font-bold text-amber-700' : ''}>
-              {booking.seatCount} Passenger{booking.seatCount !== 1 ? 's' : ''} {isWaitlist ? `(WL ${booking.travelClass || 'SL'})` : '(Confirmed)'}
+              {booking.seatCount} Passenger{booking.seatCount !== 1 ? 's' : ''} {isWaitlist ? `(Waitlisted - ${booking.travelClass || 'SL'})` : '(Confirmed)'}
             </span>
           </p>
 
