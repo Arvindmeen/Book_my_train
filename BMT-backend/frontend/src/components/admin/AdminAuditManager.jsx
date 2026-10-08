@@ -302,10 +302,10 @@ export default function AdminAuditManager() {
         <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200/80 min-w-0">
           <span className="text-emerald-700 text-[10px] font-bold block uppercase tracking-wider truncate">CONFIRMED &amp; WAITLIST PASSENGERS</span>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-black text-xl text-emerald-800">{confirmedPaxCount} <span className="text-xs font-bold">CNF</span></span>
+            <span className="font-black text-xl text-emerald-800">{confirmedPaxCount} <span className="text-xs font-bold">Confirmed</span></span>
             {waitlistPaxCount > 0 && (
               <span className="font-black text-xs text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
-                {waitlistPaxCount} WL
+                {waitlistPaxCount} Waitlisted
               </span>
             )}
           </div>
@@ -318,7 +318,7 @@ export default function AdminAuditManager() {
           <span className="font-black text-xl text-indigo-800">
             {bookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0)}
           </span>
-          <span className="text-[10px] text-indigo-600 block truncate">Manifest Travellers</span>
+          <span className="text-[10px] text-indigo-600 block truncate">Total Booked Passengers</span>
         </div>
         <div className="bg-purple-50/50 p-3.5 rounded-2xl border border-purple-200/80 min-w-0">
           <span className="text-purple-700 text-[10px] font-bold block uppercase tracking-wider truncate">NET REVENUE</span>
@@ -371,14 +371,14 @@ export default function AdminAuditManager() {
 
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-black text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md border border-emerald-200">
-                      {ts.confirmedPax} Confirmed
+                      {ts.confirmedPax} Confirmed Passengers
                     </span>
                     <span className={`text-xs font-black px-2 py-0.5 rounded-md border ${
                       ts.waitlistPax > 0
                         ? 'text-amber-800 bg-amber-100 border-amber-300'
                         : 'text-slate-500 bg-slate-100 border-slate-200'
                     }`}>
-                      {ts.waitlistPax > 0 ? `${ts.waitlistPax} in Waitlist` : '0 Waitlist'}
+                      {ts.waitlistPax > 0 ? `${ts.waitlistPax} Waiting Passengers` : 'None Waiting'}
                     </span>
                   </div>
 
@@ -396,9 +396,9 @@ export default function AdminAuditManager() {
                           >
                             <span>📅 {d.date}:</span>
                             {d.wlPax > 0 ? (
-                              <span className="text-amber-700 font-extrabold">{d.wlPax} WL (Queue #1–#{d.wlPax})</span>
+                              <span className="text-amber-700 font-extrabold">{d.wlPax} Waiting (Queue #1–#{d.wlPax})</span>
                             ) : (
-                              <span className="text-emerald-700 font-extrabold">{d.cnfPax} CNF</span>
+                              <span className="text-emerald-700 font-extrabold">{d.cnfPax} Confirmed</span>
                             )}
                           </span>
                         ))}

@@ -222,7 +222,7 @@ export default function AdminTrafficTracker() {
         status,
         waitlistCount: waitlistPax,
         recommendation,
-        trend: `${confirmedPax} real seats booked`,
+        trend: `${confirmedPax} seats booked`,
       };
     });
 
@@ -237,14 +237,14 @@ export default function AdminTrafficTracker() {
     });
 
     // Real passenger counts per station from database bookings
-    const stationPaxMap = new Map();
+    const stationPassengerMap = new Map();
     safeBookings.forEach((b) => {
-      const pax = b.passengers?.length || b.seatCount || 1;
+      const passengerCount = b.passengers?.length || b.seatCount || 1;
       if (b.fromStationId) {
-        stationPaxMap.set(b.fromStationId, (stationPaxMap.get(b.fromStationId) || 0) + pax);
+        stationPassengerMap.set(b.fromStationId, (stationPassengerMap.get(b.fromStationId) || 0) + passengerCount);
       }
       if (b.toStationId) {
-        stationPaxMap.set(b.toStationId, (stationPaxMap.get(b.toStationId) || 0) + pax);
+        stationPassengerMap.set(b.toStationId, (stationPassengerMap.get(b.toStationId) || 0) + passengerCount);
       }
     });
 
@@ -270,14 +270,14 @@ export default function AdminTrafficTracker() {
       .map((item, idx) => {
         const st = item.station;
         const platforms = platformMap[st.code] || (st.code.length > 3 ? 4 : 8);
-        const bookedPax = stationPaxMap.get(st.id) || stationPaxMap.get(st.code) || 0;
-        const load = Math.min(100, Math.round((bookedPax / Math.max(item.halts * 64, 1)) * 100));
+        const bookedPassengers = stationPassengerMap.get(st.id) || stationPassengerMap.get(st.code) || 0;
+        const load = Math.min(100, Math.round((bookedPassengers / Math.max(item.halts * 64, 1)) * 100));
 
         return {
           rank: idx + 1,
           name: `${st.name} (${st.code})`,
           city: st.city || st.state || 'India',
-          bookedPassengers: bookedPax,
+          bookedPassengers,
           platforms,
           load,
           halts: item.halts,
@@ -645,7 +645,7 @@ export default function AdminTrafficTracker() {
                       <strong className="text-emerald-700 font-bold">{c.confirmedPax}</strong> Confirmed &bull;{' '}
                       <strong className={c.waitlistCount > 0 ? 'text-rose-600 font-bold' : 'text-slate-600'}>
                         {c.waitlistCount}
-                      </strong> Waitlist
+                      </strong> Waiting
                     </span>
                     <span className="text-slate-400 text-[10px] whitespace-nowrap">
                       {Math.max(0, c.corridorSeats - c.confirmedPax)} {Math.max(0, c.corridorSeats - c.confirmedPax) === 1 ? 'seat' : 'seats'} available
@@ -666,7 +666,7 @@ export default function AdminTrafficTracker() {
                   <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/70">
                     <span className="text-[10px] text-slate-400 font-bold block uppercase">Waitlist</span>
                     <span className={`text-xs font-black ${c.waitlistCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                      {c.waitlistCount > 0 ? `${c.waitlistCount} WL` : '0 WL'}
+                      {c.waitlistCount > 0 ? `${c.waitlistCount} Waiting` : 'None'}
                     </span>
                   </div>
                 </div>
@@ -816,8 +816,10 @@ export default function AdminTrafficTracker() {
                 <span className="text-base font-black text-slate-900">{selectedCorridor.capacity}%</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] text-slate-400 font-bold block uppercase">Waitlist Backlog</span>
-                <span className="text-base font-black text-rose-600">{selectedCorridor.waitlistCount} pax</span>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">Waiting Passengers</span>
+                <span className="text-base font-black text-rose-600">
+                  {selectedCorridor.waitlistCount} {selectedCorridor.waitlistCount === 1 ? 'Passenger' : 'Passengers'}
+                </span>
               </div>
             </div>
 

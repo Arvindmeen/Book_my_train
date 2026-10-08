@@ -3461,7 +3461,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {recentBookings.map((b) => (
+              {recentBookings.slice(0, 3).map((b) => (
                 <div key={b.id} className="bg-white rounded-2xl shadow-card border border-slate-150 p-4 hover:shadow-card-hover transition-shadow">
                   <BookingCard booking={b} />
                 </div>
