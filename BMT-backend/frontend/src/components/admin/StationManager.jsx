@@ -66,7 +66,7 @@ export default function StationManager() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-slate-900">Stations Directory</h3>
-            <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+            <span className="text-xs font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200 whitespace-nowrap shrink-0">
               {stations.length} Listed
             </span>
           </div>

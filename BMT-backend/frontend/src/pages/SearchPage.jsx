@@ -47,21 +47,21 @@ export default function SearchPage() {
         
         {/* Page Title & Search Bar Card */}
         <div className="card p-5 md:p-6 bg-white border border-slate-150 shadow-card rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Search & Filter Trains
+                Search &amp; Filter Trains
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Check real-time train schedules, seat quotas & AI waitlist predictions across India
+                Check real-time train schedules, seat quotas &amp; AI waitlist predictions across India
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2">
-              <span className="flex h-2 w-2 relative">
+              <span className="flex h-2 w-2 relative shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full whitespace-nowrap shrink-0">
                 Live Railway Network
               </span>
             </div>

@@ -166,19 +166,31 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
 
     const map = new Map();
 
-    const getCluster = (code = '') => {
-      const c = code.toUpperCase();
-      if (['NDLS', 'ANVT', 'NZM', 'DLI'].includes(c)) return 'New Delhi (NDLS)';
-      if (['MMCT', 'CSMT', 'BDTS', 'LTT'].includes(c)) return 'Mumbai Central (MMCT)';
-      if (['HWH', 'SDAH', 'KOAA'].includes(c)) return 'Howrah Jn (HWH)';
-      if (['BSB'].includes(c)) return 'Varanasi Jn (BSB)';
-      if (['ADI'].includes(c)) return 'Ahmedabad Jn (ADI)';
-      if (['LKO'].includes(c)) return 'Lucknow (LKO)';
-      if (['CNB'].includes(c)) return 'Kanpur Central (CNB)';
-      if (['PRYJ'].includes(c)) return 'Prayagraj Jn (PRYJ)';
-      if (['HIJ', 'KGP'].includes(c)) return 'Kharagpur / Hijli';
-      if (['MB'].includes(c)) return 'Moradabad (MB)';
-      if (['CH'].includes(c)) return 'Chandausi (CH)';
+    const getCluster = (code = '', name = '') => {
+      const c = (code || '').toUpperCase();
+      if (['NDLS', 'ANVT', 'NZM', 'DLI', 'DEE'].includes(c)) return 'Delhi NCR';
+      if (['MMCT', 'CSMT', 'BDTS', 'LTT'].includes(c)) return 'Mumbai';
+      if (['HWH', 'SDAH', 'KOAA'].includes(c)) return 'Howrah';
+      if (['BSB'].includes(c)) return 'Varanasi';
+      if (['ADI'].includes(c)) return 'Ahmedabad';
+      if (['LKO'].includes(c)) return 'Lucknow';
+      if (['CNB'].includes(c)) return 'Kanpur';
+      if (['PRYJ'].includes(c)) return 'Prayagraj';
+      if (['HIJ', 'KGP'].includes(c)) return 'Kharagpur';
+      if (['MB'].includes(c)) return 'Moradabad';
+      if (['CH'].includes(c)) return 'Chandausi';
+      if (['HW'].includes(c)) return 'Haridwar';
+      if (['BPL', 'RKMP'].includes(c)) return 'Bhopal';
+      if (['AGC'].includes(c)) return 'Agra';
+      if (['GKP'].includes(c)) return 'Gorakhpur';
+      if (['PNBE'].includes(c)) return 'Patna';
+      if (['PUNE'].includes(c)) return 'Pune';
+      if (['SBC', 'SMVB'].includes(c)) return 'Bengaluru';
+      if (['MAS'].includes(c)) return 'Chennai';
+      if (['HYB', 'SC'].includes(c)) return 'Hyderabad';
+      if (name) {
+        return name.replace(/\s*(Jn|Junction|Cantt|Central|Terminal)\b/gi, '').trim();
+      }
       return code || 'Station';
     };
 
@@ -189,8 +201,8 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
       const dest = stops[stops.length - 1]?.station;
       if (!origin || !dest) return;
 
-      const cA = getCluster(origin.code);
-      const cB = getCluster(dest.code);
+      const cA = getCluster(origin.code, origin.name);
+      const cB = getCluster(dest.code, dest.name);
       const key = [cA, cB].sort().join(' ⇄ ');
 
       if (!map.has(key)) {
@@ -204,9 +216,14 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
 
     const allCorridors = Array.from(map.values()).map((c) => {
       const trainNums = new Set(c.trains.map((t) => t.trainNumber));
-      const corridorBookings = bookings.filter((b) => b && trainNums.has(b.trainNumber));
-      const bookedPax = corridorBookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0);
-      const waitlistPax = corridorBookings.filter((b) => b.status === 'PENDING' || b.status === 'SEATS_HELD' || b.status === 'WAITLIST').length;
+      const activeCorridorBookings = bookings.filter((b) => b && trainNums.has(b.trainNumber) && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status));
+      const isWl = (b) => (b.seats?.length === 0) || b.status === 'WAITLISTED' || b.status === 'WAITLIST' || b.status === 'PENDING' || b.status === 'SEATS_HELD';
+      const bookedPax = activeCorridorBookings
+        .filter((b) => b.status === 'CONFIRMED' && !isWl(b))
+        .reduce((sum, b) => sum + (b.seats?.length || b.seatCount || b.passengers?.length || 1), 0);
+      const waitlistPax = activeCorridorBookings
+        .filter((b) => isWl(b))
+        .reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 1), 0);
       
       const corridorTotalSeats = c.trains.reduce((sum, t) => sum + (t.totalSeats || 64), 0);
       const capacity = corridorTotalSeats > 0 ? Math.min(100, Math.round((bookedPax / corridorTotalSeats) * 100)) : 0;
@@ -216,12 +233,12 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
       const status = capacity >= 100
         ? '100% Full'
         : isCritical
-        ? 'High Volume'
+        ? `${capacity}% Full`
         : isHigh
-        ? 'Moderate Rush'
+        ? `${capacity}% Booked`
         : capacity > 0
         ? `${capacity}% Booked`
-        : 'Available (0 Booked)';
+        : 'Available';
 
       const badge = isCritical
         ? 'bg-rose-50 text-rose-700 border-rose-200'
@@ -292,34 +309,34 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
   }, [bookings]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-6 pb-16 px-4 sm:px-6 lg:px-8 animate-fade-in">
+    <div className="min-h-screen bg-[#F8FAFC] pt-4 sm:pt-6 pb-24 sm:pb-20 px-3 sm:px-6 lg:px-8 animate-fade-in">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* ========================================================================= */}
         {/* 1. EXECUTIVE OPERATIONS HEADER                                            */}
         {/* ========================================================================= */}
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 transition-all">
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/90 shadow-sm p-5 sm:p-8 transition-all">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 right-1/4 -mb-20 h-48 w-48 rounded-full bg-teal-500/5 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
             
             {/* Left: Authority & Greeting */}
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap shrink-0">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Central Railway Control Hub
+                  Central Railway Hub
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0">
                   <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  Administrator Authority
+                  Admin Authority
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 whitespace-nowrap shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-ping" />
-                  Real DB Telemetry
+                  Live Telemetry
                 </span>
               </div>
 
@@ -565,18 +582,21 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
         {/* ========================================================================= */}
         {/* 4. ONE-CLICK OPERATIONS HUB                                               */}
         {/* ========================================================================= */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-black text-slate-900 tracking-tight">
-                Operations Management Directory
+              <h2 className="text-sm font-black text-slate-900 tracking-tight flex flex-wrap items-center gap-2">
+                <span>Operations Directory</span>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
+                  Quick Access
+                </span>
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Immediate access to train scheduling, station directory, traffic radar, and passenger manifest
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Immediate access to train scheduling, stations, routes, and passenger records
               </p>
             </div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">
-              Full Administrative Controls
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block whitespace-nowrap shrink-0">
+              Administrative Controls
             </span>
           </div>
 
@@ -584,25 +604,25 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
             
             <button
               onClick={() => navigate('/admin?tab=Traffic')}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
+              className="p-3.5 sm:p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
             >
               <div>
-                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
                   <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
                 <div className="font-bold text-xs text-slate-900 group-hover:text-emerald-800 transition-colors">Live Traffic</div>
-                <span className="text-[11px] text-slate-500 block mt-0.5">Corridor density radar</span>
+                <span className="text-[11px] text-slate-500 block mt-0.5">Corridor density</span>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin?tab=Trains')}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
+              className="p-3.5 sm:p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
             >
               <div>
-                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
                   <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <rect x="4" y="3" width="16" height="15" rx="3" strokeWidth="2" />
                     <circle cx="8" cy="14" r="1.5" fill="currentColor" />
@@ -610,83 +630,83 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h8M4 11h16M7 18l-2 3M17 18l2 3" />
                   </svg>
                 </div>
-                <div className="font-bold text-xs text-slate-900 group-hover:text-emerald-800 transition-colors">Create Train</div>
-                <span className="text-[11px] text-slate-500 block mt-0.5">Coaches &amp; timetables</span>
+                <div className="font-bold text-xs text-slate-900 group-hover:text-emerald-800 transition-colors">Trains</div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">Coaches &amp; roster</span>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin?tab=Stations')}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
+              className="p-3.5 sm:p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
             >
               <div>
-                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
                   <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
-                <div className="font-bold text-xs text-slate-900 group-hover:text-indigo-800 transition-colors">Create Stations</div>
-                <span className="text-[11px] text-slate-500 block mt-0.5">Platforms &amp; junctions</span>
+                <div className="font-bold text-xs text-slate-900 group-hover:text-indigo-800 transition-colors">Stations</div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">Junction directory</span>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin?tab=Routes')}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
+              className="p-3.5 sm:p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
             >
               <div>
-                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
                   <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                 </div>
-                <div className="font-bold text-xs text-slate-900 group-hover:text-teal-800 transition-colors">Create Train Routes</div>
-                <span className="text-[11px] text-slate-500 block mt-0.5">Stops &amp; distances</span>
+                <div className="font-bold text-xs text-slate-900 group-hover:text-teal-800 transition-colors">Routes</div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">Halts &amp; distances</span>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin?tab=Schedules')}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
+              className="p-3.5 sm:p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
             >
               <div>
-                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
                   <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div className="font-bold text-xs text-slate-900 group-hover:text-amber-800 transition-colors">Create Train Schedule</div>
-                <span className="text-[11px] text-slate-500 block mt-0.5">Departure &amp; active runs</span>
+                <div className="font-bold text-xs text-slate-900 group-hover:text-amber-800 transition-colors">Schedules</div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">Daily departures</span>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin?tab=Audit')}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
+              className="p-3.5 sm:p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
             >
               <div>
-                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
                   <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                   </svg>
                 </div>
-                <div className="font-bold text-xs text-slate-900 group-hover:text-purple-800 transition-colors">Passenger Audit</div>
-                <span className="text-[11px] text-slate-500 block mt-0.5">Global PNR lookup</span>
+                <div className="font-bold text-xs text-slate-900 group-hover:text-purple-800 transition-colors">Audit Ledger</div>
+                <span className="text-[11px] text-slate-500 block mt-0.5">Passenger lookup</span>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin?tab=System')}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
+              className="p-3.5 sm:p-4 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/90 hover:border-emerald-300 transition-all text-left group active:scale-95 shadow-xs cursor-pointer flex flex-col justify-between"
             >
               <div>
-                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-9 h-9 shrink-0 aspect-square rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform">
                   <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
                 <div className="font-bold text-xs text-slate-900 group-hover:text-rose-800 transition-colors">System Health</div>
-                <span className="text-[11px] text-slate-500 block mt-0.5">8 Microservices check</span>
+                <span className="text-[11px] text-slate-500 block mt-0.5">8 Microservices</span>
               </div>
             </button>
 
@@ -699,26 +719,26 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Left: High-Density Rail Corridors Telemetry */}
-          <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <span>Active Rail Corridors Telemetry</span>
-                  <span className="flex h-2 w-2 relative">
+                  <span>Corridor Telemetry</span>
+                  <span className="flex h-2 w-2 relative shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500">Real seat bookings &amp; waitlists across routes in database</p>
+                <p className="text-xs text-slate-500">Seat bookings &amp; waitlists across active routes</p>
               </div>
               <Link
                 to="/admin?tab=Traffic"
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors flex items-center gap-1 group"
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors flex items-center gap-1 group whitespace-nowrap shrink-0"
               >
-                <span>Full Traffic Radar</span>
+                <span>Traffic Radar</span>
                 <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
               </Link>
             </div>
@@ -731,10 +751,10 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
               <div className="space-y-3">
                 {corridors.map((c) => (
                   <div key={c.route} className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/70 space-y-2 hover:border-emerald-200 transition-all">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-900 truncate pr-2">{c.route}</span>
+                    <div className="flex items-center justify-between text-xs gap-2">
+                      <span className="font-bold text-slate-900 truncate pr-1" title={c.route}>{c.route}</span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap shrink-0 ${c.badge}`}>
-                        {c.status} ({c.capacity}%)
+                        {c.status}
                       </span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
@@ -745,12 +765,12 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
                         style={{ width: `${Math.max(c.capacity, c.bookedPax > 0 ? 5 : 0)}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                      <span>
-                        Real Bookings: <strong className="text-slate-800">{c.bookedPax} seats booked</strong> ({c.corridorTotalSeats} total seats)
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500 font-medium">
+                      <span className="whitespace-nowrap">
+                        Booked: <strong className="text-slate-800">{c.bookedPax} / {c.corridorTotalSeats} seats</strong>
                       </span>
-                      <span className="text-slate-600 font-semibold">
-                        Waitlist: <strong className="text-rose-600">{c.waitlist} passengers</strong>
+                      <span className="whitespace-nowrap font-semibold">
+                        Waitlist: <strong className={c.waitlist > 0 ? "text-rose-600 font-bold" : "text-slate-600"}>{c.waitlist}</strong>
                       </span>
                     </div>
                   </div>
@@ -760,17 +780,17 @@ export default function AdminHomeView({ onSwitchToPassenger }) {
           </div>
 
           {/* Right: Real Live Ticketing Stream */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span>Live Ticketing Stream</span>
               </h3>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5 whitespace-nowrap shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live DB Feed
+                Live Feed
               </span>
             </div>
 

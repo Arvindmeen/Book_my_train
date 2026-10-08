@@ -75,15 +75,15 @@ export default function AdminSystemHealth() {
             </svg>
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
-              Distributed Microservices &amp; Infrastructure Cluster Radar
-              <span className="flex h-2 w-2 relative">
+            <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 flex flex-wrap items-center gap-2">
+              <span>System &amp; Microservices Radar</span>
+              <span className="flex h-2 w-2 relative shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
             </h2>
-            <p className="text-xs text-slate-500 font-medium">
-              Live HTTP round-trip telemetry across all 8 microservices, Docker containers, Kafka &amp; databases
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Live HTTP round-trip telemetry across all microservices, Kafka, Redis &amp; databases
             </p>
           </div>
         </div>

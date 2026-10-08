@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../store/auth.store';
 
 const FAQS = [
   {
@@ -30,13 +31,15 @@ const FAQS = [
 
 export default function SupportChatbot() {
   const location = useLocation();
+  const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFaq, setSelectedFaq] = useState(null);
 
-  // Hide chatbot on seat selection, booking checkout flow, and admin panel so it never blocks action buttons
+  // Hide chatbot on seat selection, booking checkout flow, and admin panel/views so it never blocks action buttons
   const isExcluded = location.pathname.startsWith('/seats') || 
                      location.pathname.startsWith('/booking') ||
-                     location.pathname.startsWith('/admin');
+                     location.pathname.startsWith('/admin') ||
+                     (user?.role === 'ADMIN' && location.pathname === '/');
   if (isExcluded) return null;
 
   const handleClose = () => {

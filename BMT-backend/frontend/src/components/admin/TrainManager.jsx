@@ -348,16 +348,16 @@ export default function TrainManager() {
         
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Network Fleet Intelligence
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap shrink-0">
+                Fleet Intelligence
               </span>
-              <span className="text-xs text-slate-500 font-mono font-bold">
+              <span className="text-xs text-slate-500 font-mono font-bold whitespace-nowrap shrink-0">
                 {trains.length} Trains Registered
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-              <span>Create Train &amp; Route Inspector</span>
+              <span>Train Fleet Manager</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 max-w-2xl font-medium">
               Search by train name or number to inspect where and when each train starts, where it goes, operational days, and full intermediate stop timelines.
@@ -853,9 +853,9 @@ export default function TrainManager() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between text-xs py-0.5">
+                      <div className="flex flex-wrap items-center justify-between text-xs py-0.5 gap-2">
                         <span className="text-amber-800 font-semibold">⚠️ No station corridor attached yet.</span>
-                        <span className="text-slate-500 text-[11px]">Use "Create Route" tab to attach stations.</span>
+                        <span className="text-slate-500 text-[11px]">Use "Routes" tab to attach stations.</span>
                       </div>
                     )}
                   </div>

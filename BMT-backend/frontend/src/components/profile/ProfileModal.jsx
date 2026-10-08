@@ -17,7 +17,7 @@ const ADMIN_MODULES = [
   },
   {
     id: 'Trains',
-    label: 'Create Train',
+    label: 'Trains',
     subtitle: 'Coaches & timetables',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-700',
@@ -32,7 +32,7 @@ const ADMIN_MODULES = [
   },
   {
     id: 'Stations',
-    label: 'Create Stations',
+    label: 'Stations',
     subtitle: 'Platforms & junctions',
     iconBg: 'bg-indigo-100',
     iconColor: 'text-indigo-700',
@@ -44,7 +44,7 @@ const ADMIN_MODULES = [
   },
   {
     id: 'Routes',
-    label: 'Create Train Routes',
+    label: 'Routes',
     subtitle: 'Stops & distances',
     iconBg: 'bg-teal-100',
     iconColor: 'text-teal-700',
@@ -56,7 +56,7 @@ const ADMIN_MODULES = [
   },
   {
     id: 'Schedules',
-    label: 'Create Train Schedule',
+    label: 'Schedules',
     subtitle: 'Departure & active runs',
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-700',
@@ -68,7 +68,7 @@ const ADMIN_MODULES = [
   },
   {
     id: 'Audit',
-    label: 'Passenger Audit',
+    label: 'Audit Ledger',
     subtitle: 'Global PNR lookup',
     iconBg: 'bg-purple-100',
     iconColor: 'text-purple-700',
@@ -294,8 +294,8 @@ export default function ProfileModal({
             <div className="space-y-3">
               <div className="text-[10px] font-mono tracking-widest text-emerald-800 font-bold uppercase flex items-center justify-between pt-1">
                 <span>OPERATIONS COMMAND</span>
-                <span className="text-[9px] font-sans font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  7 Active Modules
+                <span className="text-[9px] font-sans font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
+                  7 Modules
                 </span>
               </div>
 

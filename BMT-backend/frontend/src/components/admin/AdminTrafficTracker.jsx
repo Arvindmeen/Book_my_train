@@ -85,28 +85,39 @@ export default function AdminTrafficTracker() {
 
     const corridorMap = new Map();
 
-    const getClusterName = (code = '') => {
-      const c = code.toUpperCase();
+    const getClusterName = (code = '', name = '') => {
+      const c = (code || '').toUpperCase();
       if (['NDLS', 'ANVT', 'NZM', 'DLI', 'DEE'].includes(c)) return 'Delhi NCR';
       if (['HWH', 'SDAH', 'KOAA'].includes(c)) return 'Kolkata';
-      if (['HIJ', 'KGP'].includes(c)) return 'Kharagpur / Hijli';
+      if (['HIJ', 'KGP'].includes(c)) return 'Kharagpur';
       if (['CSMT', 'MMCT', 'BDTS', 'LTT'].includes(c)) return 'Mumbai';
       if (['BSB'].includes(c)) return 'Varanasi';
       if (['LKO'].includes(c)) return 'Lucknow';
       if (['MB'].includes(c)) return 'Moradabad';
       if (['CH'].includes(c)) return 'Chandausi';
+      if (['HW'].includes(c)) return 'Haridwar';
       if (['ADI'].includes(c)) return 'Ahmedabad';
       if (['CNB'].includes(c)) return 'Kanpur';
       if (['PRYJ'].includes(c)) return 'Prayagraj';
       if (['BPL', 'RKMP'].includes(c)) return 'Bhopal';
+      if (['AGC'].includes(c)) return 'Agra';
+      if (['GKP'].includes(c)) return 'Gorakhpur';
+      if (['PNBE'].includes(c)) return 'Patna';
+      if (['PUNE'].includes(c)) return 'Pune';
+      if (['SBC', 'SMVB'].includes(c)) return 'Bengaluru';
+      if (['MAS'].includes(c)) return 'Chennai';
+      if (['HYB', 'SC'].includes(c)) return 'Hyderabad';
+      if (name) {
+        return name.replace(/\s*(Jn|Junction|Cantt|Central|Terminal)\b/gi, '').trim();
+      }
       return c || 'Terminal';
     };
 
     const getZone = (c1, c2) => {
       const set = new Set([c1, c2]);
-      if (set.has('Kharagpur / Hijli') || set.has('Kolkata')) return set.has('Kharagpur / Hijli') ? 'South Eastern' : 'Eastern';
+      if (set.has('Kharagpur') || set.has('Kolkata')) return 'Eastern';
       if (set.has('Mumbai') || set.has('Ahmedabad')) return 'Western';
-      if (set.has('Varanasi') || set.has('Lucknow') || set.has('Moradabad') || set.has('Chandausi') || set.has('Delhi NCR')) return 'Northern';
+      if (set.has('Varanasi') || set.has('Lucknow') || set.has('Moradabad') || set.has('Chandausi') || set.has('Haridwar') || set.has('Delhi NCR') || set.has('Prayagraj')) return 'Northern';
       return 'Central';
     };
 
@@ -117,8 +128,8 @@ export default function AdminTrafficTracker() {
       const dest = stops[stops.length - 1]?.station;
       if (!origin || !dest) return;
 
-      const cluster1 = getClusterName(origin.code);
-      const cluster2 = getClusterName(dest.code);
+      const cluster1 = getClusterName(origin.code, origin.name);
+      const cluster2 = getClusterName(dest.code, dest.name);
 
       const [cA, cB] = [cluster1, cluster2].sort();
       const corridorKey = `${cA}__${cB}`;
@@ -144,12 +155,17 @@ export default function AdminTrafficTracker() {
     // Convert map to list of corridors with 100% REAL database metrics
     const corridorList = Array.from(corridorMap.values()).map((c, idx) => {
       const trainNumbers = new Set(c.trains.map((t) => t.trainNumber));
-      const corridorBookings = safeBookings.filter((b) => b && trainNumbers.has(b.trainNumber));
+      const activeCorridorBookings = safeBookings.filter((b) => b && trainNumbers.has(b.trainNumber) && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(b.status));
+      const isWl = (b) => (b.seats?.length === 0) || b.status === 'WAITLISTED' || b.status === 'WAITLIST' || b.status === 'PENDING' || b.status === 'SEATS_HELD';
       
-      // Real passengers booked for trains on this corridor
-      const bookedPax = corridorBookings.reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0);
-      const confirmedPax = corridorBookings.filter((b) => b.status === 'CONFIRMED').reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 0), 0);
-      const waitlistPax = corridorBookings.filter((b) => b.status === 'PENDING' || b.status === 'SEATS_HELD' || b.status === 'WAITLIST').length;
+      // Real confirmed active passengers booked for trains on this corridor
+      const confirmedPax = activeCorridorBookings
+        .filter((b) => b.status === 'CONFIRMED' && !isWl(b))
+        .reduce((sum, b) => sum + (b.seats?.length || b.seatCount || b.passengers?.length || 1), 0);
+      const waitlistPax = activeCorridorBookings
+        .filter((b) => isWl(b))
+        .reduce((sum, b) => sum + (b.passengers?.length || b.seatCount || 1), 0);
+      const bookedPax = confirmedPax;
 
       // Real distance calculation
       let distanceKm = c.maxDistance;
@@ -165,23 +181,23 @@ export default function AdminTrafficTracker() {
 
       // Total coach seats provisioned on this corridor
       const corridorSeats = c.trains.reduce((sum, t) => sum + (t.totalSeats || 64), 0);
-      const capacityPct = corridorSeats > 0 ? +((bookedPax / corridorSeats) * 100).toFixed(1) : 0;
+      const capacityPct = corridorSeats > 0 ? Math.min(100, Math.round((confirmedPax / corridorSeats) * 100)) : 0;
 
       const isCritical = capacityPct >= 90;
       const isHigh = capacityPct >= 50 && capacityPct < 90;
       const status = capacityPct >= 100
         ? '100% Full'
         : isCritical
-        ? 'High Volume'
+        ? `${capacityPct}% Full`
         : isHigh
-        ? 'Moderate Rush'
+        ? `${capacityPct}% Booked`
         : capacityPct > 0
-        ? 'Active Bookings'
-        : 'Available (0 Booked)';
+        ? `${capacityPct}% Booked`
+        : 'Available';
 
-      let recommendation = bookedPax === 0
-        ? `All ${corridorSeats} seats open. No passenger tickets booked on this corridor yet.`
-        : `${bookedPax} passenger seat(s) booked across ${c.trains.length} express train(s). Telemetry in sync.`;
+      let recommendation = confirmedPax === 0
+        ? `All ${corridorSeats} seats open. No tickets booked on this corridor yet.`
+        : `${confirmedPax} passenger seat(s) confirmed across ${c.trains.length} express train(s). Telemetry in sync.`;
 
       return {
         id: `corridor-${idx + 1}`,
@@ -206,7 +222,7 @@ export default function AdminTrafficTracker() {
         status,
         waitlistCount: waitlistPax,
         recommendation,
-        trend: `${bookedPax} real seats booked`,
+        trend: `${confirmedPax} real seats booked`,
       };
     });
 
@@ -566,13 +582,13 @@ export default function AdminTrafficTracker() {
                         ? 'bg-rose-100 text-rose-800 border border-rose-200'
                         : isHigh
                         ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                        : c.bookedPax > 0
+                        : c.confirmedPax > 0
                         ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                         : 'bg-slate-100 text-slate-600 border border-slate-200'
                     }`}
                   >
-                    <span className={`h-1.5 w-1.5 rounded-full ${isCritical ? 'bg-rose-500 animate-ping' : isHigh ? 'bg-amber-500 animate-pulse' : c.bookedPax > 0 ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                    <span>{c.status} ({c.capacity}%)</span>
+                    <span className={`h-1.5 w-1.5 rounded-full ${isCritical ? 'bg-rose-500 animate-ping' : isHigh ? 'bg-amber-500 animate-pulse' : c.confirmedPax > 0 ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                    <span>{c.status}</span>
                   </span>
                 </div>
 
@@ -583,13 +599,13 @@ export default function AdminTrafficTracker() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                      <h3 className="font-serif font-black text-sm sm:text-base text-slate-900 group-hover:text-emerald-800 transition-colors leading-tight">
+                      <h3 className="font-serif font-black text-sm sm:text-base text-slate-900 group-hover:text-emerald-800 transition-colors leading-tight truncate max-w-[140px] sm:max-w-none">
                         {c.clusterA || c.route.split('⇄')[0]?.trim()}
                       </h3>
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70 shrink-0">
-                        ⇄ Dual Line
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70 whitespace-nowrap shrink-0">
+                        ⇄ Dual-Line
                       </span>
-                      <h3 className="font-serif font-black text-sm sm:text-base text-slate-900 group-hover:text-emerald-800 transition-colors leading-tight">
+                      <h3 className="font-serif font-black text-sm sm:text-base text-slate-900 group-hover:text-emerald-800 transition-colors leading-tight truncate max-w-[140px] sm:max-w-none">
                         {c.clusterB || c.route.split('⇄')[1]?.trim()}
                       </h3>
                     </div>
@@ -601,12 +617,12 @@ export default function AdminTrafficTracker() {
 
                 {/* Seat Occupancy Progress & Telemetry */}
                 <div className="space-y-1.5 bg-slate-50/80 p-3 rounded-2xl border border-slate-200/70">
-                  <div className="flex items-center justify-between text-xs font-semibold gap-2">
+                  <div className="flex flex-wrap items-center justify-between text-xs font-semibold gap-1.5">
                     <span className="text-slate-500 text-[10px] font-extrabold uppercase tracking-wider">
-                      Seat Occupancy Telemetry
+                      Seat Occupancy
                     </span>
-                    <span className="text-slate-900 font-black text-xs">
-                      {c.bookedPax} / {c.corridorSeats} seats{' '}
+                    <span className="text-slate-900 font-black text-xs whitespace-nowrap">
+                      {c.confirmedPax} / {c.corridorSeats} seats{' '}
                       <span className={`ml-1 font-black ${isCritical ? 'text-rose-600' : isHigh ? 'text-amber-600' : 'text-emerald-600'}`}>
                         ({c.capacity}%)
                       </span>
@@ -621,18 +637,18 @@ export default function AdminTrafficTracker() {
                           ? 'bg-gradient-to-r from-amber-500 to-orange-500'
                           : 'bg-gradient-to-r from-emerald-500 to-teal-500'
                       }`}
-                      style={{ width: `${Math.min(100, Math.max(c.capacity, c.bookedPax > 0 ? 5 : 0))}%` }}
+                      style={{ width: `${Math.min(100, Math.max(c.capacity, c.confirmedPax > 0 ? 5 : 0))}%` }}
                     />
                   </div>
-                  <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-0.5">
-                    <span>
+                  <div className="flex flex-wrap items-center justify-between text-[11px] font-medium text-slate-500 pt-0.5 gap-1">
+                    <span className="whitespace-nowrap">
                       <strong className="text-emerald-700 font-bold">{c.confirmedPax}</strong> Confirmed &bull;{' '}
                       <strong className={c.waitlistCount > 0 ? 'text-rose-600 font-bold' : 'text-slate-600'}>
                         {c.waitlistCount}
                       </strong> Waitlist
                     </span>
-                    <span className="text-slate-400 text-[10px]">
-                      {Math.max(0, c.corridorSeats - c.bookedPax)} seats available
+                    <span className="text-slate-400 text-[10px] whitespace-nowrap">
+                      {Math.max(0, c.corridorSeats - c.confirmedPax)} {Math.max(0, c.corridorSeats - c.confirmedPax) === 1 ? 'seat' : 'seats'} available
                     </span>
                   </div>
                 </div>
@@ -793,7 +809,7 @@ export default function AdminTrafficTracker() {
             <div className="grid grid-cols-3 gap-3">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                 <span className="text-[10px] text-slate-400 font-bold block uppercase">Booked Seats</span>
-                <span className="text-base font-black text-slate-900">{selectedCorridor.bookedPax} / {selectedCorridor.corridorSeats}</span>
+                <span className="text-base font-black text-slate-900">{selectedCorridor.confirmedPax} / {selectedCorridor.corridorSeats}</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                 <span className="text-[10px] text-slate-400 font-bold block uppercase">Occupancy %</span>

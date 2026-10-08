@@ -13,7 +13,7 @@ const TABS = [
   },
   {
     id: 'Trains',
-    label: 'Create Train',
+    label: 'Trains',
     subtitle: 'Coaches & timetables',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-700',
@@ -28,7 +28,7 @@ const TABS = [
   },
   {
     id: 'Stations',
-    label: 'Create Stations',
+    label: 'Stations',
     subtitle: 'Platforms & junctions',
     iconBg: 'bg-indigo-100',
     iconColor: 'text-indigo-700',
@@ -40,7 +40,7 @@ const TABS = [
   },
   {
     id: 'Routes',
-    label: 'Create Train Routes',
+    label: 'Routes',
     subtitle: 'Stops & distances',
     iconBg: 'bg-teal-100',
     iconColor: 'text-teal-700',
@@ -52,7 +52,7 @@ const TABS = [
   },
   {
     id: 'Schedules',
-    label: 'Create Train Schedule',
+    label: 'Schedules',
     subtitle: 'Departure & active runs',
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-700',
@@ -64,7 +64,7 @@ const TABS = [
   },
   {
     id: 'Audit',
-    label: 'Passenger Audit',
+    label: 'Audit Ledger',
     subtitle: 'Global PNR lookup',
     iconBg: 'bg-purple-100',
     iconColor: 'text-purple-700',
@@ -90,20 +90,20 @@ const TABS = [
 
 export default function AdminTabs({ active, onChange }) {
   return (
-    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Operations Management Directory</span>
-            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              Command Modules
+          <h2 className="text-sm font-black text-slate-900 tracking-tight flex flex-wrap items-center gap-2">
+            <span>Operations Directory</span>
+            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
+              Modules
             </span>
           </h2>
-          <p className="text-xs text-slate-500 font-medium">
-            Immediate access to train scheduling, station directory, traffic radar, and passenger manifest
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Quick access to scheduling, station directory, routes &amp; passenger records
           </p>
         </div>
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block whitespace-nowrap shrink-0">
           Full Administrative Controls
         </span>
       </div>
@@ -133,7 +133,7 @@ export default function AdminTabs({ active, onChange }) {
                   {tab.icon}
                 </div>
                 {isActive ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300 whitespace-nowrap shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
                     Active
                   </span>

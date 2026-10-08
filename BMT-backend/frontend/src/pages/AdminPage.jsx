@@ -92,10 +92,10 @@ export default function AdminPage() {
                   <h1 className="font-serif font-black text-lg sm:text-2xl text-slate-900 tracking-tight leading-snug break-words">
                     Central Admin Control Center
                   </h1>
-                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
-                    Administrator Authority
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
+                    Admin Authority
                   </span>
-                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200 flex items-center gap-1 shrink-0">
+                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200 flex items-center gap-1 whitespace-nowrap shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
                     Live Telemetry
                   </span>
