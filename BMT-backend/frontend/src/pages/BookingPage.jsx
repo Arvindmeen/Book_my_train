@@ -306,8 +306,8 @@ export default function BookingPage() {
         <div className="bg-white border border-slate-150 rounded-2xl p-6 shadow-card space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-              <span className="text-base shrink-0">🔒</span>
-              <span>256-Bit Encrypted Payment with Book My Train Direct Gateway</span>
+              <span className="text-base shrink-0">🛡️</span>
+              <span>100% Safe &amp; Secure Payment via UPI, Cards &amp; NetBanking</span>
             </div>
             <span className="text-xs font-bold text-emerald-600 self-start sm:self-auto">Instant Refund Eligible</span>
           </div>

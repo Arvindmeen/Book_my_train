@@ -212,7 +212,7 @@ export default function PnrPage() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-16 space-y-3">
             <div className="animate-spin h-10 w-10 border-3 border-slate-200 border-t-emerald-600 rounded-full" />
-            <p className="text-xs font-bold text-slate-500 animate-pulse">Checking central railway reservation database for real-time PNR telemetry...</p>
+            <p className="text-xs font-bold text-slate-500 animate-pulse">Fetching live PNR status from Indian Railways...</p>
           </div>
         )}
 

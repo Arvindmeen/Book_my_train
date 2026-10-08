@@ -721,13 +721,13 @@ export default function HomePage() {
                 coach: 'B1',
                 seat: '14 (Lower)'
               }],
-          probability: '100% Confirmation (Verified Database Record)'
+          probability: 'Confirmed Ticket'
         });
       } else {
         setPnrError(`No booking record found for PNR "${cleanPnr}". Please verify your 10-digit number.`);
       }
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.message || err.message || `PNR "${cleanPnr}" not found in Indian Railways database.`;
+      const msg = err.response?.data?.error || err.response?.data?.message || err.message || `PNR "${cleanPnr}" not found. Please verify your 10-digit number.`;
       setPnrError(msg);
     } finally {
       setPnrLoading(false);
@@ -966,7 +966,7 @@ export default function HomePage() {
 
             {/* 4. Subtitle */}
             <p className="text-slate-600 text-xs sm:text-sm md:text-base font-medium mt-2 text-center leading-relaxed max-w-2xl mx-auto">
-              Seamlessly compare schedules across 10,000+ routes, check live PNR status with AI confirmation probabilities, and enjoy guaranteed instant 100% refunds directly to your UPI account.
+              Compare train schedules across 10,000+ routes, check live PNR status with confirmation chances, and enjoy instant refunds directly to your account.
             </p>
           </div>
 
@@ -1163,7 +1163,7 @@ export default function HomePage() {
                         <p className="font-bold text-sm text-rose-900">PNR Not Found / Invalid</p>
                         <p className="mt-0.5 text-rose-700">{pnrError}</p>
                         <p className="mt-1 text-[11px] text-rose-600 font-medium">
-                          Note: Real Indian Railways PNR records are created upon confirmed ticket bookings. Arbitrary fake numbers cannot be found in the database.
+                          Note: Please enter the 10-digit PNR number printed on the top-left of your train ticket or booking confirmation SMS.
                         </p>
                       </div>
                     </div>
@@ -1172,7 +1172,7 @@ export default function HomePage() {
                   {pnrLoading && (
                     <div className="flex flex-col items-center justify-center py-8 space-y-2">
                       <div className="animate-spin h-8 w-8 border-3 border-slate-200 border-t-emerald-600 rounded-full" />
-                      <p className="text-xs text-slate-500 font-semibold">Retrieving live chart logs from CRIS railway servers...</p>
+                      <p className="text-xs text-slate-500 font-semibold">Checking live reservation charts...</p>
                     </div>
                   )}
 
@@ -1594,12 +1594,12 @@ export default function HomePage() {
                         🔍
                       </div>
                       <h4 className="font-bold text-slate-800 text-sm">
-                        No Trains Found in Database
+                        No Trains Found
                       </h4>
                       <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                         {liveSearchMode === 'stations'
-                          ? `No trains found operating between ${liveFromStation || 'departure'} and ${liveToStation || 'destination'} in the railway system.`
-                          : `No train record matches "${liveTrainQuery}" in the railway database.`}
+                          ? `No trains found operating between ${liveFromStation || 'departure'} and ${liveToStation || 'destination'}.`
+                          : `No trains found matching "${liveTrainQuery}". Try searching by station code or train number.`}
                       </p>
                       <div className="pt-1 flex flex-wrap justify-center gap-2">
                         <button
@@ -2538,7 +2538,7 @@ export default function HomePage() {
                     <span className="font-extrabold text-slate-700 flex items-center gap-1.5">
                       <span>⚡</span> Fast PNR Status Radar
                     </span>
-                    <span className="text-[11px] text-slate-400">Instant database lookup</span>
+                    <span className="text-[11px] text-slate-400">Live railway status</span>
                   </div>
                   <form
                     onSubmit={(e) => {

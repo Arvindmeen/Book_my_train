@@ -30,7 +30,7 @@ export default function Footer() {
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed font-medium max-w-sm">
-              India's premier high-throughput rail ticketing platform engineered with real-time seat tracking, deep AI confirmation forecasts, and zero-deduction instant refunds.
+              India's trusted train ticketing portal for confirmed seat reservations, live PNR tracking, and hassle-free instant refunds.
             </p>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">

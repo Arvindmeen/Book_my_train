@@ -53,7 +53,7 @@ export default function SearchPage() {
                 Search &amp; Filter Trains
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Check real-time train schedules, seat quotas &amp; AI waitlist predictions across India
+                Check real-time train schedules, seat quotas &amp; ticket availability across India
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2">

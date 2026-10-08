@@ -580,7 +580,7 @@ export default function ProfilePage() {
                   { label: 'Account Status', value: 'Active', color: 'text-emerald-700', icon: '✓' },
                   { label: 'Profile Complete', value: `${completeness.percentage}%`, color: completeness.percentage === 100 ? 'text-emerald-700' : 'text-amber-600', icon: '📊' },
                   { label: 'Saved Passengers', value: passengers.length, color: 'text-slate-800', icon: '👥' },
-                  { label: 'Account Security', value: '256-bit SSL', color: 'text-emerald-700', icon: '🔒' },
+                  { label: 'Security Level', value: 'Protected', color: 'text-emerald-700', icon: '🛡️' },
                 ].map(item => (
                   <div key={item.label} className="space-y-1">
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{item.icon} {item.label}</p>
@@ -781,10 +781,10 @@ export default function ProfilePage() {
               </div>
 
               <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-xs">
-                <span className="text-emerald-600 text-lg">🔒</span>
+                <span className="text-emerald-600 text-lg">🛡️</span>
                 <div>
-                  <p className="font-bold text-emerald-900">Account Protected</p>
-                  <p className="text-emerald-700 mt-0.5">Your account is secured with 256-bit SSL encryption</p>
+                  <p className="font-bold text-emerald-900">Account Security</p>
+                  <p className="text-emerald-700 mt-0.5">Your credentials are protected and securely stored</p>
                 </div>
               </div>
 
