@@ -74,6 +74,13 @@ router.put(
      userServiceProxy
 )
 
+router.put(
+     '/users/user/change-password',
+     requireAuth,
+     endpointRateLimit(10, 900000), // 10 attempts per 15 minutes
+     userServiceProxy
+)
+
 router.delete(
      '/users/user/profile',
      requireAuth,

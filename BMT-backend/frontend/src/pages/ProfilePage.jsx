@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
+import { authApi } from '../api/auth.api';
 import { useToast } from '../components/ui/Toast';
 import PwaInstallModal from '../components/common/PwaInstallModal';
 
@@ -184,16 +185,34 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    if (newPassword.length < 6) { showToast('Password must be at least 6 characters', 'warning'); return; }
-    if (newPassword !== confirmPassword) { showToast('Passwords do not match', 'warning'); return; }
+    if (!oldPassword) {
+      showToast('Please enter your current password', 'warning');
+      return;
+    }
+    if (newPassword.length < 6) {
+      showToast('Password must be at least 6 characters', 'warning');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast('Passwords do not match', 'warning');
+      return;
+    }
     setPasswordLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await authApi.changePassword({ oldPassword, newPassword, confirmPassword });
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      showToast(res.message || 'Password updated successfully! 🔒', 'success');
+    } catch (err) {
+      console.error('Password change error:', err);
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to update password';
+      showToast(msg, 'error');
+    } finally {
       setPasswordLoading(false);
-      setOldPassword(''); setNewPassword(''); setConfirmPassword('');
-      showToast('Password updated successfully!', 'success');
-    }, 800);
+    }
   };
 
   const Field = ({ label, value, icon, placeholder = 'Not set' }) => (

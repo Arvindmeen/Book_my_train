@@ -84,3 +84,25 @@ exports.getUserInternal = asyncHandler(async(req, res) =>{
           }
      });
 })
+
+exports.changePassword = asyncHandler(async (req, res) => {
+     const userId = req.user.id;
+     if (!userId) {
+          throw new BadRequestError("User Id is missing");
+     }
+
+     const { oldPassword, newPassword, confirmPassword } = req.body;
+     if (!oldPassword || !newPassword) {
+          throw new BadRequestError("Current password and new password are required");
+     }
+
+     if (confirmPassword && newPassword !== confirmPassword) {
+          throw new BadRequestError("Passwords do not match");
+     }
+
+     const result = await userService.changePassword(userId, oldPassword, newPassword);
+     return res.status(200).json({
+          success: true,
+          message: result.message || "Password changed successfully"
+     });
+});

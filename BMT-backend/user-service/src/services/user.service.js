@@ -2,6 +2,8 @@ const { config } = require("../config");
 const {redis} = require("../config/redis");
 const prisma = require('../config/prisma');
 const logger = require('../config/logger');
+const bcrypt = require('bcrypt');
+const { BadRequestError, NotFoundError } = require("../utils/error");
 
 
 
@@ -79,4 +81,41 @@ const deleteProfile = async (userId) => {
      await redis.del(`user:${userId}`);
 };
 
-module.exports = { getProfile, updateProfile, deleteProfile };
+const changePassword = async (userId, oldPassword, newPassword) => {
+     logger.info(`Changing password for user ${userId}`);
+     const user = await prisma.user.findUnique({
+          where: { id: userId }
+     });
+
+     if (!user) {
+          throw new NotFoundError("User not found");
+     }
+
+     if (!user.password) {
+          throw new BadRequestError("This account uses Google Sign-In. Password cannot be changed.");
+     }
+
+     if (!oldPassword) {
+          throw new BadRequestError("Current password is required");
+     }
+
+     const isMatch = await bcrypt.compare(oldPassword, user.password);
+     if (!isMatch) {
+          throw new BadRequestError("Current password is incorrect");
+     }
+
+     if (!newPassword || newPassword.length < 6) {
+          throw new BadRequestError("New password must be at least 6 characters long");
+     }
+
+     const hashedPassword = await bcrypt.hash(newPassword, 12);
+     await prisma.user.update({
+          where: { id: userId },
+          data: { password: hashedPassword }
+     });
+
+     logger.info(`Password successfully changed for user ${userId}`);
+     return { message: "Password updated successfully" };
+};
+
+module.exports = { getProfile, updateProfile, deleteProfile, changePassword };

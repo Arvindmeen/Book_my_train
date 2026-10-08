@@ -9,4 +9,5 @@ export const authApi = {
   resetPassword: (data) => client.post('/users/auth/reset-password', data).then((r) => r.data),
   getProfile: () => client.get('/users/user/profile').then((r) => r.data),
   updateProfile: (data) => client.put('/users/user/profile', data).then((r) => r.data),
+  changePassword: (data) => client.put('/users/user/change-password', data).then((r) => r.data),
 };
