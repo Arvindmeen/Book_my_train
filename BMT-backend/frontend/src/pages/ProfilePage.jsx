@@ -115,6 +115,40 @@ export default function ProfilePage() {
     try { localStorage.setItem(passengerKey, JSON.stringify(list)); } catch {}
   };
 
+  const compressImage = (file, maxWidth = 360, maxHeight = 360, quality = 0.82) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
   const handlePhotoChange = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -122,24 +156,17 @@ export default function ProfilePage() {
       showToast('Please select an image file (JPG, PNG, WEBP)', 'warning');
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      showToast('Image must be under 2MB', 'warning');
-      return;
-    }
     setPhotoUploading(true);
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const base64 = ev.target.result;
-      try {
-        await updateProfile({ profilePicture: base64 });
-        showToast('Profile photo updated! 📸', 'success');
-      } catch {
-        showToast('Failed to save photo', 'error');
-      } finally {
-        setPhotoUploading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressImage(file);
+      await updateProfile({ profilePicture: compressedBase64 });
+      showToast('Profile photo updated and saved to account! 📸', 'success');
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+      showToast('Failed to save photo. Please try again.', 'error');
+    } finally {
+      setPhotoUploading(false);
+    }
   }, [updateProfile, showToast]);
 
   const handleSaveProfile = async (e) => {
