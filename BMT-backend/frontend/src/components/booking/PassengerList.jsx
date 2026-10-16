@@ -1,6 +1,6 @@
 import PassengerForm from './PassengerForm';
 
-export default function PassengerList({ seats, register, errors, selectedClass, isWaitlist, onRemove }) {
+export default function PassengerList({ seats, register, control, errors, selectedClass, isWaitlist, onRemove }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -19,6 +19,7 @@ export default function PassengerList({ seats, register, errors, selectedClass, 
             index={i}
             seat={seat}
             register={register}
+            control={control}
             errors={errors}
             selectedClass={selectedClass}
             isWaitlist={isWaitlist}

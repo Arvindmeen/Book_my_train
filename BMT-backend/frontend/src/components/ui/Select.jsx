@@ -1,8 +1,13 @@
+import { forwardRef } from 'react';
 import CustomSelect from './CustomSelect';
 
-export default function Select({ label, error, options = [], placeholder, className = '', value, onChange, disabled, required, ...props }) {
+const Select = forwardRef(function Select(
+  { label, error, options = [], placeholder, className = '', value, onChange, disabled, required, ...props },
+  ref
+) {
   return (
     <CustomSelect
+      ref={ref}
       label={label}
       error={error}
       options={options}
@@ -15,4 +20,7 @@ export default function Select({ label, error, options = [], placeholder, classN
       {...props}
     />
   );
-}
+});
+
+export default Select;
+

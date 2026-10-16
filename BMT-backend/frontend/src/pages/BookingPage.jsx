@@ -36,7 +36,7 @@ export default function BookingPage() {
     return 1;
   });
 
-  const { register, handleSubmit, setValue, unregister, formState: { errors, isValid }, getValues } = useForm({
+  const { register, control, handleSubmit, setValue, unregister, formState: { errors, isValid }, getValues } = useForm({
     mode: 'onChange',
   });
 
@@ -281,6 +281,7 @@ export default function BookingPage() {
             <PassengerList
               seats={virtualSeats}
               register={register}
+              control={control}
               errors={errors}
               selectedClass={selectedClass}
               isWaitlist={isWaitlist}

@@ -1,3 +1,4 @@
+import { Controller } from 'react-hook-form';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import { formatSeatType } from '../../utils/format';
@@ -9,7 +10,7 @@ const GENDER_OPTIONS = [
   { value: 'OTHER', label: 'Other' },
 ];
 
-export default function PassengerForm({ index, seat, register, errors, selectedClass, isWaitlist, onRemove, canRemove }) {
+export default function PassengerForm({ index, seat, register, control, errors, selectedClass, isWaitlist, onRemove, canRemove }) {
   return (
     <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3.5 transition-all hover:bg-slate-50 hover:border-slate-300">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
@@ -71,23 +72,60 @@ export default function PassengerForm({ index, seat, register, errors, selectedC
           />
         </div>
         <div>
-          <Select
-            label="Gender"
-            placeholder="Gender"
-            options={GENDER_OPTIONS}
-            {...register(`passengers.${index}.gender`, { required: 'Gender is required' })}
-            error={errors?.passengers?.[index]?.gender?.message}
-          />
+          {control ? (
+            <Controller
+              control={control}
+              name={`passengers.${index}.gender`}
+              rules={{ required: 'Gender is required' }}
+              render={({ field }) => (
+                <Select
+                  label="Gender"
+                  placeholder="Gender"
+                  options={GENDER_OPTIONS}
+                  value={field.value || ''}
+                  onChange={(e) => field.onChange(e?.target?.value !== undefined ? e.target.value : e)}
+                  onBlur={field.onBlur}
+                  error={errors?.passengers?.[index]?.gender?.message}
+                />
+              )}
+            />
+          ) : (
+            <Select
+              label="Gender"
+              placeholder="Gender"
+              options={GENDER_OPTIONS}
+              {...register?.(`passengers.${index}.gender`, { required: 'Gender is required' })}
+              error={errors?.passengers?.[index]?.gender?.message}
+            />
+          )}
         </div>
         <div>
-          <Select
-            label="Berth Preference"
-            placeholder="No Preference"
-            options={BERTH_PREFERENCE_OPTIONS}
-            {...register(`passengers.${index}.berthPreference`)}
-          />
+          {control ? (
+            <Controller
+              control={control}
+              name={`passengers.${index}.berthPreference`}
+              render={({ field }) => (
+                <Select
+                  label="Berth Preference"
+                  placeholder="No Preference"
+                  options={BERTH_PREFERENCE_OPTIONS}
+                  value={field.value || ''}
+                  onChange={(e) => field.onChange(e?.target?.value !== undefined ? e.target.value : e)}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
+          ) : (
+            <Select
+              label="Berth Preference"
+              placeholder="No Preference"
+              options={BERTH_PREFERENCE_OPTIONS}
+              {...register?.(`passengers.${index}.berthPreference`)}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
+

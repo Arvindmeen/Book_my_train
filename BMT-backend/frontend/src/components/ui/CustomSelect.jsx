@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, forwardRef } from 'react';
 
-export default function CustomSelect({
+const CustomSelect = forwardRef(function CustomSelect({
   label,
   value,
+  defaultValue = '',
   onChange,
+  onBlur,
   options = [],
   placeholder = 'Select an option...',
   searchPlaceholder = 'Type to search...',
@@ -13,11 +15,23 @@ export default function CustomSelect({
   className = '',
   required = false,
   name,
-}) {
+  ...props
+}, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [internalValue, setInternalValue] = useState(defaultValue ?? value ?? '');
   const containerRef = useRef(null);
   const searchInputRef = useRef(null);
+
+  // Sync internalValue if value prop changes
+  useEffect(() => {
+    if (value !== undefined) {
+      setInternalValue(value);
+    }
+  }, [value]);
+
+  const isControlled = value !== undefined;
+  const currentValue = isControlled ? value : internalValue;
 
   // Close when clicking outside
   useEffect(() => {
@@ -60,8 +74,11 @@ export default function CustomSelect({
 
   // Find currently selected option
   const selectedOption = useMemo(() => {
-    return options.find((opt) => String(opt.value) === String(value));
-  }, [options, value]);
+    if (currentValue === undefined || currentValue === null || currentValue === '') {
+      return options.find((opt) => opt.value === '' || opt.value === currentValue) || null;
+    }
+    return options.find((opt) => String(opt.value) === String(currentValue)) || null;
+  }, [options, currentValue]);
 
   // Filter options based on search query
   const filteredOptions = useMemo(() => {
@@ -78,6 +95,9 @@ export default function CustomSelect({
 
   const handleSelect = (opt) => {
     if (disabled || opt.disabled) return;
+    if (!isControlled) {
+      setInternalValue(opt.value);
+    }
     if (onChange) {
       // Provide standard event-like object for backwards compatibility
       onChange({
@@ -149,6 +169,15 @@ export default function CustomSelect({
         </svg>
       </button>
 
+      {/* Hidden input for HTML form and React Hook Form integration */}
+      <input
+        type="hidden"
+        name={name}
+        value={currentValue ?? ''}
+        ref={ref}
+        onBlur={onBlur}
+      />
+
       {error && <p className="mt-1 text-xs text-rose-600 font-medium">{error}</p>}
 
       {/* Animated Dropdown Menu Popover */}
@@ -198,7 +227,10 @@ export default function CustomSelect({
               </div>
             ) : (
               filteredOptions.map((opt) => {
-                const isSelected = String(opt.value) === String(value);
+                const isSelected = currentValue !== undefined &&
+                  currentValue !== null &&
+                  currentValue !== '' &&
+                  String(opt.value) === String(currentValue);
                 return (
                   <button
                     key={opt.value}
@@ -252,4 +284,6 @@ export default function CustomSelect({
       )}
     </div>
   );
-}
+});
+
+export default CustomSelect;
