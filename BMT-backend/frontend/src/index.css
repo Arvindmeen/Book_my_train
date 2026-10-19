@@ -287,11 +287,4 @@
 .gsi-button-wrapper iframe {
   margin: 0 auto !important;
   border-radius: 9999px !important;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
-}
-
-.gsi-button-wrapper:hover iframe {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1) !important;
 }

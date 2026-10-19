@@ -8,6 +8,9 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
   const containerRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [sdkReady, setSdkReady] = useState(false);
+  const lastWidthRef = useRef(0);
+  const initializedRef = useRef(false);
+
   const setUser = useAuthStore((s) => s.setUser);
   const showToast = useToast();
   const navigate = useNavigate();
@@ -75,25 +78,50 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
     document.body.appendChild(script);
   }, []);
 
-  const renderGoogleButton = useCallback(() => {
-    if (!sdkReady || !clientId || typeof window === 'undefined' || !window.google?.accounts?.id || !containerRef.current) {
+  // Initialize Google Identity Services once
+  useEffect(() => {
+    if (!sdkReady || !clientId || typeof window === 'undefined' || !window.google?.accounts?.id) {
       return;
     }
 
+    if (!initializedRef.current) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        // Listen for prompt events for debugging
+        if (window.google.accounts.id.setMomentListener) {
+          window.google.accounts.id.setMomentListener((notification) => {
+            if (notification.isNotDisplayed()) {
+              console.warn('[Google Auth] Prompt not displayed:', notification.getNotDisplayedReason());
+            }
+          });
+        }
+        initializedRef.current = true;
+      } catch (err) {
+        console.warn('Google initialize error:', err);
+      }
+    }
+  }, [sdkReady, clientId, handleCredentialResponse]);
+
+  // Stable button renderer (no loop, only renders when width meaningfully changes)
+  const renderButton = useCallback((force = false) => {
+    if (!containerRef.current || !window.google?.accounts?.id || !clientId) return;
+
+    const currentWidth = containerRef.current.clientWidth || 300;
+    // Don't re-render if width change is minimal (prevents re-render thrashing)
+    if (!force && Math.abs(currentWidth - lastWidthRef.current) < 20 && lastWidthRef.current > 0) {
+      return;
+    }
+
+    lastWidthRef.current = currentWidth;
+    const buttonWidth = Math.min(Math.max(currentWidth - 8, 220), 400);
+
     try {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-
-      // Compute precise width without clipping
-      const rect = containerRef.current.getBoundingClientRect();
-      const availableWidth = Math.floor(rect.width) || containerRef.current.clientWidth || 320;
-      // Clamped between Google minimum (200) and maximum (400), with safety margin
-      const targetWidth = Math.min(Math.max(availableWidth - 6, 220), 400);
-
       containerRef.current.innerHTML = '';
       window.google.accounts.id.renderButton(containerRef.current, {
         type: 'standard',
@@ -102,26 +130,37 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
         text: mode === 'signup' ? 'signup_with' : 'continue_with',
         shape: 'pill',
         logo_alignment: 'left',
-        width: targetWidth,
+        width: buttonWidth,
       });
     } catch (err) {
-      console.warn('Google button initialization error:', err);
+      console.warn('Google renderButton error:', err);
     }
-  }, [sdkReady, clientId, mode, handleCredentialResponse]);
+  }, [clientId, mode]);
 
-  // Render button once SDK is ready and re-render on resize
+  // Render on mount and on debounced window resize
   useEffect(() => {
     if (!sdkReady) return;
-    renderGoogleButton();
 
-    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
-      const ro = new ResizeObserver(() => {
-        renderGoogleButton();
-      });
-      ro.observe(containerRef.current);
-      return () => ro.disconnect();
-    }
-  }, [sdkReady, renderGoogleButton]);
+    // Small delay to ensure parent card layout is settled
+    const timer = setTimeout(() => {
+      renderButton(true);
+    }, 50);
+
+    let resizeTimer = null;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        renderButton(false);
+      }, 300);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [sdkReady, renderButton]);
 
   const handleManualClick = () => {
     if (window.google?.accounts?.id) {
@@ -141,10 +180,10 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
           </div>
         )}
 
-        {/* Official Google render container - with gsi-button-wrapper and NO overflow-hidden */}
+        {/* Stable Google Button Mount Container */}
         <div
           ref={containerRef}
-          className="gsi-button-wrapper w-full flex items-center justify-center transition-all duration-200"
+          className="gsi-button-wrapper w-full flex items-center justify-center"
         />
 
         {/* Smooth fallback placeholder before Google SDK loads */}
