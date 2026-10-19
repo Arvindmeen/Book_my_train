@@ -507,7 +507,7 @@ export default function Footer() {
                   />
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                      Founder &amp; Architect
+                      Founder &amp; CEO
                     </span>
                     <h5 className="font-black text-sm text-slate-900 group-hover:text-emerald-700 transition-colors mt-0.5">
                       Arvind Meena
