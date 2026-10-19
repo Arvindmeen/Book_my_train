@@ -197,6 +197,33 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
   const isRunning = activeRun !== null;
   const delay = t.delay ?? (t.trainType === 'VANDE_BHARAT' ? 0 : t.trainType === 'RAJDHANI' ? 4 : 0);
 
+  // IRCTC Phase Classification: RUNNING | YET_TO_RUN | COMPLETED | FUTURE_SCHEDULE
+  let phase = 'RUNNING';
+  let completionMinsAgo = 0;
+
+  if (!isRunning) {
+    const runsToday = runningDays.includes(currentDayOfWeek);
+    if (runsToday && currentClockMinutes < originDepMin) {
+      phase = 'YET_TO_RUN';
+    } else if (runsToday && currentClockMinutes > (originDepMin + totalTripDuration)) {
+      phase = 'COMPLETED';
+      completionMinsAgo = Math.max(0, currentClockMinutes - (originDepMin + totalTripDuration));
+    } else {
+      // Check if yesterday's scheduled run completed earlier today
+      const yesterdayDayOfWeek = (currentDayOfWeek - 1 + 7) % 7;
+      const runsYesterday = runningDays.includes(yesterdayDayOfWeek);
+      const elapsedSinceYesterdayDep = (currentClockMinutes + 1440) - originDepMin;
+      const yesterdayArrClockMin = (originDepMin + totalTripDuration) - 1440;
+
+      if (runsYesterday && elapsedSinceYesterdayDep > totalTripDuration && yesterdayArrClockMin >= 0 && currentClockMinutes >= yesterdayArrClockMin) {
+        phase = 'COMPLETED';
+        completionMinsAgo = Math.max(0, currentClockMinutes - yesterdayArrClockMin);
+      } else {
+        phase = 'FUTURE_SCHEDULE';
+      }
+    }
+  }
+
   let currentStation = '';
   let nextStation = '';
   let currentPlatform = '';
@@ -205,7 +232,7 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
   let liveSummary = '';
   let enrichedStops = [];
 
-  if (isRunning) {
+  if (phase === 'RUNNING') {
     const elapsed = activeRun.elapsedSinceDep;
 
     // Check if halted at platform
@@ -284,22 +311,53 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
         };
       });
     }
-  } else {
-    const isTodayRunUpcoming = originDepMin > currentClockMinutes && runningDays.includes(currentDayOfWeek);
+  } else if (phase === 'YET_TO_RUN') {
     const timeUntilDep = originDepMin - currentClockMinutes;
-
     currentStation = originName.split(' (')[0];
     nextStation = mappedStops[1]?.name ? mappedStops[1].name.split(' (')[0] : destName.split(' (')[0];
     currentPlatform = mappedStops[0]?.platform || 'Pf #1';
-    trainSpeed = '0 km/h (Not On Track)';
+    trainSpeed = '0 km/h (Platform / Yard)';
+    liveStatus = `Yet to Start • Departs in ${formatDurationText(timeUntilDep)}`;
+    liveSummary = `Train is scheduled to depart today from ${currentStation} (${currentPlatform}) in ${formatDurationText(timeUntilDep)} at ${mappedStops[0]?.time} towards ${destName.split(' (')[0]}.`;
 
-    if (isTodayRunUpcoming) {
-      liveStatus = `Scheduled Today at ${mappedStops[0]?.time}`;
-      liveSummary = `Train is scheduled to depart today in ${formatDurationText(timeUntilDep)} from ${currentStation} (at ${mappedStops[0]?.time}).`;
-    } else {
-      liveStatus = 'Not Running Right Now';
-      liveSummary = `Train is not currently active on track right now. Next scheduled run according to timetable (${t.runsOn || 'Daily Service'}).`;
-    }
+    enrichedStops = mappedStops.map((s, idx) => ({
+      ...s,
+      departed: false,
+      current: idx === 0,
+      upcoming: idx > 0,
+      isNextHalt: false,
+      statusDetail: idx === 0
+        ? `Origin Station • Scheduled Departure at ${s.time} (in ${formatDurationText(timeUntilDep)})`
+        : `Scheduled Arrival: ${s.time}`,
+    }));
+  } else if (phase === 'COMPLETED') {
+    currentStation = destName.split(' (')[0];
+    nextStation = 'Terminated';
+    currentPlatform = mappedStops[mappedStops.length - 1]?.platform || 'Pf #1';
+    trainSpeed = '0 km/h (Journey Ended)';
+    liveStatus = `Journey Completed at ${mappedStops[mappedStops.length - 1]?.time}`;
+    liveSummary = `Train completed its journey today. Arrived at destination ${currentStation} (${currentPlatform}) at ${mappedStops[mappedStops.length - 1]?.time} (${formatDurationText(completionMinsAgo)} ago).`;
+
+    enrichedStops = mappedStops.map((s, idx) => {
+      const isDest = idx === mappedStops.length - 1;
+      return {
+        ...s,
+        departed: !isDest,
+        current: isDest,
+        upcoming: false,
+        isNextHalt: false,
+        statusDetail: isDest
+          ? `Destination Reached at ${s.time} (${formatDurationText(completionMinsAgo)} ago)`
+          : `Departed at ${s.time}`,
+      };
+    });
+  } else {
+    currentStation = originName.split(' (')[0];
+    nextStation = mappedStops[1]?.name ? mappedStops[1].name.split(' (')[0] : destName.split(' (')[0];
+    currentPlatform = mappedStops[0]?.platform || 'Pf #1';
+    trainSpeed = '0 km/h (Not Operating Today)';
+    liveStatus = `Runs on ${t.runsOn || 'Timetable Service'}`;
+    liveSummary = `Train does not operate on track today. Runs on: ${t.runsOn || 'Scheduled Days'}. Next run according to timetable.`;
 
     enrichedStops = mappedStops.map((s, idx) => ({
       ...s,
@@ -307,9 +365,7 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
       current: false,
       upcoming: true,
       isNextHalt: idx === 0,
-      statusDetail: idx === 0
-        ? `Scheduled Departure: ${s.time}`
-        : `Scheduled Arrival: ${s.time}`,
+      statusDetail: `Scheduled Time: ${s.time}`,
     }));
   }
 
@@ -326,7 +382,10 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
     arrivalTime: mappedStops[mappedStops.length - 1]?.time || '02:00 PM',
     runsOn: t.runsOn || 'Daily Service',
     runningDays,
-    isRunning,
+    phase,
+    isRunning: phase === 'RUNNING',
+    isYetToRun: phase === 'YET_TO_RUN',
+    isCompleted: phase === 'COMPLETED',
     status: liveStatus,
     liveSummary,
     currentTimeFormatted,
@@ -402,9 +461,9 @@ export default function HomePage() {
   const [liveToStation, setLiveToStation] = useState('');
   const [liveTrainQuery, setLiveTrainQuery] = useState('');
   const [liveTrackingLoading, setLiveTrackingLoading] = useState(false);
-  const [liveResults, setLiveResults] = useState(null); // active running trains to show
+  const [liveResults, setLiveResults] = useState(null); // corridor trains to display
   const [allMatchedCorridorTrains, setAllMatchedCorridorTrains] = useState([]); // all trains found in database
-  const [liveFilterTab, setLiveFilterTab] = useState('running'); // 'running' | 'all'
+  const [liveFilterTab, setLiveFilterTab] = useState('all'); // 'all' | 'running' | 'upcoming' | 'completed'
   const [selectedLiveTrain, setSelectedLiveTrain] = useState(null);
   const [inactiveSearchedTrain, setInactiveSearchedTrain] = useState(null);
   const [liveSwapRotated, setLiveSwapRotated] = useState(false);
@@ -454,19 +513,21 @@ export default function HomePage() {
     if (activeTab === 'live' && allMatchedCorridorTrains.length > 0) {
       const updatedAll = allMatchedCorridorTrains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
       setAllMatchedCorridorTrains(updatedAll);
-      const activeOnly = updatedAll.filter((t) => t.isRunning);
+
+      let filtered = updatedAll;
       if (liveFilterTab === 'running') {
-        setLiveResults(activeOnly);
-        if (selectedLiveTrain) {
-          const match = activeOnly.find((x) => x.id === selectedLiveTrain.id) || activeOnly[0] || null;
-          setSelectedLiveTrain(match);
-        }
-      } else {
-        setLiveResults(updatedAll);
-        if (selectedLiveTrain) {
-          const match = updatedAll.find((x) => x.id === selectedLiveTrain.id) || updatedAll[0] || null;
-          setSelectedLiveTrain(match);
-        }
+        filtered = updatedAll.filter((t) => t.phase === 'RUNNING');
+      } else if (liveFilterTab === 'upcoming') {
+        filtered = updatedAll.filter((t) => t.phase === 'YET_TO_RUN');
+      } else if (liveFilterTab === 'completed') {
+        filtered = updatedAll.filter((t) => t.phase === 'COMPLETED');
+      }
+
+      setLiveResults(filtered);
+
+      if (selectedLiveTrain) {
+        const match = updatedAll.find((x) => x.id === selectedLiveTrain.id) || filtered[0] || updatedAll[0] || null;
+        setSelectedLiveTrain(match);
       }
     }
   }, [liveClockTime, liveFilterTab]);
@@ -735,16 +796,16 @@ export default function HomePage() {
           // Real database has no trains between these stations: NO fake fallback
           setLiveResults([]);
           setSelectedLiveTrain(null);
-        } else if (runningTrains.length > 0) {
-          // Requirement: "if run then show it All Train within user search"
-          setLiveFilterTab('running');
-          setLiveResults(runningTrains);
-          setSelectedLiveTrain(runningTrains[0]);
         } else {
-          // Requirement: "if not running then not show"
-          setLiveFilterTab('running');
-          setLiveResults([]);
-          setSelectedLiveTrain(allTrains[0]);
+          // IRCTC standard: show all corridor trains (running, upcoming, completed)
+          const running = allTrains.filter((t) => t.phase === 'RUNNING');
+          const upcoming = allTrains.filter((t) => t.phase === 'YET_TO_RUN');
+          const completed = allTrains.filter((t) => t.phase === 'COMPLETED');
+
+          setLiveFilterTab('all');
+          setLiveResults(allTrains);
+          const defaultSelected = running[0] || upcoming[0] || completed[0] || allTrains[0];
+          setSelectedLiveTrain(defaultSelected);
         }
       } catch (err) {
         console.error('Error fetching live train status:', err);
@@ -791,18 +852,11 @@ export default function HomePage() {
           setLiveResults([]);
           setSelectedLiveTrain(null);
           setInactiveSearchedTrain(null);
-        } else if (runningTrains.length > 0) {
-          // Running right now: show live telemetry
-          setLiveFilterTab('running');
-          setLiveResults(runningTrains);
-          setSelectedLiveTrain(runningTrains[0]);
-          setInactiveSearchedTrain(null);
         } else {
-          // Found in database but NOT running right now
           setLiveFilterTab('all');
-          setLiveResults([]);
-          setInactiveSearchedTrain(allTrains[0]);
+          setLiveResults(allTrains);
           setSelectedLiveTrain(allTrains[0]);
+          setInactiveSearchedTrain(null);
         }
       } catch (err) {
         console.error('Error fetching live train by query:', err);
@@ -1392,362 +1446,374 @@ export default function HomePage() {
                   )}
 
                   {/* Results: Matching Trains & Live GPS Route Tracking */}
-                  {!liveTrackingLoading && liveResults && liveResults.length > 0 && selectedLiveTrain && (
+                  {!liveTrackingLoading && allMatchedCorridorTrains.length > 0 && selectedLiveTrain && (
                     <div className="space-y-4 animate-scale-in">
                       
-                      {/* Active / All Toggle Bar if corridor has other scheduled trains */}
-                      {allMatchedCorridorTrains.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                            <span className="font-bold text-slate-800">
-                              {liveFilterTab === 'running'
-                                ? `🟢 GPS Radar Active: ${liveResults.length} train${liveResults.length > 1 ? 's' : ''} currently on track right now`
-                                : `📋 Corridor Schedule: Showing all ${allMatchedCorridorTrains.length} trains`}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200 text-[11px] font-bold">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setLiveFilterTab('running');
-                                const active = allMatchedCorridorTrains.filter((t) => t.isRunning);
-                                setLiveResults(active);
-                                if (active.length > 0) setSelectedLiveTrain(active[0]);
-                              }}
-                              className={`px-2.5 py-1 rounded-md transition-all ${
-                                liveFilterTab === 'running'
-                                  ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              Running Now ({allMatchedCorridorTrains.filter((t) => t.isRunning).length})
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setLiveFilterTab('all');
-                                setLiveResults(allMatchedCorridorTrains);
-                                if (allMatchedCorridorTrains.length > 0) setSelectedLiveTrain(allMatchedCorridorTrains[0]);
-                              }}
-                              className={`px-2.5 py-1 rounded-md transition-all ${
-                                liveFilterTab === 'all'
-                                  ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              All Scheduled ({allMatchedCorridorTrains.length})
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Train Switcher Pills if multiple trains match */}
-                      {liveResults.length > 1 && (
-                        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
-                            Select Train ({liveResults.length}):
+                      {/* IRCTC Status Filter Tabs: All, Running, Yet to Run, Completed */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                          <span className="font-bold text-slate-800">
+                            {liveFilterTab === 'running'
+                              ? `🟢 Live on Track: ${allMatchedCorridorTrains.filter((t) => t.phase === 'RUNNING').length} trains active right now`
+                              : liveFilterTab === 'upcoming'
+                              ? `🕒 Yet to Run: ${allMatchedCorridorTrains.filter((t) => t.phase === 'YET_TO_RUN').length} trains scheduled later today`
+                              : liveFilterTab === 'completed'
+                              ? `🏁 Completed: ${allMatchedCorridorTrains.filter((t) => t.phase === 'COMPLETED').length} trains finished journey today`
+                              : `📋 Corridor Timetable: Showing all ${allMatchedCorridorTrains.length} trains`}
                           </span>
-                          {liveResults.map((t) => (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={() => setSelectedLiveTrain(t)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                                selectedLiveTrain.id === t.id
-                                  ? 'bg-emerald-600 text-white shadow-xs'
-                                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                              }`}
-                            >
-                              <span>{t.number}</span>
-                              <span>&middot;</span>
-                              <span>{t.name.split(' ')[0]}</span>
-                              {t.isRunning && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Main Live Telemetry Card */}
-                      <div className="border border-slate-200 rounded-2xl p-5 bg-gradient-to-br from-slate-50/80 via-white to-emerald-50/20 space-y-5">
-                        
-                        {/* Train Info Header */}
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-200 pb-3">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-extrabold text-slate-900 text-base sm:text-lg">
-                                {selectedLiveTrain.name}
-                              </h4>
-                              <span className="font-mono text-xs font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
-                                #{selectedLiveTrain.number}
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">
-                              Route: <span className="font-bold text-slate-700">{selectedLiveTrain.fromName}</span> &rarr; <span className="font-bold text-slate-700">{selectedLiveTrain.toName}</span>
-                              <span className="ml-2 font-normal text-slate-400">&bull; {selectedLiveTrain.runsOn}</span>
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-2 self-start sm:self-auto">
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
-                              !selectedLiveTrain.isRunning
-                                ? 'bg-slate-100 text-slate-700 border-slate-200'
-                                : selectedLiveTrain.delay > 0
-                                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            }`}>
-                              {!selectedLiveTrain.isRunning
-                                ? selectedLiveTrain.status
-                                : selectedLiveTrain.delay > 0
-                                ? `Delayed by ${selectedLiveTrain.delay}m`
-                                : '🟢 Running On Time'}
-                            </span>
-                          </div>
                         </div>
 
-                        {/* Live Location Alert Bar (Comparing reaching times with current time) */}
-                        <div className={`rounded-xl p-3.5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 text-xs font-semibold ${
-                          selectedLiveTrain.isRunning
-                            ? 'bg-emerald-50/80 border border-emerald-200 text-emerald-950'
-                            : 'bg-amber-50/80 border border-amber-200 text-amber-950'
-                        }`}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-base shrink-0">{selectedLiveTrain.isRunning ? '📍' : '🕒'}</span>
-                            <span>
-                              {selectedLiveTrain.liveSummary || (
-                                <><strong>Currently:</strong> {selectedLiveTrain.currentStation} &middot; Next Stop: <strong>{selectedLiveTrain.nextStation}</strong> ({selectedLiveTrain.platform})</>
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-[11px] shrink-0">
-                            <span>⚡ Speed: <strong>{selectedLiveTrain.speed}</strong></span>
-                            <span>🕒 Clock: <strong>{selectedLiveTrain.currentTimeFormatted}</strong></span>
-                            <span className={`px-2 py-0.5 rounded-full font-extrabold text-[10px] ${
-                              selectedLiveTrain.isRunning
-                                ? 'bg-emerald-200 text-emerald-950'
-                                : 'bg-amber-200 text-amber-950'
-                            }`}>
-                              {selectedLiveTrain.isRunning ? 'Time-Synced' : 'Timetable View'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Station Vertical Progress Tracker */}
-                        <div>
-                          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                            Live Station Progress Tracker ({selectedLiveTrain.stops.length} Key Halts)
-                          </p>
-                          <div className="relative pl-6 space-y-6 pt-1 pb-1">
-                            {/* Vertical Line */}
-                            <div className="absolute left-2.5 top-3 bottom-3 w-0.5 bg-slate-200" />
-
-                            {selectedLiveTrain.stops.map((stop, idx) => {
-                              const isCurrent = stop.current;
-                              const isDeparted = stop.departed;
-
-                              return (
-                                <div key={idx} className="relative flex items-center justify-between text-xs">
-                                  <div className="flex items-center">
-                                    {/* Stop Beacon */}
-                                    <div className={`absolute -left-[20px] h-4 w-4 rounded-full border-2 border-white flex items-center justify-center ${
-                                      isCurrent
-                                        ? 'bg-emerald-600 scale-125 z-10 ring-4 ring-emerald-100 shadow-sm'
-                                        : isDeparted
-                                        ? 'bg-emerald-500'
-                                        : 'bg-slate-300'
-                                    }`}>
-                                      {isCurrent && (
-                                        <span className="absolute h-6 w-6 rounded-full bg-emerald-400/40 animate-ping-slow" />
-                                      )}
-                                      {isDeparted && !isCurrent && (
-                                        <span className="text-[8px] text-white font-bold leading-none">✓</span>
-                                      )}
-                                    </div>
-
-                                    {/* Station Name & Status */}
-                                    <div className="ml-3">
-                                      <p className={`font-bold ${isCurrent ? 'text-emerald-900 text-sm' : isDeparted ? 'text-slate-800' : 'text-slate-500'}`}>
-                                        {stop.name}
-                                      </p>
-                                      {isCurrent ? (
-                                        <p className="text-[10px] text-emerald-700 font-extrabold uppercase mt-0.5 tracking-wider">
-                                          📶 Live Location &middot; {stop.statusDetail}
-                                        </p>
-                                      ) : isDeparted ? (
-                                        <p className="text-[10px] text-emerald-700 font-semibold">
-                                          ✓ {stop.statusDetail || `Departed ${stop.time}`}
-                                        </p>
-                                      ) : (
-                                        <p className="text-[10px] text-slate-500 font-medium">
-                                          {stop.statusDetail || `Scheduled Arrival: ${stop.time}`}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Platform Info */}
-                                  <div className="text-right">
-                                    <span className="text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md">
-                                      {stop.platform || 'Platform 1'}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Booking CTA for this train */}
-                        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-slate-200 text-xs">
-                          <span className="text-slate-500 font-medium">
-                            Need a confirmed seat on this express? Check live seat quota &amp; Tatkal availability.
-                          </span>
+                        <div className="flex flex-wrap items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-[11px] font-bold">
+                          {/* Tab 1: All */}
                           <button
                             type="button"
                             onClick={() => {
-                              useSearchStore.getState().setSearchParams(
-                                selectedLiveTrain.fromName,
-                                selectedLiveTrain.toName,
-                                new Date().toISOString().split('T')[0],
-                                'GN'
-                              );
-                              navigate('/search');
+                              setLiveFilterTab('all');
+                              setLiveResults(allMatchedCorridorTrains);
+                              setSelectedLiveTrain(allMatchedCorridorTrains[0]);
                             }}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition-colors shrink-0"
+                            className={`px-2.5 py-1 rounded-lg transition-all ${
+                              liveFilterTab === 'all'
+                                ? 'bg-slate-900 text-white shadow-xs font-extrabold'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
                           >
-                            Book This Train &rarr;
+                            All ({allMatchedCorridorTrains.length})
+                          </button>
+
+                          {/* Tab 2: Running */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLiveFilterTab('running');
+                              const running = allMatchedCorridorTrains.filter((t) => t.phase === 'RUNNING');
+                              setLiveResults(running);
+                              if (running.length > 0) setSelectedLiveTrain(running[0]);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                              liveFilterTab === 'running'
+                                ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                                : 'text-emerald-700 hover:bg-emerald-50'
+                            }`}
+                          >
+                            <span>🟢 Running ({allMatchedCorridorTrains.filter((t) => t.phase === 'RUNNING').length})</span>
+                          </button>
+
+                          {/* Tab 3: Yet to Run */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLiveFilterTab('upcoming');
+                              const upcoming = allMatchedCorridorTrains.filter((t) => t.phase === 'YET_TO_RUN');
+                              setLiveResults(upcoming);
+                              if (upcoming.length > 0) setSelectedLiveTrain(upcoming[0]);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                              liveFilterTab === 'upcoming'
+                                ? 'bg-blue-600 text-white shadow-xs font-extrabold'
+                                : 'text-blue-700 hover:bg-blue-50'
+                            }`}
+                          >
+                            <span>🕒 Yet to Run ({allMatchedCorridorTrains.filter((t) => t.phase === 'YET_TO_RUN').length})</span>
+                          </button>
+
+                          {/* Tab 4: Completed */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLiveFilterTab('completed');
+                              const completed = allMatchedCorridorTrains.filter((t) => t.phase === 'COMPLETED');
+                              setLiveResults(completed);
+                              if (completed.length > 0) setSelectedLiveTrain(completed[0]);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                              liveFilterTab === 'completed'
+                                ? 'bg-purple-600 text-white shadow-xs font-extrabold'
+                                : 'text-purple-700 hover:bg-purple-50'
+                            }`}
+                          >
+                            <span>🏁 Completed ({allMatchedCorridorTrains.filter((t) => t.phase === 'COMPLETED').length})</span>
                           </button>
                         </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Corridor has trains in database, but NONE running right now */}
-                  {!liveTrackingLoading && allMatchedCorridorTrains.length > 0 && (!liveResults || liveResults.length === 0) && (
-                    <div className="border border-amber-200 bg-amber-50/40 rounded-2xl p-5 md:p-6 space-y-4 animate-scale-in">
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-amber-200/60 pb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 text-amber-900 flex items-center justify-center text-xl shrink-0">
-                            ⏳
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-slate-900 text-base">
-                              No Trains Currently on Track Right Now
-                            </h4>
-                            <p className="text-xs text-slate-600 mt-0.5">
-                              0 of {allMatchedCorridorTrains.length} scheduled trains are active at this moment ({liveClockTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })} IST).
-                            </p>
-                          </div>
+                      {/* If active category has 0 trains, show clean prompt */}
+                      {liveResults && liveResults.length === 0 ? (
+                        <div className="p-6 text-center bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                          <p className="font-bold text-slate-800 text-sm">
+                            No trains currently in "{liveFilterTab === 'running' ? 'Running' : liveFilterTab === 'upcoming' ? 'Yet to Run' : 'Completed'}" category right now
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Check "All Trains" to see the full timetable or select another status above.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLiveFilterTab('all');
+                              setLiveResults(allMatchedCorridorTrains);
+                              setSelectedLiveTrain(allMatchedCorridorTrains[0]);
+                            }}
+                            className="mt-2 px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-emerald-700 transition-colors"
+                          >
+                            Show All {allMatchedCorridorTrains.length} Corridor Trains &rarr;
+                          </button>
                         </div>
+                      ) : (
+                        <>
+                          {/* Train Switcher Pills */}
+                          {liveResults && liveResults.length > 1 && (
+                            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                                Select Train ({liveResults.length}):
+                              </span>
+                              {liveResults.map((t) => {
+                                const isSelected = selectedLiveTrain?.id === t.id;
+                                return (
+                                  <button
+                                    key={t.id}
+                                    type="button"
+                                    onClick={() => setSelectedLiveTrain(t)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
+                                      isSelected
+                                        ? 'bg-emerald-600 text-white shadow-xs'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    }`}
+                                  >
+                                    <span>#{t.number}</span>
+                                    <span>{t.name.split(' ')[0]}</span>
+                                    {t.phase === 'RUNNING' && (
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 ${
+                                        isSelected ? 'bg-emerald-700 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
+                                      }`}>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        Running
+                                      </span>
+                                    )}
+                                    {t.phase === 'YET_TO_RUN' && (
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                        isSelected ? 'bg-blue-700 text-blue-100' : 'bg-blue-100 text-blue-800'
+                                      }`}>
+                                        🕒 {t.departureTime}
+                                      </span>
+                                    )}
+                                    {t.phase === 'COMPLETED' && (
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                        isSelected ? 'bg-purple-700 text-purple-100' : 'bg-purple-100 text-purple-800'
+                                      }`}>
+                                        🏁 Arrived
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setLiveFilterTab('all');
-                            setLiveResults(allMatchedCorridorTrains);
-                            setSelectedLiveTrain(allMatchedCorridorTrains[0]);
-                          }}
-                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto"
-                        >
-                          View Full Timetable ({allMatchedCorridorTrains.length} Trains) &rarr;
-                        </button>
-                      </div>
-
-                      {/* Corridor Scheduled Trains Cards */}
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                          Scheduled Runs on this Corridor:
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {allMatchedCorridorTrains.map((train) => (
-                            <div key={train.id} className="bg-white p-4 rounded-xl border border-slate-200 text-xs shadow-2xs space-y-2.5">
-                              <div className="flex justify-between items-start gap-2">
-                                <div>
-                                  <span className="font-bold text-slate-900 text-sm">{train.name}</span>
-                                  <span className="font-mono font-bold text-[11px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded ml-1.5 border border-slate-200">
-                                    #{train.number}
+                          {/* Main Live Telemetry Card */}
+                          <div className="border border-slate-200 rounded-2xl p-5 bg-gradient-to-br from-slate-50/80 via-white to-emerald-50/20 space-y-5">
+                            
+                            {/* Train Info Header */}
+                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-200 pb-3">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-extrabold text-slate-900 text-base sm:text-lg">
+                                    {selectedLiveTrain.name}
+                                  </h4>
+                                  <span className="font-mono text-xs font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
+                                    #{selectedLiveTrain.number}
                                   </span>
                                 </div>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                                  {train.runsOn}
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                  Route: <span className="font-bold text-slate-700">{selectedLiveTrain.fromName}</span> &rarr; <span className="font-bold text-slate-700">{selectedLiveTrain.toName}</span>
+                                  <span className="ml-2 font-normal text-slate-400">&bull; {selectedLiveTrain.runsOn}</span>
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 self-start sm:self-auto">
+                                <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                                  selectedLiveTrain.phase === 'RUNNING'
+                                    ? selectedLiveTrain.delay > 0
+                                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                    : selectedLiveTrain.phase === 'YET_TO_RUN'
+                                    ? 'bg-blue-50 text-blue-800 border-blue-200'
+                                    : selectedLiveTrain.phase === 'COMPLETED'
+                                    ? 'bg-purple-50 text-purple-800 border-purple-200'
+                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}>
+                                  {selectedLiveTrain.phase === 'RUNNING'
+                                    ? selectedLiveTrain.delay > 0
+                                      ? `Delayed by ${selectedLiveTrain.delay}m`
+                                      : '🟢 Running On Time'
+                                    : selectedLiveTrain.phase === 'YET_TO_RUN'
+                                    ? `🕒 Yet to Start • Departs at ${selectedLiveTrain.departureTime}`
+                                    : selectedLiveTrain.phase === 'COMPLETED'
+                                    ? `🏁 Journey Completed at ${selectedLiveTrain.arrivalTime}`
+                                    : selectedLiveTrain.status}
                                 </span>
-                              </div>
-
-                              <div className="flex justify-between items-center text-slate-600 pt-1 border-t border-slate-100">
-                                <span>Departs: <strong className="text-slate-900">{train.departureTime}</strong></span>
-                                <span>&rarr;</span>
-                                <span>Arrives: <strong className="text-slate-900">{train.arrivalTime}</strong></span>
-                              </div>
-
-                              <div className="bg-amber-50 p-2 rounded-lg border border-amber-200/80 text-[11px] text-amber-900 font-medium flex items-center gap-1.5">
-                                <span>ℹ️</span>
-                                <span>{train.liveSummary}</span>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Single Train Not Running Right Now (By Train Number Search) */}
-                  {!liveTrackingLoading && inactiveSearchedTrain && (!liveResults || liveResults.length === 0) && (
-                    <div className="border border-amber-200 bg-amber-50/40 rounded-2xl p-5 md:p-6 space-y-4 animate-scale-in">
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-amber-200/60 pb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 text-amber-900 flex items-center justify-center text-xl shrink-0">
-                            ⏸️
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-slate-900 text-base">
-                              {inactiveSearchedTrain.name} (#{inactiveSearchedTrain.number}) is Not Running Right Now
-                            </h4>
-                            <p className="text-xs text-slate-600 mt-0.5">
-                              Current Real Time: {liveClockTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })} IST &bull; Service: {inactiveSearchedTrain.runsOn}
-                            </p>
-                          </div>
-                        </div>
-
-                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200 shrink-0 self-start sm:self-auto">
-                          Off-Track Right Now
-                        </span>
-                      </div>
-
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs space-y-2">
-                        <p className="font-semibold text-slate-800">
-                          📍 <strong>Route:</strong> {inactiveSearchedTrain.fromName} &rarr; {inactiveSearchedTrain.toName}
-                        </p>
-                        <p className="text-slate-600">
-                          🕒 <strong>Scheduled Timings:</strong> Departure at <strong>{inactiveSearchedTrain.departureTime}</strong> &bull; Arrival at <strong>{inactiveSearchedTrain.arrivalTime}</strong>
-                        </p>
-                        <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-200 text-amber-900 font-medium">
-                          ℹ️ {inactiveSearchedTrain.liveSummary}
-                        </div>
-                      </div>
-
-                      {/* Scheduled Halts Timetable */}
-                      {inactiveSearchedTrain.stops && inactiveSearchedTrain.stops.length > 0 && (
-                        <div>
-                          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-                            Scheduled Halts Timetable ({inactiveSearchedTrain.stops.length} Stops)
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                            {inactiveSearchedTrain.stops.map((s, idx) => (
-                              <div key={idx} className="bg-white p-2.5 rounded-lg border border-slate-200 text-xs flex justify-between items-center">
-                                <div>
-                                  <p className="font-bold text-slate-800 text-[11px]">{s.name}</p>
-                                  <p className="text-[10px] text-slate-500">Scheduled: {s.time}</p>
-                                </div>
-                                <span className="text-[10px] bg-slate-100 text-slate-600 font-semibold px-1.5 py-0.5 rounded border border-slate-200">
-                                  {s.platform || 'Pf 1'}
+                            {/* Live Location Alert Bar (Comparing reaching times with current time) */}
+                            <div className={`rounded-xl p-3.5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 text-xs font-semibold ${
+                              selectedLiveTrain.phase === 'RUNNING'
+                                ? 'bg-emerald-50/80 border border-emerald-200 text-emerald-950'
+                                : selectedLiveTrain.phase === 'YET_TO_RUN'
+                                ? 'bg-blue-50/80 border border-blue-200 text-blue-950'
+                                : selectedLiveTrain.phase === 'COMPLETED'
+                                ? 'bg-purple-50/80 border border-purple-200 text-purple-950'
+                                : 'bg-slate-50 border border-slate-200 text-slate-800'
+                            }`}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base shrink-0">
+                                  {selectedLiveTrain.phase === 'RUNNING' ? '📍' : selectedLiveTrain.phase === 'YET_TO_RUN' ? '🕒' : selectedLiveTrain.phase === 'COMPLETED' ? '🏁' : '📅'}
+                                </span>
+                                <span>
+                                  {selectedLiveTrain.liveSummary || (
+                                    <><strong>Currently:</strong> {selectedLiveTrain.currentStation} &middot; Next Stop: <strong>{selectedLiveTrain.nextStation}</strong> ({selectedLiveTrain.platform})</>
+                                  )}
                                 </span>
                               </div>
-                            ))}
+                              <div className="flex items-center gap-3 text-[11px] shrink-0">
+                                <span>⚡ Speed: <strong>{selectedLiveTrain.speed}</strong></span>
+                                <span>🕒 Clock: <strong>{selectedLiveTrain.currentTimeFormatted}</strong></span>
+                                <span className={`px-2 py-0.5 rounded-full font-extrabold text-[10px] ${
+                                  selectedLiveTrain.phase === 'RUNNING'
+                                    ? 'bg-emerald-200 text-emerald-950'
+                                    : selectedLiveTrain.phase === 'YET_TO_RUN'
+                                    ? 'bg-blue-200 text-blue-950'
+                                    : selectedLiveTrain.phase === 'COMPLETED'
+                                    ? 'bg-purple-200 text-purple-950'
+                                    : 'bg-slate-200 text-slate-800'
+                                }`}>
+                                  {selectedLiveTrain.phase === 'RUNNING'
+                                    ? 'GPS Live Track'
+                                    : selectedLiveTrain.phase === 'YET_TO_RUN'
+                                    ? 'Scheduled Today'
+                                    : selectedLiveTrain.phase === 'COMPLETED'
+                                    ? 'Arrived Today'
+                                    : 'Timetable View'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Station Vertical Progress Tracker */}
+                            <div>
+                              <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                                Live Station Progress Tracker ({selectedLiveTrain.stops.length} Key Halts)
+                              </p>
+                              <div className="relative pl-6 space-y-6 pt-1 pb-1">
+                                {/* Vertical Line */}
+                                <div className="absolute left-2.5 top-3 bottom-3 w-0.5 bg-slate-200" />
+
+                                {selectedLiveTrain.stops.map((stop, idx) => {
+                                  const isCurrent = stop.current;
+                                  const isDeparted = stop.departed;
+                                  const isCompletedDest = selectedLiveTrain.phase === 'COMPLETED' && idx === selectedLiveTrain.stops.length - 1;
+                                  const isOriginYetToRun = selectedLiveTrain.phase === 'YET_TO_RUN' && idx === 0;
+
+                                  return (
+                                    <div key={idx} className="relative flex items-center justify-between text-xs">
+                                      <div className="flex items-center">
+                                        {/* Stop Beacon */}
+                                        <div className={`absolute -left-[20px] h-4 w-4 rounded-full border-2 border-white flex items-center justify-center ${
+                                          isCurrent
+                                            ? isCompletedDest
+                                              ? 'bg-purple-600 scale-125 z-10 ring-4 ring-purple-100 shadow-sm'
+                                              : isOriginYetToRun
+                                              ? 'bg-blue-600 scale-125 z-10 ring-4 ring-blue-100 shadow-sm'
+                                              : 'bg-emerald-600 scale-125 z-10 ring-4 ring-emerald-100 shadow-sm'
+                                            : isDeparted
+                                            ? 'bg-emerald-500'
+                                            : 'bg-slate-300'
+                                        }`}>
+                                          {isCurrent && !isCompletedDest && !isOriginYetToRun && (
+                                            <span className="absolute h-6 w-6 rounded-full bg-emerald-400/40 animate-ping-slow" />
+                                          )}
+                                          {isCompletedDest && (
+                                            <span className="text-[8px] text-white font-bold leading-none">🏁</span>
+                                          )}
+                                          {isOriginYetToRun && (
+                                            <span className="text-[8px] text-white font-bold leading-none">🕒</span>
+                                          )}
+                                          {isDeparted && !isCurrent && (
+                                            <span className="text-[8px] text-white font-bold leading-none">✓</span>
+                                          )}
+                                        </div>
+
+                                        {/* Station Name & Status */}
+                                        <div className="ml-3">
+                                          <p className={`font-bold ${
+                                            isCurrent
+                                              ? isCompletedDest
+                                                ? 'text-purple-900 text-sm'
+                                                : isOriginYetToRun
+                                                ? 'text-blue-900 text-sm'
+                                                : 'text-emerald-900 text-sm'
+                                              : isDeparted
+                                              ? 'text-slate-800'
+                                              : 'text-slate-500'
+                                          }`}>
+                                            {stop.name}
+                                          </p>
+                                          {isCurrent ? (
+                                            <p className={`text-[10px] font-extrabold uppercase mt-0.5 tracking-wider ${
+                                              isCompletedDest
+                                                ? 'text-purple-700'
+                                                : isOriginYetToRun
+                                                ? 'text-blue-700'
+                                                : 'text-emerald-700'
+                                            }`}>
+                                              {isCompletedDest ? '🏁 Destination Reached' : isOriginYetToRun ? '🕒 Origin Station' : '📶 Live Location'} &middot; {stop.statusDetail}
+                                            </p>
+                                          ) : isDeparted ? (
+                                            <p className="text-[10px] text-emerald-700 font-semibold">
+                                              ✓ {stop.statusDetail || `Departed ${stop.time}`}
+                                            </p>
+                                          ) : (
+                                            <p className="text-[10px] text-slate-500 font-medium">
+                                              {stop.statusDetail || `Scheduled Arrival: ${stop.time}`}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Platform Info */}
+                                      <div className="text-right">
+                                        <span className="text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md">
+                                          {stop.platform || 'Platform 1'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Booking CTA for this train */}
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-slate-200 text-xs">
+                              <span className="text-slate-500 font-medium">
+                                Need a confirmed seat on this express? Check live seat quota &amp; Tatkal availability.
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  useSearchStore.getState().setSearchParams(
+                                    selectedLiveTrain.fromName,
+                                    selectedLiveTrain.toName,
+                                    new Date().toISOString().split('T')[0],
+                                    'GN'
+                                  );
+                                  navigate('/search');
+                                }}
+                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition-colors shrink-0"
+                              >
+                                Book This Train &rarr;
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                        </>
                       )}
                     </div>
                   )}
