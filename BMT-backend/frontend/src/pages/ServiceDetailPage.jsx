@@ -212,7 +212,7 @@ export default function ServiceDetailPage() {
   const [foodPnr, setFoodPnr] = useState('2419821456');
   const [foodStation, setFoodStation] = useState('Kanpur Central (CNB)');
   const [foodCategory, setFoodCategory] = useState('All');
-  const [foodCart, setFoodCart] = useState({ 1: 1, 6: 1 });
+  const [foodCart, setFoodCart] = useState({});
   const [foodConfirmed, setFoodConfirmed] = useState(null);
 
   // ─── 7. HOTELS STATE ───

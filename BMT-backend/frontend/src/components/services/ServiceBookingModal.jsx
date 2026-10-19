@@ -54,7 +54,7 @@ export default function ServiceBookingModal({ service, onClose }) {
 
   // ─── 6. FOOD ON TRACK STATE ───
   const [foodPnr, setFoodPnr] = useState('2419821456');
-  const [foodCart, setFoodCart] = useState({ 1: 1, 5: 1 });
+  const [foodCart, setFoodCart] = useState({});
   const [foodConfirmed, setFoodConfirmed] = useState(false);
 
   // ─── 7. HOTELS & POD LOUNGES STATE ───
