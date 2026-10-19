@@ -97,7 +97,9 @@ export const useAuthStore = create((set, get) => ({
       const res = await authApi.updateProfile(updatedFields);
       backendUser = res.data?.user || res.data?.data?.user || res.data;
     } catch (err) {
-      console.warn('Backend update notice, syncing with local cache:', err);
+      console.error('Backend profile update failed:', err);
+      const errMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to save to cloud database';
+      throw new Error(errMsg);
     }
 
     const merged = enrichUserRole({

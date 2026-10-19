@@ -182,7 +182,7 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
      })
 
      const safeUser = toSafeUser(user);
-     const accessToken = generateAccessToken(user.id, safeUser.role);
+     const accessToken = generateAccessToken(user.id, safeUser.role, user.email);
      const refreshToken = generateRefreshToken(user.id);
      const {jti} = jwt.decode(refreshToken);
      await redis.set(`refresh:${user.id}:${deviceId}`, jti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
