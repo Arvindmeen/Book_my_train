@@ -25,6 +25,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const { Pool } = require('pg');
 const prisma = require('../config/prisma');
 const adminProducer = require('../kafka/producer/admin.producer');
+const RAILYATRI_STATIONS = require('./data/railyatri-stations.json').stations;
 
 // ─── 1. AUTHENTIC STATIONS ACROSS ALL INDIAN STATES & MAJOR DISTRICTS ────────
 
@@ -399,6 +400,8 @@ const STATIONS = [
   { code: 'HPT', name: 'Hosapete Junction', city: 'Hosapete', state: 'Karnataka' },
   { code: 'FKG', name: 'Furkating Junction', city: 'Furkating', state: 'Assam' },
 ];
+
+STATIONS.push(...RAILYATRI_STATIONS);
 
 // Helper: Generates realistic seat configurations partitioned across IRCTC travel classes
 function generateSeats(basePrice, totalSeats = 64, trainType = 'EXPRESS', trainName = '') {
@@ -2301,24 +2304,32 @@ async function seedRealIndianRailways() {
   }
   console.log(`  ✓ Found ${existingStations.length} pre-existing stations in database.`);
 
+  const stationNameKey = (name) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const existingStationNames = new Set(existingStations.map((station) => stationNameKey(station.name)));
+  const stationsToAdd = STATIONS.filter(
+    (station) => !stationMap.has(station.code) && !existingStationNames.has(stationNameKey(station.name))
+  );
   let newStationsCount = 0;
-  for (const s of STATIONS) {
-    if (!stationMap.has(s.code)) {
-      const station = await prisma.station.create({
-        data: {
-          code: s.code,
-          name: s.name,
-          city: s.city,
-          state: s.state,
-        },
-      });
-      stationMap.set(s.code, station);
-      newStationsCount++;
+  for (let offset = 0; offset < stationsToAdd.length; offset += 500) {
+    const batch = stationsToAdd.slice(offset, offset + 500);
+    const result = await prisma.station.createMany({
+      data: batch,
+      skipDuplicates: true,
+    });
+    newStationsCount += result.count;
+
+    const createdStations = await prisma.station.findMany({
+      where: { code: { in: batch.map((station) => station.code) } },
+    });
+    for (const station of createdStations) {
+      stationMap.set(station.code, station);
 
       if (kafkaAvailable) {
         try {
           await adminProducer.publishStationCreated(station);
-        } catch (_) {}
+        } catch (err) {
+          console.error(`Failed to publish station ${station.code} to Kafka:`, err.message);
+        }
       }
     }
   }
@@ -2763,24 +2774,39 @@ async function directIndexTrainToEs(esUrl, train, config, routeStations, schedul
 }
 
 async function directIndexStationsToEs(esUrl, stations) {
-  for (const s of stations) {
-    try {
+  for (let offset = 0; offset < stations.length; offset += 500) {
+    const batch = stations.slice(offset, offset + 500);
+    const bulkBody = batch.flatMap((station) => {
       const doc = {
-        stationId: s.id,
-        name: s.name,
-        code: s.code,
-        city: s.city,
+        stationId: station.id,
+        name: station.name,
+        code: station.code,
+        city: station.city,
         suggest: {
-          input: [s.name, s.code, s.city].filter(Boolean),
+          input: [station.name, station.code, station.city].filter(Boolean),
           weight: 10,
         },
       };
-      await fetch(`${esUrl}/stations/_doc/${s.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(doc),
-      });
-    } catch (_) {}
+      return [
+        JSON.stringify({ index: { _id: station.id } }),
+        JSON.stringify(doc),
+      ];
+    }).join('\n') + '\n';
+
+    const response = await fetch(`${esUrl}/stations/_bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-ndjson' },
+      body: bulkBody,
+    });
+    if (!response.ok) {
+      throw new Error(`Elasticsearch station bulk indexing failed with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (result.errors) {
+      const failedItems = result.items.filter((item) => item.index?.error).length;
+      throw new Error(`Elasticsearch failed to index ${failedItems} station records`);
+    }
   }
 }
 
