@@ -92,12 +92,8 @@ export default function AdminPage() {
                   <h1 className="font-serif font-black text-lg sm:text-2xl text-slate-900 tracking-tight leading-snug break-words">
                     Central Admin Control Center
                   </h1>
-                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap shrink-0">
                     Admin Authority
-                  </span>
-                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200 flex items-center gap-1 whitespace-nowrap shrink-0">
-                    <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
-                    Live Telemetry
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 font-semibold break-words">
@@ -109,7 +105,7 @@ export default function AdminPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
-                  <span className="font-medium text-emerald-800 leading-tight">Master Railway Gateway Connected &bull; Full CRUD Authority</span>
+                  <span className="font-medium text-emerald-800 leading-tight">Central Rail Management &bull; Full Administrative Access</span>
                 </div>
               </div>
             </div>
@@ -126,26 +122,26 @@ export default function AdminPage() {
             <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all min-w-0">
               <span className="text-slate-400 text-[10px] sm:text-[11px] font-bold block uppercase truncate">NETWORK CORRIDORS</span>
               <span className="font-black text-base sm:text-lg text-slate-900 block truncate">Live Traffic</span>
-              <span className="text-[10px] text-slate-500 block truncate">Density &amp; waitlist surge</span>
+              <span className="text-[10px] text-slate-500 block truncate">Route load &amp; waitlist</span>
             </div>
             <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all min-w-0">
               <span className="text-slate-400 text-[10px] sm:text-[11px] font-bold block uppercase truncate">RAIL SERVICES</span>
               <span className="font-black text-base sm:text-lg text-emerald-700 block truncate">
                 <AnimatedCounter value={trainCount} suffix=" Active" />
               </span>
-              <span className="text-[10px] text-slate-500 block truncate">Vande Bharat &amp; Rajdhani</span>
+              <span className="text-[10px] text-slate-500 block truncate">Vande Bharat &amp; Express</span>
             </div>
             <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all min-w-0">
               <span className="text-slate-400 text-[10px] sm:text-[11px] font-bold block uppercase truncate">PNR AUDIT LEDGER</span>
               <span className="font-black text-base sm:text-lg text-indigo-700 block truncate">Master Search</span>
-              <span className="text-[10px] text-slate-500 block truncate">System verification</span>
+              <span className="text-[10px] text-slate-500 block truncate">Booking records lookup</span>
             </div>
             <div className="bg-slate-50/80 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all min-w-0">
-              <span className="text-slate-400 text-[10px] sm:text-[11px] font-bold block uppercase truncate">MICROSERVICES</span>
+              <span className="text-slate-400 text-[10px] sm:text-[11px] font-bold block uppercase truncate">DATABASE &amp; API</span>
               <span className="font-black text-base sm:text-lg text-emerald-700 block truncate">
-                {healthyServicesCount} of {totalServicesCount} Healthy
+                Operational
               </span>
-              <span className="text-[10px] text-slate-500 block truncate">Cluster radar active</span>
+              <span className="text-[10px] text-slate-500 block truncate">PostgreSQL &bull; Real-time</span>
             </div>
           </div>
         </div>
