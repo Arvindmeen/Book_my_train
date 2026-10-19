@@ -246,117 +246,195 @@ export default function ProfilePage() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
 
-        {/* ── Hero Profile Card ── */}
-        <div className="relative bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden fade-up">
-          {/* Background gradient strip */}
-          <div className="h-24 sm:h-32 bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 relative">
-            <div className="absolute inset-0 opacity-20" style={{backgroundImage:'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize:'40px 40px'}} />
-            <div className="absolute top-3 right-4 flex gap-2">
-              <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${isAdmin ? 'bg-purple-900/60 text-purple-100 border-purple-400/50' : 'bg-emerald-900/40 text-emerald-100 border-emerald-400/40'}`}>
-                {isAdmin ? '🛡️ Admin' : '✦ Member'}
-              </span>
-            </div>
-          </div>
-
-          <div className="px-6 sm:px-8 pb-6 sm:pb-8">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-12 sm:-mt-14 mb-5">
-              {/* Avatar */}
-              <div className="relative w-fit">
-                <div className="photo-hover relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl ring-4 ring-white shadow-xl overflow-hidden cursor-pointer"
-                  onClick={() => photoInputRef.current?.click()}>
+        {/* ── Executive Profile Header Card ── */}
+        <div className="relative bg-white rounded-3xl shadow-sm border border-slate-200/90 p-6 sm:p-8 fade-up">
+          {/* Top Row: Avatar, Identity & Actions */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+            {/* Left: Avatar + Details */}
+            <div className="flex items-start sm:items-center gap-5">
+              {/* Avatar Container */}
+              <div className="relative shrink-0">
+                <div
+                  className="photo-hover relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl ring-2 ring-slate-100 shadow-sm overflow-hidden cursor-pointer bg-slate-50 transition-all hover:ring-emerald-400 group"
+                  onClick={() => photoInputRef.current?.click()}
+                  title="Click to update photo"
+                >
                   {photoUploading ? (
-                    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                      <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                      <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : user?.profilePicture ? (
                     <img src={user.profilePicture} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-emerald-500 via-teal-500 to-indigo-600 flex items-center justify-center font-black text-3xl text-white select-none">
+                    <div className="w-full h-full bg-gradient-to-br from-emerald-600 via-teal-600 to-slate-800 flex items-center justify-center font-black text-2xl sm:text-3xl text-white select-none">
                       {userInitials}
                     </div>
                   )}
-                  <div className="photo-overlay absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1 opacity-0 transition-opacity duration-200">
-                    <span className="text-xl">📷</span>
-                    <span className="text-white text-[10px] font-bold">Change Photo</span>
+                  <div className="photo-overlay absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center gap-1 opacity-0 transition-opacity duration-200 backdrop-blur-[2px]">
+                    <span className="text-lg">📷</span>
+                    <span className="text-white text-[10px] font-bold">Update</span>
                   </div>
                 </div>
+
+                {/* Quick Camera Action Button */}
                 <button
+                  type="button"
                   onClick={() => photoInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-md transition-all hover:scale-110 active:scale-95"
+                  className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-md transition-transform hover:scale-110 active:scale-95 ring-2 ring-white"
                   title="Upload Profile Photo"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                 </button>
                 <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                {/* Active dot */}
-                <span className="absolute top-1 left-1 w-3 h-3 bg-emerald-400 rounded-full ring-2 ring-white pulse-ring" />
+
+                {/* Online Status Pill */}
+                <span className="absolute top-1 left-1 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
               </div>
 
-              {/* Actions */}
-              <div className="flex flex-wrap gap-2 sm:pb-1">
-                <button
-                  onClick={() => { setIsEditing(!isEditing); setActiveTab('personal'); }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 ${isEditing ? 'bg-slate-800 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25'}`}
-                >
-                  <span>{isEditing ? '✕' : '✏️'}</span>
-                  <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
-                </button>
-                <Link to="/bookings" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all">
-                  <span>🎫</span>
-                  <span>My Bookings</span>
-                </Link>
-                <button onClick={() => { logout(); navigate('/login'); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all">
-                  <span>→</span>
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Identity */}
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{displayName}</h1>
-                {isAdmin && (
-                  <span className="text-[11px] font-black text-purple-900 bg-purple-100 border border-purple-300 px-2.5 py-0.5 rounded-full">Admin</span>
-                )}
-                {completeness.percentage < 100 && (
-                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-full">
-                    {completeness.percentage}% Complete
+              {/* User Identity & Info */}
+              <div className="space-y-1.5 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight truncate">
+                    {displayName}
+                  </h1>
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    isAdmin
+                      ? 'bg-purple-50 text-purple-700 border-purple-200'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  }`}>
+                    {isAdmin ? '🛡️ Administrator' : '✦ Verified Passenger'}
                   </span>
-                )}
-                {completeness.percentage === 100 && (
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 rounded-full">✓ Profile Complete</span>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 font-medium">
-                <span>✉️ {user?.email || 'No email'}</span>
-                {user?.phone && <><span className="text-slate-300">•</span><span>📞 {user.phone}</span></>}
-                {(user?.city || user?.state) && <><span className="text-slate-300">•</span><span>📍 {[user.city, user.state].filter(Boolean).join(', ')}</span></>}
-                <><span className="text-slate-300">•</span><span>🗓️ Member since {memberSince}</span></>
+                  {completeness.percentage === 100 ? (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <span>✓</span> 100% Complete
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                      {completeness.percentage}% Complete
+                    </span>
+                  )}
+                </div>
+
+                {/* Contact & Meta Details */}
+                <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs sm:text-sm text-slate-500 font-medium">
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <span className="text-slate-400">✉️</span>
+                    <span>{user?.email || 'No email registered'}</span>
+                  </span>
+                  {user?.phone ? (
+                    <>
+                      <span className="text-slate-300 hidden sm:inline">•</span>
+                      <span className="flex items-center gap-1.5 text-slate-600">
+                        <span className="text-slate-400">📞</span>
+                        <span>{user.phone}</span>
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-slate-300 hidden sm:inline">•</span>
+                      <button
+                        type="button"
+                        onClick={() => { setIsEditing(true); setActiveTab('personal'); }}
+                        className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline"
+                      >
+                        + Add Mobile
+                      </button>
+                    </>
+                  )}
+                  {(user?.city || user?.state) && (
+                    <>
+                      <span className="text-slate-300 hidden sm:inline">•</span>
+                      <span className="flex items-center gap-1.5 text-slate-600">
+                        <span className="text-slate-400">📍</span>
+                        <span>{[user.city, user.state].filter(Boolean).join(', ')}</span>
+                      </span>
+                    </>
+                  )}
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                  <span className="text-slate-400 text-xs">
+                    Member since {memberSince}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Progress bar */}
-            {completeness.percentage < 100 && (
-              <div className="mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-amber-800">Complete your profile for better experience</span>
-                  <span className="text-amber-700">{completeness.filled}/{completeness.total}</span>
-                </div>
-                <div className="h-2 bg-amber-200/60 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-700" style={{ width: `${completeness.percentage}%` }} />
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {completeness.missing.map(m => (
-                    <button key={m.label} onClick={() => { setIsEditing(true); setActiveTab('personal'); }}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors">
-                      + {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Right: Actions */}
+            <div className="flex flex-wrap items-center gap-2.5 self-start md:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() => { setIsEditing(!isEditing); setActiveTab('personal'); }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 ${
+                  isEditing
+                    ? 'bg-slate-900 text-white hover:bg-slate-800'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                }`}
+              >
+                <span>{isEditing ? '✕' : '✏️'}</span>
+                <span>{isEditing ? 'Cancel Edit' : 'Edit Profile'}</span>
+              </button>
+
+              <Link
+                to="/bookings"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all"
+              >
+                <span>🎫</span>
+                <span>My Bookings</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => { logout(); navigate('/login'); }}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200/80 transition-all"
+                title="Sign out of account"
+              >
+                <span>Sign Out</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
           </div>
+
+          {/* Profile Strength & Completion Progress */}
+          {completeness.percentage < 100 && (
+            <div className="mt-5 p-4 sm:p-5 bg-gradient-to-r from-amber-50/70 via-emerald-50/40 to-slate-50/70 border border-amber-200/80 rounded-2xl space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-[11px]">
+                    ★
+                  </span>
+                  <span className="font-extrabold text-slate-800">
+                    Complete your profile for 1-tap Tatkal booking & verified IRCTC access
+                  </span>
+                </div>
+                <span className="font-bold text-slate-500 self-end sm:self-auto">
+                  {completeness.filled} of {completeness.total} completed ({completeness.percentage}%)
+                </span>
+              </div>
+
+              <div className="h-2 bg-slate-200/70 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-500 via-emerald-500 to-teal-500 rounded-full transition-all duration-700"
+                  style={{ width: `${completeness.percentage}%` }}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[11px] font-bold text-slate-500 mr-1">Missing details:</span>
+                {completeness.missing.map((m) => (
+                  <button
+                    key={m.label}
+                    type="button"
+                    onClick={() => { setIsEditing(true); setActiveTab('personal'); }}
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50/50 shadow-2xs transition-all active:scale-95"
+                  >
+                    + {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Edit Form ── */}
