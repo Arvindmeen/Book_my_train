@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import ServiceBookingModal from '../components/services/ServiceBookingModal';
+import { Link, useNavigate } from 'react-router-dom';
 
 const ALL_SERVICES = [
   {
@@ -111,8 +109,7 @@ const ALL_SERVICES = [
 ];
 
 export default function ServicesPage() {
-  const [selectedService, setSelectedService] = useState(null);
-  const [notified, setNotified] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[#FAFCFE] py-8 pb-20">
@@ -141,7 +138,7 @@ export default function ServicesPage() {
                   window.open(s.externalUrl, '_blank', 'noopener,noreferrer');
                   return;
                 }
-                setSelectedService(s);
+                navigate(`/services/${s.id}`);
               }}
               className={`p-4 bg-white border ${s.borderColor} shadow-xs hover:shadow-card-hover hover:-translate-y-0.5 rounded-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer`}
             >
@@ -184,7 +181,7 @@ export default function ServicesPage() {
                       window.open(s.externalUrl, '_blank', 'noopener,noreferrer');
                       return;
                     }
-                    setSelectedService(s);
+                    navigate(`/services/${s.id}`);
                   }}
                   className={`w-full py-2 rounded-xl text-white font-bold text-xs bg-gradient-to-r ${s.color} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center cursor-pointer`}
                 >
@@ -194,14 +191,6 @@ export default function ServicesPage() {
             </div>
           ))}
         </div>
-
-        {/* Live Functional Service Booking Modal */}
-        {selectedService && (
-          <ServiceBookingModal
-            service={selectedService}
-            onClose={() => setSelectedService(null)}
-          />
-        )}
 
         {/* Back to Home CTA */}
         <div className="text-center pt-4">

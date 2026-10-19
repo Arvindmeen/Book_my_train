@@ -11,7 +11,6 @@ import { useToast } from '../components/ui/Toast';
 import PwaInstallModal from '../components/common/PwaInstallModal';
 import { predictWaitlist, predictPnr } from '../utils/aiPrediction';
 import AdminHomeView from '../components/admin/AdminHomeView';
-import ServiceBookingModal from '../components/services/ServiceBookingModal';
 import { AUTHENTIC_TRAIN_ROUTES, STATION_DIRECTORY } from '../utils/trainRoutes';
 
 const parseTimeToMinutes = (timeStr) => {
@@ -2565,7 +2564,7 @@ export default function HomePage() {
                 if (s.id === 'cabs' || s.action === 'ride') {
                   window.open('https://ride-tracker-ruddy.vercel.app/', '_blank', 'noopener,noreferrer');
                 } else {
-                  setUpcomingService(s);
+                  navigate(`/services/${s.id}`);
                 }
               }}
               className={`p-3.5 sm:p-4 bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-card-hover hover:-translate-y-0.5 rounded-2xl transition-all duration-300 group flex flex-col justify-between cursor-pointer ${
@@ -2608,7 +2607,7 @@ export default function HomePage() {
                       window.open('https://ride-tracker-ruddy.vercel.app/', '_blank', 'noopener,noreferrer');
                       return;
                     }
-                    setUpcomingService(s);
+                    navigate(`/services/${s.id}`);
                   }}
                   className={`w-full py-1.5 font-bold text-xs rounded-xl transition-all text-center cursor-pointer ${
                     s.id === 'cabs' || s.action === 'ride'
@@ -2637,14 +2636,6 @@ export default function HomePage() {
           ))}
         </div>
       </div>
-
-      {/* Live Interactive Service Booking Modal */}
-      {upcomingService && (
-        <ServiceBookingModal
-          service={upcomingService}
-          onClose={() => setUpcomingService(null)}
-        />
-      )}
 
       {/* 4. Dynamic Conditional Section: Logged In vs Guest */}
       <div className="max-w-7xl mx-auto px-4 py-6 w-full">

@@ -7,6 +7,7 @@ import LoginPage from '../pages/LoginPage';
 import SearchPage from '../pages/SearchPage';
 import PnrPage from '../pages/PnrPage';
 import ServicesPage from '../pages/ServicesPage';
+import ServiceDetailPage from '../pages/ServiceDetailPage';
 import SeatSelectionPage from '../pages/SeatSelectionPage';
 import BookingPage from '../pages/BookingPage';
 import BookingDetailPage from '../pages/BookingDetailPage';
@@ -24,6 +25,7 @@ export default function AppRouter() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/pnr" element={<PnrPage />} />
         <Route path="/services" element={<ServicesPage />} />
+        <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
 
         {/* Regular Authenticated User Routes */}
         <Route element={<ProtectedRoute />}>
