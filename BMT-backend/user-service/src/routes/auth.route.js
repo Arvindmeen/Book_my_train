@@ -7,7 +7,8 @@ const {
      rotateRefreshToken, 
      verifyGoogleIdToken,
      forgotPassword,
-     resetPassword
+     resetPassword,
+     logout
 } = require('../controllers/auth.controller');
 
 router.post("/send-otp", sendOTP);
@@ -17,5 +18,6 @@ router.post("/refresh", rotateRefreshToken);
 router.post("/google-auth", verifyGoogleIdToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/logout", logout);
 
 module.exports = router;

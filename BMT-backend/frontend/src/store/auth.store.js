@@ -79,6 +79,17 @@ export const useAuthStore = create((set, get) => ({
   },
 
   fetchProfile: async () => {
+    // If user has no tokens and no stored session, they are a guest / logged out.
+    // NEVER fetch or revive a stale session from cookies.
+    if (typeof window !== 'undefined') {
+      const hasToken = localStorage.getItem('bmt_access_token');
+      const hasStoredUser = localStorage.getItem('bmt_auth_user');
+      if (!hasToken && !hasStoredUser) {
+        set({ user: null, isAuthenticated: false, isLoading: false });
+        return null;
+      }
+    }
+
     try {
       const res = await authApi.getProfile();
       const rawUser = res.data?.user || res.data?.data?.user || res.data;
@@ -95,6 +106,7 @@ export const useAuthStore = create((set, get) => ({
           localStorage.removeItem('bmt_auth_user');
           localStorage.removeItem('bmt_access_token');
           localStorage.removeItem('bmt_refresh_token');
+          localStorage.removeItem('bmt_admin_session');
         }
         set({ user: null, isAuthenticated: false, isLoading: false });
       } else {
@@ -141,14 +153,30 @@ export const useAuthStore = create((set, get) => ({
     return merged;
   },
 
-  logout: () => {
+  logout: async () => {
+    // 1. Immediately purge local credentials & storage
     if (typeof window !== 'undefined') {
       localStorage.removeItem('bmt_auth_user');
       localStorage.removeItem('bmt_access_token');
       localStorage.removeItem('bmt_refresh_token');
       localStorage.removeItem('bmt_admin_session');
+      try {
+        Object.keys(localStorage).forEach((k) => {
+          if (k.startsWith('bmt_user_profile_')) {
+            localStorage.removeItem(k);
+          }
+        });
+        sessionStorage.clear();
+      } catch (_) {}
     }
+
+    // 2. Immediately reset memory state so navbar & all components switch to guest instantly
     set({ user: null, isAuthenticated: false, isLoading: false });
+
+    // 3. Clear server httpOnly cookies & Redis tokens
+    try {
+      await authApi.logout();
+    } catch (_) {}
   },
 }));
 

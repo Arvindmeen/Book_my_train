@@ -269,6 +269,24 @@ const resetPassword = async (otp, otpSessionId, newPassword) => {
      return { email: meta.email };
 };
 
+const logout = async (userId, refreshToken, deviceId) => {
+     try {
+          if (userId) {
+               await redis.del(`user:${userId}`);
+               if (deviceId) {
+                    await redis.del(`refresh:${userId}:${deviceId}`);
+               }
+               const keys = await redis.keys(`refresh:${userId}:*`);
+               if (keys && keys.length > 0) {
+                    await redis.del(...keys);
+               }
+          }
+     } catch (err) {
+          logger.warn(`Redis cleanup during logout failed: ${err.message}`);
+     }
+     return true;
+};
+
 module.exports = {
      sendOTP, 
      verifyOTP, 
@@ -276,5 +294,6 @@ module.exports = {
      rotateRefreshToken, 
      verifyGoogleIdToken,
      forgotPassword,
-     resetPassword
+     resetPassword,
+     logout
 };

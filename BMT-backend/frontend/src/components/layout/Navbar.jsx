@@ -47,15 +47,11 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setProfileMenuOpen(false);
     setMobileMenuOpen(false);
-    logout();
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    } else {
-      navigate('/login', { replace: true });
-    }
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   const isActive = (path) => location.pathname === path;

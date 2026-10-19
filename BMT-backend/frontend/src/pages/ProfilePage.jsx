@@ -529,13 +529,9 @@ export default function ProfilePage() {
 
               <button
                 type="button"
-                onClick={() => {
-                  logout();
-                  if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
-                  } else {
-                    navigate('/login', { replace: true });
-                  }
+                onClick={async () => {
+                  await logout();
+                  navigate('/login', { replace: true });
                 }}
                 className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200/80 transition-all"
                 title="Sign out of account"

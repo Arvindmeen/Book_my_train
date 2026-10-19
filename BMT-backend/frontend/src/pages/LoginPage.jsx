@@ -76,8 +76,8 @@ export default function LoginPage() {
     if (typeof window !== 'undefined') {
       const hasToken = localStorage.getItem('bmt_access_token');
       const hasStoredUser = localStorage.getItem('bmt_auth_user');
-      if (!hasToken && !hasStoredUser && useAuthStore.getState().user) {
-        useAuthStore.getState().logout();
+      if (!hasToken && !hasStoredUser) {
+        useAuthStore.setState({ user: null, isAuthenticated: false, isLoading: false });
       }
     }
   }, []);

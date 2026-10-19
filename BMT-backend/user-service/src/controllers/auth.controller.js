@@ -144,3 +144,37 @@ exports.resetPassword = asyncHandler(async (req, res) => {
           message: "Password has been reset successfully. Please sign in with your new password."
      });
 });
+
+exports.logout = asyncHandler(async (req, res) => {
+     const deviceId = getDeviceFingerprint(req);
+     const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
+     let userId = req.headers['x-user-id'] || null;
+
+     if (!userId && refreshToken) {
+          try {
+               const jwt = require('jsonwebtoken');
+               const decoded = jwt.decode(refreshToken);
+               if (decoded?.sub) userId = decoded.sub;
+          } catch (_) {}
+     }
+
+     if (userId && authService.logout) {
+          await authService.logout(userId, refreshToken, deviceId).catch(() => {});
+     }
+
+     const clearOpts = {
+          httpOnly: true,
+          secure: isProd,
+          sameSite,
+          path: '/',
+     };
+
+     res.clearCookie("accessToken", clearOpts);
+     res.clearCookie("refreshToken", clearOpts);
+     res.clearCookie("otp_session", clearOpts);
+
+     return res.status(200).json({
+          success: true,
+          message: "Logged out successfully"
+     });
+});

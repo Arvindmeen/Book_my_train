@@ -7,6 +7,7 @@ export const authApi = {
   googleAuth: (idToken) => client.post('/users/auth/google-auth', { idToken }).then((r) => r.data),
   forgotPassword: (email) => client.post('/users/auth/forgot-password', { email }).then((r) => r.data),
   resetPassword: (data) => client.post('/users/auth/reset-password', data).then((r) => r.data),
+  logout: () => client.post('/users/auth/logout').then((r) => r.data).catch(() => ({})),
   getProfile: () => client.get('/users/user/profile').then((r) => r.data),
   updateProfile: (data) => client.put('/users/user/profile', data).then((r) => r.data),
   changePassword: (data) => client.put('/users/user/change-password', data).then((r) => r.data),

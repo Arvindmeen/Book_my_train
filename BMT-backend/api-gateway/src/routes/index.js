@@ -59,6 +59,11 @@ router.post(
      userServiceProxy
 );
 
+router.post(
+     '/users/auth/logout',
+     userServiceProxy
+);
+
 // private routes
 router.get(
      '/users/user/profile',
