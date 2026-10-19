@@ -106,6 +106,19 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
           }
           if (tokenResponse?.access_token) {
             await handleAuthToken(tokenResponse.access_token);
+          } else {
+            setLoading(false);
+          }
+        },
+        error_callback: (err) => {
+          console.warn('[Google OAuth] Popup error details:', err);
+          setLoading(false);
+          if (err?.type === 'popup_failed_to_open') {
+            showToast('Google popup was blocked by your browser. Please allow popups in your URL bar.', 'error');
+          } else if (err?.type === 'popup_closed') {
+            showToast('Google sign-in window was closed.', 'info');
+          } else {
+            showToast(err?.message || 'Google sign-in could not open.', 'error');
           }
         },
       });
@@ -126,7 +139,7 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
     } catch (err) {
       console.warn('Google client initialization error:', err);
     }
-  }, [sdkReady, clientId, handleAuthToken]);
+  }, [sdkReady, clientId, handleAuthToken, showToast]);
 
   // Click handler that triggers direct Google OAuth popup
   const handleGoogleSignInClick = () => {
@@ -139,13 +152,20 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
 
     setLoading(true);
 
+    // Auto-reset loading after 12 seconds in case Google popup hangs or closes silently
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 12000);
+
     if (tokenClientRef.current) {
       try {
         // Triggers Google's official OAuth account selection popup
-        tokenClientRef.current.requestAccessToken({ prompt: '' });
+        tokenClientRef.current.requestAccessToken({ prompt: 'select_account' });
         return;
       } catch (err) {
         console.warn('OAuth token request error:', err);
+        clearTimeout(timeout);
+        setLoading(false);
       }
     }
 
@@ -153,11 +173,13 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          clearTimeout(timeout);
           setLoading(false);
         }
       });
     } else {
-      setTimeout(() => setLoading(false), 2000);
+      clearTimeout(timeout);
+      setLoading(false);
       showToast('Connecting to Google services, please try again in a moment.', 'info');
     }
   };
