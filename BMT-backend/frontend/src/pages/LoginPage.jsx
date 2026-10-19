@@ -341,12 +341,14 @@ export default function LoginPage() {
               </div>
 
               {/* Divider & Google Sign-In */}
-              <div className="relative my-3.5">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className="w-full border-t border-slate-200/90" />
                 </div>
-                <div className="relative flex justify-center text-[11px] uppercase">
-                  <span className="bg-white px-2 text-slate-400 font-bold tracking-wider">Or continue with</span>
+                <div className="relative flex justify-center text-[10px] uppercase font-bold">
+                  <span className="bg-white px-3 py-0.5 rounded-full text-slate-400 tracking-wider border border-slate-200/80 shadow-2xs">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -418,12 +420,14 @@ export default function LoginPage() {
               </div>
 
               {/* Divider & Google Sign-Up */}
-              <div className="relative my-3.5">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className="w-full border-t border-slate-200/90" />
                 </div>
-                <div className="relative flex justify-center text-[11px] uppercase">
-                  <span className="bg-white px-2 text-slate-400 font-bold tracking-wider">Or sign up with</span>
+                <div className="relative flex justify-center text-[10px] uppercase font-bold">
+                  <span className="bg-white px-3 py-0.5 rounded-full text-slate-400 tracking-wider border border-slate-200/80 shadow-2xs">
+                    Or sign up with
+                  </span>
                 </div>
               </div>
 
