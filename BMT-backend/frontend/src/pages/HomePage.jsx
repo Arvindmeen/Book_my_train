@@ -11,170 +11,12 @@ import { useToast } from '../components/ui/Toast';
 import PwaInstallModal from '../components/common/PwaInstallModal';
 import { predictWaitlist, predictPnr } from '../utils/aiPrediction';
 import AdminHomeView from '../components/admin/AdminHomeView';
-
-// Express trains roster with real-time GPS telemetry
-const LIVE_TRAINS_DATA = [
-  {
-    id: '22436',
-    number: '22436',
-    name: 'Varanasi Vande Bharat Express',
-    fromCode: 'NDLS',
-    toCode: 'BSB',
-    fromName: 'New Delhi (NDLS)',
-    toName: 'Varanasi Jn (BSB)',
-    route: 'NDLS - BSB',
-    departureTime: '06:00 AM',
-    arrivalTime: '02:00 PM',
-    status: 'On Time',
-    currentStation: 'Kanpur Central',
-    nextStation: 'Prayagraj Jn',
-    platform: 'Platform #1',
-    delay: 0,
-    speed: '130 km/h',
-    stops: [
-      { name: 'New Delhi (NDLS)', time: '06:00 AM', departed: true, platform: 'Pf 16' },
-      { name: 'Kanpur Central (CNB)', time: '10:08 AM', current: true, platform: 'Pf 1' },
-      { name: 'Prayagraj Jn (PRYJ)', time: '12:08 PM', upcoming: true, platform: 'Pf 6' },
-      { name: 'Varanasi Jn (BSB)', time: '02:00 PM', upcoming: true, platform: 'Pf 1' }
-    ]
-  },
-  {
-    id: '12301',
-    number: '12301',
-    name: 'Howrah Rajdhani Express',
-    fromCode: 'NDLS',
-    toCode: 'HWH',
-    fromName: 'New Delhi (NDLS)',
-    toName: 'Howrah Jn (HWH)',
-    route: 'NDLS - HWH',
-    departureTime: '04:50 PM',
-    arrivalTime: '09:55 AM (Next Day)',
-    status: 'Delayed by 15m',
-    currentStation: 'Prayagraj Jn',
-    nextStation: 'Pt. Deen Dayal Upadhyaya Jn',
-    platform: 'Platform #4',
-    delay: 15,
-    speed: '120 km/h',
-    stops: [
-      { name: 'New Delhi (NDLS)', time: '04:50 PM', departed: true, platform: 'Pf 9' },
-      { name: 'Kanpur Central (CNB)', time: '09:30 PM', departed: true, platform: 'Pf 3' },
-      { name: 'Prayagraj Jn (PRYJ)', time: '11:50 PM', current: true, platform: 'Pf 4' },
-      { name: 'Mughalsarai / DDU (DDU)', time: '01:45 AM', upcoming: true, platform: 'Pf 2' },
-      { name: 'Howrah Jn (HWH)', time: '09:55 AM', upcoming: true, platform: 'Pf 9' }
-    ]
-  },
-  {
-    id: '12002',
-    number: '12002',
-    name: 'Bhopal Shatabdi Express',
-    fromCode: 'NDLS',
-    toCode: 'BPL',
-    fromName: 'New Delhi (NDLS)',
-    toName: 'Bhopal Jn / Rani Kamlapati (RKMP)',
-    route: 'NDLS - RKMP',
-    departureTime: '06:00 AM',
-    arrivalTime: '02:40 PM',
-    status: 'On Time',
-    currentStation: 'Agra Cantt',
-    nextStation: 'Morena',
-    platform: 'Platform #2',
-    delay: 0,
-    speed: '140 km/h',
-    stops: [
-      { name: 'New Delhi (NDLS)', time: '06:00 AM', departed: true, platform: 'Pf 1' },
-      { name: 'Mathura Jn (MTJ)', time: '07:19 AM', departed: true, platform: 'Pf 1' },
-      { name: 'Agra Cantt (AGC)', time: '07:50 AM', current: true, platform: 'Pf 2' },
-      { name: 'Morena (MRA)', time: '08:48 AM', upcoming: true, platform: 'Pf 1' },
-      { name: 'Gwalior (GWL)', time: '09:23 AM', upcoming: true, platform: 'Pf 1' },
-      { name: 'Jhansi Jn (VGLJ)', time: '10:45 AM', upcoming: true, platform: 'Pf 2' },
-      { name: 'Bhopal Jn (BPL)', time: '02:40 PM', upcoming: true, platform: 'Pf 1' }
-    ]
-  },
-  {
-    id: '12951',
-    number: '12951',
-    name: 'Mumbai Tejas Rajdhani Express',
-    fromCode: 'MMCT',
-    toCode: 'NDLS',
-    fromName: 'Mumbai Central (MMCT)',
-    toName: 'New Delhi (NDLS)',
-    route: 'MMCT - NDLS',
-    departureTime: '05:00 PM',
-    arrivalTime: '08:35 AM (Next Day)',
-    status: 'On Time',
-    currentStation: 'Surat',
-    nextStation: 'Vadodara Jn',
-    platform: 'Platform #1',
-    delay: 0,
-    speed: '130 km/h',
-    stops: [
-      { name: 'Mumbai Central (MMCT)', time: '05:00 PM', departed: true, platform: 'Pf 1' },
-      { name: 'Surat (ST)', time: '07:43 PM', current: true, platform: 'Pf 1' },
-      { name: 'Vadodara Jn (BRC)', time: '09:18 PM', upcoming: true, platform: 'Pf 2' },
-      { name: 'Ratlam Jn (RTM)', time: '12:55 AM', upcoming: true, platform: 'Pf 4' },
-      { name: 'Kota Jn (KOTA)', time: '03:55 AM', upcoming: true, platform: 'Pf 1' },
-      { name: 'New Delhi (NDLS)', time: '08:35 AM', upcoming: true, platform: 'Pf 3' }
-    ]
-  },
-  {
-    id: '12004',
-    number: '12004',
-    name: 'Lucknow Swarna Shatabdi Express',
-    fromCode: 'NDLS',
-    toCode: 'LKO',
-    fromName: 'New Delhi (NDLS)',
-    toName: 'Lucknow Charbagh (LKO)',
-    route: 'NDLS - LKO',
-    departureTime: '06:10 AM',
-    arrivalTime: '12:40 PM',
-    status: 'On Time',
-    currentStation: 'Aligarh Jn',
-    nextStation: 'Tundla Jn',
-    platform: 'Platform #3',
-    delay: 0,
-    speed: '125 km/h',
-    stops: [
-      { name: 'New Delhi (NDLS)', time: '06:10 AM', departed: true, platform: 'Pf 6' },
-      { name: 'Ghaziabad (GZB)', time: '06:48 AM', departed: true, platform: 'Pf 2' },
-      { name: 'Aligarh Jn (ALJN)', time: '07:49 AM', current: true, platform: 'Pf 3' },
-      { name: 'Tundla Jn (TDL)', time: '08:45 AM', upcoming: true, platform: 'Pf 1' },
-      { name: 'Kanpur Central (CNB)', time: '11:20 AM', upcoming: true, platform: 'Pf 5' },
-      { name: 'Lucknow Charbagh (LKO)', time: '12:40 PM', upcoming: true, platform: 'Pf 1' }
-    ]
-  },
-  {
-    id: '12958',
-    number: '12958',
-    name: 'Swarna Jayanti Rajdhani Express',
-    fromCode: 'NDLS',
-    toCode: 'ADI',
-    fromName: 'New Delhi (NDLS)',
-    toName: 'Ahmedabad Jn (ADI)',
-    route: 'NDLS - ADI',
-    departureTime: '07:55 PM',
-    arrivalTime: '08:45 AM',
-    status: 'Delayed by 8m',
-    currentStation: 'Jaipur Jn',
-    nextStation: 'Ajmer Jn',
-    platform: 'Platform #2',
-    delay: 8,
-    speed: '118 km/h',
-    stops: [
-      { name: 'New Delhi (NDLS)', time: '07:55 PM', departed: true, platform: 'Pf 4' },
-      { name: 'Delhi Cantt (DEC)', time: '08:23 PM', departed: true, platform: 'Pf 1' },
-      { name: 'Gurgaon (GGN)', time: '08:41 PM', departed: true, platform: 'Pf 1' },
-      { name: 'Jaipur Jn (JP)', time: '11:55 PM', current: true, platform: 'Pf 2' },
-      { name: 'Ajmer Jn (AII)', time: '01:55 AM', upcoming: true, platform: 'Pf 1' },
-      { name: 'Abu Road (ABR)', time: '05:05 AM', upcoming: true, platform: 'Pf 1' },
-      { name: 'Ahmedabad Jn (ADI)', time: '08:45 AM', upcoming: true, platform: 'Pf 1' }
-    ]
-  }
-];
+import { AUTHENTIC_TRAIN_ROUTES, STATION_DIRECTORY } from '../utils/trainRoutes';
 
 const parseTimeToMinutes = (timeStr) => {
   if (!timeStr) return null;
   const s = String(timeStr).trim();
-  if (s.toLowerCase() === 'starts' || s.toLowerCase() === 'terminates') return null;
+  if (s.toLowerCase() === 'starts' || s.toLowerCase() === 'terminates' || s.includes('--')) return null;
 
   // 12-hour AM/PM: e.g. "06:00 AM", "04:50 PM", "11:50 PM"
   const ampmMatch = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
@@ -209,33 +51,75 @@ const formatDurationText = (minutes) => {
   return `${hrs}h ${mins}m`;
 };
 
+/**
+ * Evaluates train timetable schedule from database against real-time current clock (IST).
+ * Accurately determines:
+ * - isRunning: whether the train is actively on track right now (departed origin, not yet at destination)
+ * - isStationHalt: whether train is currently halted at a station platform
+ * - departed/upcoming stops with exact timestamps
+ */
 const formatLiveTelemetryTrain = (t, customNow = null) => {
-  // 1. Current Real-Time Clock
-  const now = customNow || new Date();
-  const currentHour = now.getHours();
-  const currentMin = now.getMinutes();
+  // 1. Current Real-Time Clock in Indian Standard Time (IST UTC+5:30)
+  const now = customNow ? new Date(customNow) : new Date();
+  let istDate = now;
+  try {
+    istDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  } catch (_) {}
+
+  const currentHour = istDate.getHours();
+  const currentMin = istDate.getMinutes();
   const currentClockMinutes = currentHour * 60 + currentMin;
-  const currentTimeFormatted = now.toLocaleTimeString('en-IN', {
+  const currentDayOfWeek = istDate.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const currentTimeFormatted = istDate.toLocaleTimeString('en-IN', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true
   });
 
   // 2. Extract or build raw stops
+  const trainNum = String(t.number || t.trainNumber || '').trim();
+  const authenticRoute = AUTHENTIC_TRAIN_ROUTES[trainNum] || [];
+
   let rawStops = [];
-  if (Array.isArray(t.stops) && t.stops.length > 0) {
+  if (Array.isArray(t.route) && t.route.length >= 2) {
+    rawStops = t.route.map((rs, idx) => {
+      const code = (rs.stationCode || rs.code || '').toUpperCase();
+      const dirEntry = STATION_DIRECTORY[code] || {};
+      const name = rs.stationName || rs.name || dirEntry.name || `${code} Station`;
+      return {
+        name: name.includes('(') ? name : `${name} (${code || 'STN'})`,
+        code,
+        arrivalTime: rs.arrivalTime && rs.arrivalTime !== 'Starts' ? rs.arrivalTime : null,
+        departureTime: rs.departureTime && rs.departureTime !== 'Terminates' ? rs.departureTime : null,
+        time: rs.departureTime || rs.arrivalTime || (rs.departure ? rs.departure : '--:--'),
+        platform: rs.platform || `Pf #${(idx % 4) + 1}`,
+        distance: rs.distanceFromOrigin ?? rs.distance ?? (idx * 120),
+      };
+    });
+  } else if (authenticRoute.length >= 2) {
+    rawStops = authenticRoute.map((rs, idx) => {
+      const code = (rs.code || '').toUpperCase();
+      const dirEntry = STATION_DIRECTORY[code] || {};
+      const name = dirEntry.name || rs.name || `${code} Station`;
+      return {
+        name: `${name} (${code})`,
+        code,
+        arrivalTime: rs.arrivalTime && rs.arrivalTime !== 'Starts' ? rs.arrivalTime : null,
+        departureTime: rs.departureTime && rs.departureTime !== 'Terminates' ? rs.departureTime : null,
+        time: rs.departureTime || rs.arrivalTime || '--:--',
+        platform: rs.platform || `Pf #${(idx % 4) + 1}`,
+        distance: rs.distance ?? (idx * 120),
+      };
+    });
+  } else if (Array.isArray(t.stops) && t.stops.length > 0) {
     rawStops = t.stops.map((s, idx) => ({
       name: s.name || s.stationName || `Station #${idx + 1}`,
-      time: s.time || s.departureTime || s.arrivalTime || '08:00 AM',
+      code: (s.code || s.stationCode || '').toUpperCase(),
+      arrivalTime: s.arrivalTime || s.time || null,
+      departureTime: s.departureTime || s.time || null,
+      time: s.time || s.departureTime || s.arrivalTime || '--:--',
       platform: s.platform || `Pf #${(idx % 4) + 1}`,
-      distance: s.distance || idx * 120,
-    }));
-  } else if (Array.isArray(t.route) && t.route.length > 0) {
-    rawStops = t.route.map((rs, idx) => ({
-      name: rs.stationName ? `${rs.stationName} (${rs.stationCode || rs.code})` : `${rs.name} (${rs.code})`,
-      time: rs.departureTime || rs.arrivalTime || (rs.departure ? rs.departure : '08:00 AM'),
-      platform: rs.platform || `Pf #${(idx % 4) + 1}`,
-      distance: rs.distanceFromOrigin || rs.distance || idx * 120,
+      distance: s.distance ?? (idx * 120),
     }));
   }
 
@@ -247,178 +131,202 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
     : (t.to?.name ? `${t.to.name} (${t.to.code})` : rawStops[rawStops.length - 1]?.name || 'Destination Station');
 
   const baseStops = rawStops.length > 0 ? rawStops : [
-    { name: originName, time: t.origin?.departureTime || t.from?.departure || '06:00 AM', platform: 'Pf #1', distance: 0 },
-    { name: destName, time: t.destination?.arrivalTime || t.to?.arrival || '02:00 PM', platform: 'Pf #2', distance: 750 }
+    { name: originName, code: t.from?.code || 'ORIGIN', arrivalTime: null, departureTime: t.from?.departure || '06:00', time: t.from?.departure || '06:00', platform: 'Pf #1', distance: 0 },
+    { name: destName, code: t.to?.code || 'DEST', arrivalTime: t.to?.arrival || '14:00', departureTime: null, time: t.to?.arrival || '14:00', platform: 'Pf #2', distance: 750 }
   ];
 
-  // 3. Map reaching times with midnight rollover awareness
+  const originDepMin = parseTimeToMinutes(baseStops[0].departureTime || baseStops[0].time) ?? 360;
+
+  // 3. Map cumulative minutes from trip departure (0 min at origin)
   let cumulativeDayOffset = 0;
-  let prevMinute = -1;
+  let prevMinute = originDepMin;
 
   const mappedStops = baseStops.map((s, idx) => {
-    let m = parseTimeToMinutes(s.time);
-    if (m === null) {
-      m = idx === 0 ? 360 : prevMinute + 90;
+    let arrM = parseTimeToMinutes(s.arrivalTime);
+    let depM = parseTimeToMinutes(s.departureTime);
+
+    if (idx === 0) {
+      arrM = originDepMin;
+      depM = originDepMin;
+    } else if (idx === baseStops.length - 1) {
+      if (arrM === null) arrM = prevMinute + 60;
+      depM = arrM;
+    } else {
+      if (arrM === null && depM !== null) arrM = depM;
+      if (depM === null && arrM !== null) depM = arrM;
+      if (arrM === null && depM === null) {
+        arrM = prevMinute + 60;
+        depM = arrM + 5;
+      }
     }
-    // Overnight jump across midnight (e.g. 23:50 -> 01:45)
-    if (prevMinute !== -1 && m < prevMinute - 90) {
+
+    if (arrM < prevMinute - 60) {
       cumulativeDayOffset += 1440;
     }
-    prevMinute = m;
+    prevMinute = depM || arrM;
+
+    const cumArr = Math.max(0, (arrM + cumulativeDayOffset) - originDepMin);
+    const cumDep = Math.max(cumArr, (depM + cumulativeDayOffset) - originDepMin);
 
     return {
       ...s,
-      reachMinuteOfDay: m,
-      cumulativeMinute: m + cumulativeDayOffset,
+      time: s.departureTime || s.arrivalTime || s.time || '--:--',
+      cumArr,
+      cumDep,
     };
   });
 
-  const originMinute = mappedStops[0].cumulativeMinute;
-  const destMinute = mappedStops[mappedStops.length - 1].cumulativeMinute;
+  const totalTripDuration = mappedStops[mappedStops.length - 1].cumArr;
+  const runningDays = Array.isArray(t.runningDays) && t.runningDays.length > 0 ? t.runningDays : [0, 1, 2, 3, 4, 5, 6];
 
-  // 4. Align current clock minutes with active train run
-  // If the train crosses midnight (multi-day) and current time is in morning of Day 2:
-  let effectiveTime = currentClockMinutes;
-  let isMultiDayMorningRun = false;
-  if (destMinute > 1440 && (currentClockMinutes + 1440) <= (destMinute + 60)) {
-    effectiveTime = currentClockMinutes + 1440;
-    isMultiDayMorningRun = true;
+  // 4. Check whether a trip is currently active right now
+  const maxDaysAgo = Math.min(3, Math.ceil(totalTripDuration / 1440));
+  let activeRun = null;
+
+  for (let dayAgo = 0; dayAgo <= maxDaysAgo; dayAgo++) {
+    const depDayOfWeek = (currentDayOfWeek - dayAgo + 7) % 7;
+    if (!runningDays.includes(depDayOfWeek)) continue;
+
+    const elapsedSinceDep = (currentClockMinutes + dayAgo * 1440) - originDepMin;
+    if (elapsedSinceDep >= 0 && elapsedSinceDep <= totalTripDuration) {
+      activeRun = { dayAgo, elapsedSinceDep, depDayOfWeek };
+      break;
+    }
   }
 
-  // 5. Compare train reaching stations time with current time
+  const isRunning = activeRun !== null;
+  const delay = t.delay ?? (t.trainType === 'VANDE_BHARAT' ? 0 : t.trainType === 'RAJDHANI' ? 4 : 0);
+
   let currentStation = '';
   let nextStation = '';
   let currentPlatform = '';
-  let trainSpeed = '115 km/h';
-  let liveStatus = 'On Time';
+  let trainSpeed = '110 km/h';
+  let liveStatus = 'Running On Time';
   let liveSummary = '';
-  let delay = t.delay ?? (t.trainType === 'VANDE_BHARAT' ? 0 : t.trainType === 'RAJDHANI' ? 4 : 0);
-
   let enrichedStops = [];
 
-  if (effectiveTime < originMinute) {
-    // ── Phase 1: Train has NOT started yet today ──
-    const timeUntilDeparture = originMinute - effectiveTime;
-    currentStation = mappedStops[0].name.split(' (')[0];
-    nextStation = mappedStops[1]?.name ? mappedStops[1].name.split(' (')[0] : destName.split(' (')[0];
-    currentPlatform = mappedStops[0].platform || 'Platform #1';
-    trainSpeed = '0 km/h (Station Halt)';
-    liveStatus = `Scheduled Departure at ${mappedStops[0].time}`;
-    liveSummary = `Train is waiting at origin platform at ${currentStation}. Scheduled to depart in ${formatDurationText(timeUntilDeparture)} (at ${mappedStops[0].time}).`;
+  if (isRunning) {
+    const elapsed = activeRun.elapsedSinceDep;
 
-    enrichedStops = mappedStops.map((s, idx) => ({
-      ...s,
-      departed: false,
-      current: idx === 0,
-      upcoming: idx > 0,
-      isNextHalt: idx === 1,
-      statusDetail: idx === 0
-        ? `Waiting for Departure • Departs in ${formatDurationText(timeUntilDeparture)} (${mappedStops[0].time})`
-        : `Scheduled at ${s.time} (in ${formatDurationText(s.cumulativeMinute - effectiveTime)})`,
-      timeRemaining: idx > 0 ? `in ${formatDurationText(s.cumulativeMinute - effectiveTime)}` : null,
-    }));
-
-  } else if (effectiveTime >= destMinute) {
-    // ── Phase 2: Train has COMPLETED its journey ──
-    const timeSinceArrival = effectiveTime - destMinute;
-    currentStation = mappedStops[mappedStops.length - 1].name.split(' (')[0];
-    nextStation = 'Terminated';
-    currentPlatform = mappedStops[mappedStops.length - 1].platform || 'Platform #1';
-    trainSpeed = '0 km/h (Completed)';
-    liveStatus = 'Journey Completed';
-    liveSummary = `Train has arrived at final destination ${currentStation} at ${mappedStops[mappedStops.length - 1].time} (${formatDurationText(timeSinceArrival)} ago).`;
-
-    enrichedStops = mappedStops.map((s, idx) => ({
-      ...s,
-      departed: true,
-      current: idx === mappedStops.length - 1,
-      upcoming: false,
-      isNextHalt: false,
-      statusDetail: idx === mappedStops.length - 1
-        ? `Arrived at ${s.time} (${formatDurationText(timeSinceArrival)} ago)`
-        : `Departed at ${s.time}`,
-      timeRemaining: null,
-    }));
-
-  } else {
-    // ── Phase 3: Train is ACTIVELY RUNNING on route ──
-    // Find the last stop where reaching time <= current time
-    let activeIdx = 0;
+    // Check if halted at platform
+    let haltIdx = -1;
     for (let i = 0; i < mappedStops.length; i++) {
-      if (effectiveTime >= mappedStops[i].cumulativeMinute) {
-        activeIdx = i;
-      } else {
+      if (elapsed >= mappedStops[i].cumArr && elapsed <= mappedStops[i].cumDep) {
+        haltIdx = i;
         break;
       }
     }
 
-    const lastPassedStop = mappedStops[activeIdx];
-    const nextHaltStop = mappedStops[activeIdx + 1] || mappedStops[mappedStops.length - 1];
-    const minsSinceDeparted = effectiveTime - lastPassedStop.cumulativeMinute;
-    const minsUntilNext = nextHaltStop.cumulativeMinute - effectiveTime;
-
-    // Check if stopped at platform (within 3 mins of reaching)
-    const isStationHalt = minsSinceDeparted <= 3;
-
-    currentStation = lastPassedStop.name.split(' (')[0];
-    nextStation = nextHaltStop.name.split(' (')[0];
-    currentPlatform = isStationHalt ? (lastPassedStop.platform || 'Pf #1') : (nextHaltStop.platform || 'Pf #2');
-
-    if (isStationHalt) {
+    if (haltIdx !== -1) {
+      const stop = mappedStops[haltIdx];
+      const nextStop = mappedStops[haltIdx + 1] || stop;
+      const haltRemain = Math.max(0, stop.cumDep - elapsed);
+      currentStation = stop.name.split(' (')[0];
+      nextStation = nextStop.name.split(' (')[0];
+      currentPlatform = stop.platform || 'Pf #1';
       trainSpeed = '0 km/h (Platform Halt)';
-      liveStatus = delay > 0 ? `Halted • Delayed by ${delay}m` : 'Halted at Platform';
-      liveSummary = `Currently standing at platform at ${currentStation} (${currentPlatform}). Next departure towards ${nextStation}.`;
+      liveStatus = delay > 0 ? `Halted • Delayed ${delay}m` : 'Halted at Platform';
+      liveSummary = `Currently standing at platform at ${currentStation} (${currentPlatform}). Next departure towards ${nextStation} in ${haltRemain}m.`;
+
+      enrichedStops = mappedStops.map((s, idx) => {
+        const isPast = idx < haltIdx;
+        const isCurrent = idx === haltIdx;
+        const isNext = idx === haltIdx + 1;
+        return {
+          ...s,
+          departed: isPast,
+          current: isCurrent,
+          upcoming: idx > haltIdx,
+          isNextHalt: isNext,
+          statusDetail: isCurrent
+            ? `Standing at Platform • Scheduled Departure ${s.time}`
+            : isPast
+            ? `Passed at ${s.time}`
+            : `Scheduled Arrival: ${s.time}`,
+        };
+      });
     } else {
-      trainSpeed = t.trainType === 'VANDE_BHARAT' ? '135 km/h' : t.trainType === 'RAJDHANI' ? '125 km/h' : '110 km/h';
-      liveStatus = delay > 0 ? `Delayed by ${delay}m` : 'Running On Time';
-      liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDeparted)} ago. Next Stop: ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextHaltStop.time}).`;
-    }
-
-    enrichedStops = mappedStops.map((s, idx) => {
-      const isPast = idx < activeIdx;
-      const isCurrentHalt = idx === activeIdx;
-      const isNext = idx === activeIdx + 1;
-      const isFuture = idx > activeIdx;
-
-      let detail = '';
-      let remaining = null;
-
-      if (isPast) {
-        detail = `Passed at ${s.time} (${formatDurationText(effectiveTime - s.cumulativeMinute)} ago)`;
-      } else if (isCurrentHalt) {
-        detail = isStationHalt
-          ? `Standing at Platform • Arrived ${s.time}`
-          : `Departed at ${s.time} (${formatDurationText(minsSinceDeparted)} ago)`;
-      } else if (isNext) {
-        detail = `Next Halt: Scheduled ${s.time} (in ${formatDurationText(minsUntilNext)})`;
-        remaining = `in ${formatDurationText(minsUntilNext)}`;
-      } else {
-        detail = `Scheduled at ${s.time} (in ${formatDurationText(s.cumulativeMinute - effectiveTime)})`;
-        remaining = `in ${formatDurationText(s.cumulativeMinute - effectiveTime)}`;
+      let lastPassedIdx = 0;
+      for (let i = 0; i < mappedStops.length; i++) {
+        if (elapsed >= mappedStops[i].cumDep) {
+          lastPassedIdx = i;
+        } else {
+          break;
+        }
       }
 
-      return {
-        ...s,
-        departed: isPast || (!isStationHalt && isCurrentHalt),
-        current: isCurrentHalt,
-        upcoming: isFuture,
-        isNextHalt: isNext,
-        statusDetail: detail,
-        timeRemaining: remaining,
-      };
-    });
+      const lastStop = mappedStops[lastPassedIdx];
+      const nextStop = mappedStops[lastPassedIdx + 1] || mappedStops[mappedStops.length - 1];
+      const minsSinceDep = Math.max(0, elapsed - lastStop.cumDep);
+      const minsUntilNext = Math.max(1, nextStop.cumArr - elapsed);
+
+      currentStation = lastStop.name.split(' (')[0];
+      nextStation = nextStop.name.split(' (')[0];
+      currentPlatform = nextStop.platform || 'Pf #1';
+      trainSpeed = t.trainType === 'VANDE_BHARAT' ? '130 km/h' : t.trainType === 'RAJDHANI' ? '120 km/h' : '110 km/h';
+      liveStatus = delay > 0 ? `Delayed by ${delay}m` : 'Running On Time';
+      liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDep)} ago. Next Stop: ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextStop.time}).`;
+
+      enrichedStops = mappedStops.map((s, idx) => {
+        const isPast = idx <= lastPassedIdx;
+        const isNext = idx === lastPassedIdx + 1;
+        return {
+          ...s,
+          departed: isPast,
+          current: false,
+          upcoming: idx > lastPassedIdx,
+          isNextHalt: isNext,
+          statusDetail: isNext
+            ? `Next Halt: Expected in ${formatDurationText(minsUntilNext)} (at ${s.time})`
+            : isPast
+            ? `Departed at ${s.time} (${formatDurationText(elapsed - s.cumDep)} ago)`
+            : `Scheduled Arrival: ${s.time}`,
+        };
+      });
+    }
+  } else {
+    const isTodayRunUpcoming = originDepMin > currentClockMinutes && runningDays.includes(currentDayOfWeek);
+    const timeUntilDep = originDepMin - currentClockMinutes;
+
+    currentStation = originName.split(' (')[0];
+    nextStation = mappedStops[1]?.name ? mappedStops[1].name.split(' (')[0] : destName.split(' (')[0];
+    currentPlatform = mappedStops[0]?.platform || 'Pf #1';
+    trainSpeed = '0 km/h (Not On Track)';
+
+    if (isTodayRunUpcoming) {
+      liveStatus = `Scheduled Today at ${mappedStops[0]?.time}`;
+      liveSummary = `Train is scheduled to depart today in ${formatDurationText(timeUntilDep)} from ${currentStation} (at ${mappedStops[0]?.time}).`;
+    } else {
+      liveStatus = 'Not Running Right Now';
+      liveSummary = `Train is not currently active on track right now. Next scheduled run according to timetable (${t.runsOn || 'Daily Service'}).`;
+    }
+
+    enrichedStops = mappedStops.map((s, idx) => ({
+      ...s,
+      departed: false,
+      current: false,
+      upcoming: true,
+      isNextHalt: idx === 0,
+      statusDetail: idx === 0
+        ? `Scheduled Departure: ${s.time}`
+        : `Scheduled Arrival: ${s.time}`,
+    }));
   }
 
   return {
-    id: t.id || t.trainId || t.trainNumber,
-    number: t.number || t.trainNumber,
-    name: t.name || t.trainName,
-    fromCode: t.fromCode || t.origin?.stationCode || t.origin?.code || '',
-    toCode: t.toCode || t.destination?.stationCode || t.destination?.code || '',
+    id: t.trainId || t.id || t.trainNumber,
+    trainId: t.trainId || t.id,
+    number: t.trainNumber || t.number,
+    name: t.trainName || t.name,
+    fromCode: t.fromCode || t.origin?.stationCode || t.origin?.code || t.from?.code || '',
+    toCode: t.toCode || t.destination?.stationCode || t.destination?.code || t.to?.code || '',
     fromName: originName,
     toName: destName,
-    departureTime: mappedStops[0].time,
-    arrivalTime: mappedStops[mappedStops.length - 1].time,
+    departureTime: mappedStops[0]?.time || '06:00 AM',
+    arrivalTime: mappedStops[mappedStops.length - 1]?.time || '02:00 PM',
+    runsOn: t.runsOn || 'Daily Service',
+    runningDays,
+    isRunning,
     status: liveStatus,
     liveSummary,
     currentTimeFormatted,
@@ -428,7 +336,6 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
     delay,
     speed: trainSpeed,
     stops: enrichedStops,
-    isMultiDayMorningRun,
   };
 };
 
@@ -489,14 +396,17 @@ export default function HomePage() {
   const [pnrLoading, setPnrLoading] = useState(false);
   const [pnrError, setPnrError] = useState(null);
 
-  // Live Track Interactive States (Station entry, NO default train select!)
+  // Live Track Interactive States (Database-backed real-time running train tracking)
   const [liveSearchMode, setLiveSearchMode] = useState('stations'); // 'stations' | 'train'
   const [liveFromStation, setLiveFromStation] = useState('');
   const [liveToStation, setLiveToStation] = useState('');
   const [liveTrainQuery, setLiveTrainQuery] = useState('');
   const [liveTrackingLoading, setLiveTrackingLoading] = useState(false);
-  const [liveResults, setLiveResults] = useState(null);
+  const [liveResults, setLiveResults] = useState(null); // active running trains to show
+  const [allMatchedCorridorTrains, setAllMatchedCorridorTrains] = useState([]); // all trains found in database
+  const [liveFilterTab, setLiveFilterTab] = useState('running'); // 'running' | 'all'
   const [selectedLiveTrain, setSelectedLiveTrain] = useState(null);
+  const [inactiveSearchedTrain, setInactiveSearchedTrain] = useState(null);
   const [liveSwapRotated, setLiveSwapRotated] = useState(false);
   const showToast = useToast();
 
@@ -527,7 +437,7 @@ export default function HomePage() {
   const [upcomingService, setUpcomingService] = useState(null);
   const [serviceNotified, setServiceNotified] = useState(false);
 
-  // Live real-time clock tick for dynamic train running status evaluation
+  // Live real-time clock tick for dynamic train running status evaluation (IST)
   const [liveClockTime, setLiveClockTime] = useState(new Date());
 
   useEffect(() => {
@@ -538,6 +448,28 @@ export default function HomePage() {
       return () => clearInterval(interval);
     }
   }, [activeTab]);
+
+  // Re-evaluate live telemetry dynamically when clock ticks
+  useEffect(() => {
+    if (activeTab === 'live' && allMatchedCorridorTrains.length > 0) {
+      const updatedAll = allMatchedCorridorTrains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
+      setAllMatchedCorridorTrains(updatedAll);
+      const activeOnly = updatedAll.filter((t) => t.isRunning);
+      if (liveFilterTab === 'running') {
+        setLiveResults(activeOnly);
+        if (selectedLiveTrain) {
+          const match = activeOnly.find((x) => x.id === selectedLiveTrain.id) || activeOnly[0] || null;
+          setSelectedLiveTrain(match);
+        }
+      } else {
+        setLiveResults(updatedAll);
+        if (selectedLiveTrain) {
+          const match = updatedAll.find((x) => x.id === selectedLiveTrain.id) || updatedAll[0] || null;
+          setSelectedLiveTrain(match);
+        }
+      }
+    }
+  }, [liveClockTime, liveFilterTab]);
 
   // General Notification Modal
   const [popupMsg, setPopupMsg] = useState(null);
@@ -764,83 +696,120 @@ export default function HomePage() {
 
       setLiveTrackingLoading(true);
       setLiveResults(null);
+      setAllMatchedCorridorTrains([]);
       setSelectedLiveTrain(null);
+      setInactiveSearchedTrain(null);
 
       try {
         const cleanFrom = fromVal.includes('(') ? fromVal.match(/\(([^)]+)\)/)?.[1] || fromVal : fromVal;
         const cleanTo = toVal.includes('(') ? toVal.match(/\(([^)]+)\)/)?.[1] || toVal : toVal;
 
-        const res = await searchApi.search(cleanFrom, cleanTo, new Date().toISOString().split('T')[0]);
-        let trains = res?.trains || [];
+        // 1. Try server live-status endpoint (database-backed)
+        const serverData = await searchApi.getLiveStatus({ from: cleanFrom, to: cleanTo });
 
-        if (trains.length === 0) {
-          const allRes = await searchApi.search(cleanFrom, cleanTo);
-          trains = allRes?.trains || [];
+        let allTrains = [];
+        let runningTrains = [];
+
+        if (serverData && Array.isArray(serverData.allTrains) && serverData.allTrains.length > 0) {
+          allTrains = serverData.allTrains;
+          runningTrains = serverData.activeTrains || allTrains.filter((t) => t.isRunning);
+        } else {
+          // 2. Query search database directly
+          const res = await searchApi.search(cleanFrom, cleanTo, new Date().toISOString().split('T')[0]);
+          let trains = res?.trains || [];
+
+          if (trains.length === 0) {
+            const allRes = await searchApi.search(cleanFrom, cleanTo);
+            trains = allRes?.trains || [];
+          }
+
+          if (trains.length > 0) {
+            allTrains = trains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
+            runningTrains = allTrains.filter((t) => t.isRunning);
+          }
         }
 
-        if (trains.length > 0) {
-          const formatted = trains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
-          setLiveResults(formatted);
-          setSelectedLiveTrain(formatted[0]);
+        setAllMatchedCorridorTrains(allTrains);
+
+        if (allTrains.length === 0) {
+          // Real database has no trains between these stations: NO fake fallback
+          setLiveResults([]);
+          setSelectedLiveTrain(null);
+        } else if (runningTrains.length > 0) {
+          // Requirement: "if run then show it All Train within user search"
+          setLiveFilterTab('running');
+          setLiveResults(runningTrains);
+          setSelectedLiveTrain(runningTrains[0]);
         } else {
-          // Fallback to matching corridors in LIVE_TRAINS_DATA
-          const mockMatch = LIVE_TRAINS_DATA.filter((m) =>
-            (m.fromCode && cleanFrom.toUpperCase().includes(m.fromCode)) ||
-            (m.toCode && cleanTo.toUpperCase().includes(m.toCode)) ||
-            m.fromName.toLowerCase().includes(fromVal.toLowerCase()) ||
-            m.toName.toLowerCase().includes(toVal.toLowerCase())
-          );
-          if (mockMatch.length > 0) {
-            const formatted = mockMatch.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
-            setLiveResults(formatted);
-            setSelectedLiveTrain(formatted[0]);
-          } else {
-            setLiveResults([]);
-            setSelectedLiveTrain(null);
-          }
+          // Requirement: "if not running then not show"
+          setLiveFilterTab('running');
+          setLiveResults([]);
+          setSelectedLiveTrain(allTrains[0]);
         }
       } catch (err) {
         console.error('Error fetching live train status:', err);
         setLiveResults([]);
+        setAllMatchedCorridorTrains([]);
         setSelectedLiveTrain(null);
       } finally {
         setLiveTrackingLoading(false);
       }
     } else {
+      // By Train Number or Name
       if (!trainQ) {
-        showToast('Please enter train number or name (e.g. 22436, Rajdhani)', 'warning');
+        showToast('Please enter train number or name (e.g. 12802, Purushottam)', 'warning');
         return;
       }
 
       setLiveTrackingLoading(true);
       setLiveResults(null);
+      setAllMatchedCorridorTrains([]);
       setSelectedLiveTrain(null);
+      setInactiveSearchedTrain(null);
 
       try {
-        const res = await searchApi.searchByTrain(trainQ);
-        const trains = Array.isArray(res) ? res : (res?.trains || res?.data || []);
-        if (trains.length > 0) {
-          const formatted = trains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
-          setLiveResults(formatted);
-          setSelectedLiveTrain(formatted[0]);
+        const serverData = await searchApi.getLiveStatus({ train: trainQ });
+        let allTrains = [];
+        let runningTrains = [];
+
+        if (serverData && Array.isArray(serverData.allTrains) && serverData.allTrains.length > 0) {
+          allTrains = serverData.allTrains;
+          runningTrains = serverData.activeTrains || allTrains.filter((t) => t.isRunning);
         } else {
-          const mockMatch = LIVE_TRAINS_DATA.filter((m) =>
-            m.number.includes(trainQ) ||
-            m.name.toLowerCase().includes(trainQ.toLowerCase())
-          );
-          if (mockMatch.length > 0) {
-            const formatted = mockMatch.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
-            setLiveResults(formatted);
-            setSelectedLiveTrain(formatted[0]);
-          } else {
-            setLiveResults([]);
-            setSelectedLiveTrain(null);
+          const res = await searchApi.searchByTrain(trainQ);
+          const trains = Array.isArray(res) ? res : (res?.trains || res?.data || []);
+          if (trains.length > 0) {
+            allTrains = trains.map((t) => formatLiveTelemetryTrain(t, liveClockTime));
+            runningTrains = allTrains.filter((t) => t.isRunning);
           }
+        }
+
+        setAllMatchedCorridorTrains(allTrains);
+
+        if (allTrains.length === 0) {
+          // No train found in database: NO fake fallback
+          setLiveResults([]);
+          setSelectedLiveTrain(null);
+          setInactiveSearchedTrain(null);
+        } else if (runningTrains.length > 0) {
+          // Running right now: show live telemetry
+          setLiveFilterTab('running');
+          setLiveResults(runningTrains);
+          setSelectedLiveTrain(runningTrains[0]);
+          setInactiveSearchedTrain(null);
+        } else {
+          // Found in database but NOT running right now
+          setLiveFilterTab('all');
+          setLiveResults([]);
+          setInactiveSearchedTrain(allTrains[0]);
+          setSelectedLiveTrain(allTrains[0]);
         }
       } catch (err) {
         console.error('Error fetching live train by query:', err);
         setLiveResults([]);
+        setAllMatchedCorridorTrains([]);
         setSelectedLiveTrain(null);
+        setInactiveSearchedTrain(null);
       } finally {
         setLiveTrackingLoading(false);
       }
@@ -1425,6 +1394,55 @@ export default function HomePage() {
                   {/* Results: Matching Trains & Live GPS Route Tracking */}
                   {!liveTrackingLoading && liveResults && liveResults.length > 0 && selectedLiveTrain && (
                     <div className="space-y-4 animate-scale-in">
+                      
+                      {/* Active / All Toggle Bar if corridor has other scheduled trains */}
+                      {allMatchedCorridorTrains.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                            <span className="font-bold text-slate-800">
+                              {liveFilterTab === 'running'
+                                ? `🟢 GPS Radar Active: ${liveResults.length} train${liveResults.length > 1 ? 's' : ''} currently on track right now`
+                                : `📋 Corridor Schedule: Showing all ${allMatchedCorridorTrains.length} trains`}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200 text-[11px] font-bold">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLiveFilterTab('running');
+                                const active = allMatchedCorridorTrains.filter((t) => t.isRunning);
+                                setLiveResults(active);
+                                if (active.length > 0) setSelectedLiveTrain(active[0]);
+                              }}
+                              className={`px-2.5 py-1 rounded-md transition-all ${
+                                liveFilterTab === 'running'
+                                  ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              Running Now ({allMatchedCorridorTrains.filter((t) => t.isRunning).length})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLiveFilterTab('all');
+                                setLiveResults(allMatchedCorridorTrains);
+                                if (allMatchedCorridorTrains.length > 0) setSelectedLiveTrain(allMatchedCorridorTrains[0]);
+                              }}
+                              className={`px-2.5 py-1 rounded-md transition-all ${
+                                liveFilterTab === 'all'
+                                  ? 'bg-emerald-600 text-white shadow-xs font-extrabold'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              All Scheduled ({allMatchedCorridorTrains.length})
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Train Switcher Pills if multiple trains match */}
                       {liveResults.length > 1 && (
                         <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -1445,6 +1463,9 @@ export default function HomePage() {
                               <span>{t.number}</span>
                               <span>&middot;</span>
                               <span>{t.name.split(' ')[0]}</span>
+                              {t.isRunning && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                              )}
                             </button>
                           ))}
                         </div>
@@ -1466,34 +1487,51 @@ export default function HomePage() {
                             </div>
                             <p className="text-xs text-slate-500 font-medium mt-0.5">
                               Route: <span className="font-bold text-slate-700">{selectedLiveTrain.fromName}</span> &rarr; <span className="font-bold text-slate-700">{selectedLiveTrain.toName}</span>
+                              <span className="ml-2 font-normal text-slate-400">&bull; {selectedLiveTrain.runsOn}</span>
                             </p>
                           </div>
 
                           <div className="flex items-center gap-2 self-start sm:self-auto">
                             <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
-                              selectedLiveTrain.delay > 0
+                              !selectedLiveTrain.isRunning
+                                ? 'bg-slate-100 text-slate-700 border-slate-200'
+                                : selectedLiveTrain.delay > 0
                                 ? 'bg-amber-50 text-amber-800 border-amber-200'
                                 : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             }`}>
-                              {selectedLiveTrain.delay > 0 ? `Delayed by ${selectedLiveTrain.delay}m` : '🟢 Running On Time'}
+                              {!selectedLiveTrain.isRunning
+                                ? selectedLiveTrain.status
+                                : selectedLiveTrain.delay > 0
+                                ? `Delayed by ${selectedLiveTrain.delay}m`
+                                : '🟢 Running On Time'}
                             </span>
                           </div>
                         </div>
 
                         {/* Live Location Alert Bar (Comparing reaching times with current time) */}
-                        <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 text-xs font-semibold text-emerald-950">
+                        <div className={`rounded-xl p-3.5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 text-xs font-semibold ${
+                          selectedLiveTrain.isRunning
+                            ? 'bg-emerald-50/80 border border-emerald-200 text-emerald-950'
+                            : 'bg-amber-50/80 border border-amber-200 text-amber-950'
+                        }`}>
                           <div className="flex items-center gap-2">
-                            <span className="text-base shrink-0">📍</span>
+                            <span className="text-base shrink-0">{selectedLiveTrain.isRunning ? '📍' : '🕒'}</span>
                             <span>
                               {selectedLiveTrain.liveSummary || (
                                 <><strong>Currently:</strong> {selectedLiveTrain.currentStation} &middot; Next Stop: <strong>{selectedLiveTrain.nextStation}</strong> ({selectedLiveTrain.platform})</>
                               )}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-[11px] text-emerald-800 shrink-0">
+                          <div className="flex items-center gap-3 text-[11px] shrink-0">
                             <span>⚡ Speed: <strong>{selectedLiveTrain.speed}</strong></span>
                             <span>🕒 Clock: <strong>{selectedLiveTrain.currentTimeFormatted}</strong></span>
-                            <span className="bg-emerald-200 text-emerald-950 px-2 py-0.5 rounded-full font-extrabold text-[10px]">Time-Synced</span>
+                            <span className={`px-2 py-0.5 rounded-full font-extrabold text-[10px] ${
+                              selectedLiveTrain.isRunning
+                                ? 'bg-emerald-200 text-emerald-950'
+                                : 'bg-amber-200 text-amber-950'
+                            }`}>
+                              {selectedLiveTrain.isRunning ? 'Time-Synced' : 'Timetable View'}
+                            </span>
                           </div>
                         </div>
 
@@ -1587,19 +1625,146 @@ export default function HomePage() {
                     </div>
                   )}
 
+                  {/* Corridor has trains in database, but NONE running right now */}
+                  {!liveTrackingLoading && allMatchedCorridorTrains.length > 0 && (!liveResults || liveResults.length === 0) && (
+                    <div className="border border-amber-200 bg-amber-50/40 rounded-2xl p-5 md:p-6 space-y-4 animate-scale-in">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-amber-200/60 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 text-amber-900 flex items-center justify-center text-xl shrink-0">
+                            ⏳
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-900 text-base">
+                              No Trains Currently on Track Right Now
+                            </h4>
+                            <p className="text-xs text-slate-600 mt-0.5">
+                              0 of {allMatchedCorridorTrains.length} scheduled trains are active at this moment ({liveClockTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })} IST).
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLiveFilterTab('all');
+                            setLiveResults(allMatchedCorridorTrains);
+                            setSelectedLiveTrain(allMatchedCorridorTrains[0]);
+                          }}
+                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                        >
+                          View Full Timetable ({allMatchedCorridorTrains.length} Trains) &rarr;
+                        </button>
+                      </div>
+
+                      {/* Corridor Scheduled Trains Cards */}
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Scheduled Runs on this Corridor:
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {allMatchedCorridorTrains.map((train) => (
+                            <div key={train.id} className="bg-white p-4 rounded-xl border border-slate-200 text-xs shadow-2xs space-y-2.5">
+                              <div className="flex justify-between items-start gap-2">
+                                <div>
+                                  <span className="font-bold text-slate-900 text-sm">{train.name}</span>
+                                  <span className="font-mono font-bold text-[11px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded ml-1.5 border border-slate-200">
+                                    #{train.number}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                                  {train.runsOn}
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between items-center text-slate-600 pt-1 border-t border-slate-100">
+                                <span>Departs: <strong className="text-slate-900">{train.departureTime}</strong></span>
+                                <span>&rarr;</span>
+                                <span>Arrives: <strong className="text-slate-900">{train.arrivalTime}</strong></span>
+                              </div>
+
+                              <div className="bg-amber-50 p-2 rounded-lg border border-amber-200/80 text-[11px] text-amber-900 font-medium flex items-center gap-1.5">
+                                <span>ℹ️</span>
+                                <span>{train.liveSummary}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Single Train Not Running Right Now (By Train Number Search) */}
+                  {!liveTrackingLoading && inactiveSearchedTrain && (!liveResults || liveResults.length === 0) && (
+                    <div className="border border-amber-200 bg-amber-50/40 rounded-2xl p-5 md:p-6 space-y-4 animate-scale-in">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-amber-200/60 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 text-amber-900 flex items-center justify-center text-xl shrink-0">
+                            ⏸️
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-900 text-base">
+                              {inactiveSearchedTrain.name} (#{inactiveSearchedTrain.number}) is Not Running Right Now
+                            </h4>
+                            <p className="text-xs text-slate-600 mt-0.5">
+                              Current Real Time: {liveClockTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })} IST &bull; Service: {inactiveSearchedTrain.runsOn}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200 shrink-0 self-start sm:self-auto">
+                          Off-Track Right Now
+                        </span>
+                      </div>
+
+                      <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs space-y-2">
+                        <p className="font-semibold text-slate-800">
+                          📍 <strong>Route:</strong> {inactiveSearchedTrain.fromName} &rarr; {inactiveSearchedTrain.toName}
+                        </p>
+                        <p className="text-slate-600">
+                          🕒 <strong>Scheduled Timings:</strong> Departure at <strong>{inactiveSearchedTrain.departureTime}</strong> &bull; Arrival at <strong>{inactiveSearchedTrain.arrivalTime}</strong>
+                        </p>
+                        <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-200 text-amber-900 font-medium">
+                          ℹ️ {inactiveSearchedTrain.liveSummary}
+                        </div>
+                      </div>
+
+                      {/* Scheduled Halts Timetable */}
+                      {inactiveSearchedTrain.stops && inactiveSearchedTrain.stops.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
+                            Scheduled Halts Timetable ({inactiveSearchedTrain.stops.length} Stops)
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            {inactiveSearchedTrain.stops.map((s, idx) => (
+                              <div key={idx} className="bg-white p-2.5 rounded-lg border border-slate-200 text-xs flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-slate-800 text-[11px]">{s.name}</p>
+                                  <p className="text-[10px] text-slate-500">Scheduled: {s.time}</p>
+                                </div>
+                                <span className="text-[10px] bg-slate-100 text-slate-600 font-semibold px-1.5 py-0.5 rounded border border-slate-200">
+                                  {s.platform || 'Pf 1'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Real Database Not-Found State (No fake trains!) */}
-                  {!liveTrackingLoading && liveResults && liveResults.length === 0 && (
+                  {!liveTrackingLoading && liveResults && liveResults.length === 0 && allMatchedCorridorTrains.length === 0 && !inactiveSearchedTrain && (
                     <div className="p-8 text-center bg-slate-50/80 border border-slate-200 rounded-2xl space-y-3 animate-scale-in">
                       <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-2xl mx-auto shadow-2xs">
                         🔍
                       </div>
                       <h4 className="font-bold text-slate-800 text-sm">
-                        No Trains Found
+                        No Trains Found in Database
                       </h4>
                       <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                         {liveSearchMode === 'stations'
-                          ? `No trains found operating between ${liveFromStation || 'departure'} and ${liveToStation || 'destination'}.`
-                          : `No trains found matching "${liveTrainQuery}". Try searching by station code or train number.`}
+                          ? `No trains found in database operating between ${liveFromStation || 'departure'} and ${liveToStation || 'destination'}.`
+                          : `No trains found in database matching "${liveTrainQuery}". Try searching by station code (e.g. NDLS, BSB) or train number (e.g. 12802, 22436).`}
                       </p>
                       <div className="pt-1 flex flex-wrap justify-center gap-2">
                         <button
@@ -1614,7 +1779,7 @@ export default function HomePage() {
                   )}
 
                   {/* Initial Empty State (When no stations entered yet) */}
-                  {!liveTrackingLoading && !liveResults && (
+                  {!liveTrackingLoading && !liveResults && allMatchedCorridorTrains.length === 0 && !inactiveSearchedTrain && (
                     <div className="p-8 text-center bg-slate-50/60 border border-dashed border-slate-200 rounded-2xl space-y-2.5">
                       <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-2xl mx-auto shadow-2xs">
                         📡

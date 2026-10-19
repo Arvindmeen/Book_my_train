@@ -11,6 +11,9 @@ router.get('/autocomplete', ctrl.autocomplete);
 // GET /search/by-train?q=rajdhani
 router.get('/by-train', ctrl.searchByTrain);
 
+// GET /search/live-status?from=NDLS&to=BSB or ?train=12802
+router.get('/live-status', ctrl.getLiveStatus);
+
 // Debug endpoints
 router.get('/debug/stations', ctrl.debugStations);
 router.get('/debug/trains', ctrl.debugTrains);

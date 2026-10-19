@@ -83,4 +83,19 @@ export const searchApi = {
       return [];
     }
   },
+
+  getLiveStatus: async ({ from, to, train, time } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      if (train) params.set('train', train);
+      if (time) params.set('time', time);
+      const res = await client.get(`/search/live-status?${params.toString()}`);
+      return res.data?.data || res.data || null;
+    } catch (err) {
+      // If endpoint is not available or legacy backend, gracefully fallback to null
+      return null;
+    }
+  },
 };

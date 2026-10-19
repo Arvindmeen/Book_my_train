@@ -22,6 +22,12 @@ exports.searchByTrain = asyncHandler(async (req, res) => {
      res.json({ success: true, count: results.length, data: results });
 });
 
+exports.getLiveStatus = asyncHandler(async (req, res) => {
+     const { from, to, train, time } = req.query;
+     const result = await searchService.getLiveStatus({ from, to, train, time });
+     res.json({ success: true, data: result });
+});
+
 exports.debugStations = asyncHandler(async (req, res) => {
      const data = await searchService.getAllStations();
      res.json({ success: true, count: data.length, data });

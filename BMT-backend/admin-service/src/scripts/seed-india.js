@@ -1,25 +1,23 @@
 /**
- * Comprehensive Indian Railways (IRCTC) Realistic Data Seeder & Database Reset
+ * Additive Indian Railways (IRCTC) sample data seeder
  *
- * 1. Deep-cleans and resets all train-related databases:
- *    - admin_service_database (stations, trains, seats, routes, route_stations, schedules)
- *    - inventory_service_database (schedule_inventories, seat_inventories, route_stops, seat_segment_locks)
- *    - booking_service_database (bookings, booking_seats, passengers, saga_logs)
- *    - elasticsearch (recreates stations & trains indices with proper ngram mappings)
- *    - redis (flushes stale cache)
+ * Adds stations, trains, routes, and 35-day operating schedules without deleting
+ * existing database, inventory, search, or booking records.
  *
- * 2. Seeds authentic stations across all Indian states and major rail divisions:
+ * 1. Adds stations across Indian states and major rail divisions:
  *    - Delhi NCR, Punjab, Haryana, Himachal Pradesh, Jammu & Kashmir, Uttarakhand
  *    - Rajasthan, Uttar Pradesh, Bihar, Jharkhand, West Bengal, Assam & North-East
  *    - Odisha, Chhattisgarh, Madhya Pradesh, Gujarat, Maharashtra, Goa
  *    - Andhra Pradesh, Telangana, Karnataka, Tamil Nadu, Kerala
  *
- * 3. Seeds realistic trains with authentic routes, stops, distances, timings, running days:
+ * 2. Adds trains with configured routes, stops, distances, timings, and running days:
  *    - Flagship Vande Bharat Express corridors (Katra, Varanasi, Ajmer, Gandhinagar, Mysuru)
  *    - Premier Rajdhani & Shatabdi Express services (Howrah, Sealdah, Mumbai, Dibrugarh, BBS, Bhopal, Amritsar, Kalka)
  *    - Trans-India Superfast & Mail lifelines (Kerala SF Express, Grand Trunk, Karnataka SF, Telangana SF, Coromandel Express, Mangala Lakshadweep, Howrah-Ahmedabad SF)
  *    - High-density passenger & intercity routes (Moradabad, Chandausi, Dehradun Jan Shatabdi)
- *    - Reciprocal return trains for seamless two-way search & reservation
+ *    - Reciprocal return trains for two-way search & reservation
+ *
+ * Seed timetable values are sample data; verify official railway schedules before live use.
  */
 
 const path = require('path');
@@ -269,6 +267,137 @@ const STATIONS = [
   { code: 'QLN', name: 'Kollam Junction', city: 'Kollam', state: 'Kerala' },
   { code: 'KTYM', name: 'Kottayam', city: 'Kottayam', state: 'Kerala' },
   { code: 'ALLP', name: 'Alappuzha', city: 'Alappuzha', state: 'Kerala' },
+
+  // ── Additional district railheads and regional connectors ──
+  { code: 'SINA', name: 'Srinagar Railway Station', city: 'Srinagar', state: 'Jammu and Kashmir' },
+  { code: 'BAHL', name: 'Banihal', city: 'Banihal', state: 'Jammu and Kashmir' },
+  { code: 'SML', name: 'Shimla', city: 'Shimla', state: 'Himachal Pradesh' },
+  { code: 'PTA', name: 'Patiala', city: 'Patiala', state: 'Punjab' },
+  { code: 'FZR', name: 'Firozpur Cantt', city: 'Firozpur', state: 'Punjab' },
+  { code: 'HSR', name: 'Hisar Junction', city: 'Hisar', state: 'Haryana' },
+  { code: 'JIND', name: 'Jind Junction', city: 'Jind', state: 'Haryana' },
+  { code: 'SSA', name: 'Sirsa', city: 'Sirsa', state: 'Haryana' },
+  { code: 'RBL', name: 'Rae Bareli Junction', city: 'Rae Bareli', state: 'Uttar Pradesh' },
+  { code: 'SPN', name: 'Shahjahanpur', city: 'Shahjahanpur', state: 'Uttar Pradesh' },
+  { code: 'HRI', name: 'Hardoi', city: 'Hardoi', state: 'Uttar Pradesh' },
+  { code: 'SLN', name: 'Sultanpur Junction', city: 'Sultanpur', state: 'Uttar Pradesh' },
+  { code: 'GCT', name: 'Ghazipur City', city: 'Ghazipur', state: 'Uttar Pradesh' },
+  { code: 'MAU', name: 'Mau Junction', city: 'Mau', state: 'Uttar Pradesh' },
+  { code: 'ON', name: 'Unnao Junction', city: 'Unnao', state: 'Uttar Pradesh' },
+  { code: 'FD', name: 'Faizabad Junction', city: 'Ayodhya', state: 'Uttar Pradesh' },
+  { code: 'HJP', name: 'Hajipur Junction', city: 'Hajipur', state: 'Bihar' },
+  { code: 'SEE', name: 'Sonpur Junction', city: 'Sonpur', state: 'Bihar' },
+  { code: 'SPJ', name: 'Samastipur Junction', city: 'Samastipur', state: 'Bihar' },
+  { code: 'PPTA', name: 'Patliputra Junction', city: 'Patna', state: 'Bihar' },
+  { code: 'BTH', name: 'Bettiah', city: 'Bettiah', state: 'Bihar' },
+  { code: 'NKE', name: 'Narkatiaganj Junction', city: 'Narkatiaganj', state: 'Bihar' },
+  { code: 'JMP', name: 'Jamalpur Junction', city: 'Jamalpur', state: 'Bihar' },
+  { code: 'HTE', name: 'Hatia', city: 'Ranchi', state: 'Jharkhand' },
+  { code: 'GMO', name: 'NSC Bose Junction Gomoh', city: 'Gomoh', state: 'Jharkhand' },
+  { code: 'BRKA', name: 'Barkakana Junction', city: 'Barkakana', state: 'Jharkhand' },
+  { code: 'GUA', name: 'Gua', city: 'Gua', state: 'Jharkhand' },
+  { code: 'BHP', name: 'Bolpur Shantiniketan', city: 'Bolpur', state: 'West Bengal' },
+  { code: 'RPH', name: 'Rampurhat Junction', city: 'Rampurhat', state: 'West Bengal' },
+  { code: 'MXN', name: 'Mariani Junction', city: 'Mariani', state: 'Assam' },
+  { code: 'JTTN', name: 'Jorhat Town', city: 'Jorhat', state: 'Assam' },
+  { code: 'NTSK', name: 'New Tinsukia Junction', city: 'Tinsukia', state: 'Assam' },
+  { code: 'RNY', name: 'Rangiya Junction', city: 'Rangia', state: 'Assam' },
+  { code: 'SCL', name: 'Silchar', city: 'Silchar', state: 'Assam' },
+  { code: 'BPB', name: 'Badarpur Junction', city: 'Badarpur', state: 'Assam' },
+  { code: 'NHLN', name: 'Naharlagun', city: 'Naharlagun', state: 'Arunachal Pradesh' },
+  { code: 'DMR', name: 'Dharmanagar', city: 'Dharmanagar', state: 'Tripura' },
+  { code: 'JRBM', name: 'Jiribam', city: 'Jiribam', state: 'Manipur' },
+  { code: 'BHRB', name: 'Bairabi', city: 'Bairabi', state: 'Mizoram' },
+  { code: 'MDPD', name: 'Mendipathar', city: 'Mendipathar', state: 'Meghalaya' },
+  { code: 'KUR', name: 'Khurda Road Junction', city: 'Jatni', state: 'Odisha' },
+  { code: 'JJKR', name: 'Jajpur Keonjhar Road', city: 'Jajpur', state: 'Odisha' },
+  { code: 'TIG', name: 'Titlagarh Junction', city: 'Titlagarh', state: 'Odisha' },
+  { code: 'KRBA', name: 'Korba', city: 'Korba', state: 'Chhattisgarh' },
+  { code: 'JNRD', name: 'Jagdalpur', city: 'Jagdalpur', state: 'Chhattisgarh' },
+  { code: 'REWA', name: 'Rewa', city: 'Rewa', state: 'Madhya Pradesh' },
+  { code: 'KURJ', name: 'Khajuraho', city: 'Khajuraho', state: 'Madhya Pradesh' },
+  { code: 'AMLA', name: 'Amla Junction', city: 'Amla', state: 'Madhya Pradesh' },
+  { code: 'BINA', name: 'Bina Junction', city: 'Bina', state: 'Madhya Pradesh' },
+  { code: 'DWK', name: 'Dwarka', city: 'Dwarka', state: 'Gujarat' },
+  { code: 'JND', name: 'Junagadh Junction', city: 'Junagadh', state: 'Gujarat' },
+  { code: 'PBR', name: 'Porbandar', city: 'Porbandar', state: 'Gujarat' },
+  { code: 'BTD', name: 'Botad Junction', city: 'Botad', state: 'Gujarat' },
+  { code: 'OKHA', name: 'Okha', city: 'Okha', state: 'Gujarat' },
+  { code: 'NED', name: 'Hazur Sahib Nanded', city: 'Nanded', state: 'Maharashtra' },
+  { code: 'MMR', name: 'Manmad Junction', city: 'Manmad', state: 'Maharashtra' },
+  { code: 'DD', name: 'Daund Junction', city: 'Daund', state: 'Maharashtra' },
+  { code: 'LNL', name: 'Lonavala', city: 'Lonavala', state: 'Maharashtra' },
+  { code: 'AWB', name: 'Chhatrapati Sambhajinagar', city: 'Chhatrapati Sambhajinagar', state: 'Maharashtra' },
+  { code: 'PRLI', name: 'Parli Vaijnath', city: 'Parli', state: 'Maharashtra' },
+  { code: 'VSG', name: 'Vasco da Gama', city: 'Vasco da Gama', state: 'Goa' },
+  { code: 'TUNI', name: 'Tuni', city: 'Tuni', state: 'Andhra Pradesh' },
+  { code: 'EE', name: 'Eluru', city: 'Eluru', state: 'Andhra Pradesh' },
+  { code: 'CHE', name: 'Srikakulam Road', city: 'Srikakulam', state: 'Andhra Pradesh' },
+  { code: 'AKP', name: 'Anakapalle', city: 'Anakapalle', state: 'Andhra Pradesh' },
+  { code: 'NZB', name: 'Nizamabad Junction', city: 'Nizamabad', state: 'Telangana' },
+  { code: 'KMT', name: 'Khammam', city: 'Khammam', state: 'Telangana' },
+  { code: 'MBNR', name: 'Mahbubnagar', city: 'Mahbubnagar', state: 'Telangana' },
+  { code: 'DWR', name: 'Dharwad', city: 'Dharwad', state: 'Karnataka' },
+  { code: 'BGM', name: 'Belagavi', city: 'Belagavi', state: 'Karnataka' },
+  { code: 'HAS', name: 'Hassan', city: 'Hassan', state: 'Karnataka' },
+  { code: 'SMET', name: 'Shivamogga Town', city: 'Shivamogga', state: 'Karnataka' },
+  { code: 'UD', name: 'Udupi', city: 'Udupi', state: 'Karnataka' },
+  { code: 'CTA', name: 'Chitradurga', city: 'Chitradurga', state: 'Karnataka' },
+  { code: 'TJ', name: 'Thanjavur Junction', city: 'Thanjavur', state: 'Tamil Nadu' },
+  { code: 'VM', name: 'Villupuram Junction', city: 'Villupuram', state: 'Tamil Nadu' },
+  { code: 'TUP', name: 'Tiruppur', city: 'Tiruppur', state: 'Tamil Nadu' },
+  { code: 'RMM', name: 'Rameswaram', city: 'Rameswaram', state: 'Tamil Nadu' },
+  { code: 'NCJ', name: 'Nagercoil Junction', city: 'Nagercoil', state: 'Tamil Nadu' },
+  { code: 'CAPE', name: 'Kanniyakumari', city: 'Kanniyakumari', state: 'Tamil Nadu' },
+  { code: 'PUU', name: 'Punalur', city: 'Punalur', state: 'Kerala' },
+  { code: 'TIR', name: 'Tirur', city: 'Tirur', state: 'Kerala' },
+  { code: 'AWY', name: 'Aluva', city: 'Aluva', state: 'Kerala' },
+  { code: 'KYJ', name: 'Kayamkulam Junction', city: 'Kayamkulam', state: 'Kerala' },
+
+  // ── Additional rail-served district and regional centres ──
+  { code: 'YNRK', name: 'Yog Nagari Rishikesh', city: 'Rishikesh', state: 'Uttarakhand' },
+  { code: 'RMR', name: 'Ramnagar', city: 'Ramnagar', state: 'Uttarakhand' },
+  { code: 'KPV', name: 'Kashipur Junction', city: 'Kashipur', state: 'Uttarakhand' },
+  { code: 'LKU', name: 'Lal Kuan Junction', city: 'Lal Kuan', state: 'Uttarakhand' },
+  { code: 'TPU', name: 'Tanakpur', city: 'Tanakpur', state: 'Uttarakhand' },
+  { code: 'JNU', name: 'Jaunpur Junction', city: 'Jaunpur', state: 'Uttar Pradesh' },
+  { code: 'AMH', name: 'Azamgarh', city: 'Azamgarh', state: 'Uttar Pradesh' },
+  { code: 'BUI', name: 'Ballia', city: 'Ballia', state: 'Uttar Pradesh' },
+  { code: 'DEOS', name: 'Deoria Sadar', city: 'Deoria', state: 'Uttar Pradesh' },
+  { code: 'BHKD', name: 'Bhurkunda', city: 'Bhurkunda', state: 'Jharkhand' },
+  { code: 'JOC', name: 'Joychandi Pahar', city: 'Raghunathpur', state: 'West Bengal' },
+  { code: 'MURI', name: 'Muri Junction', city: 'Muri', state: 'Jharkhand' },
+  { code: 'CRP', name: 'Chandrapura Junction', city: 'Chandrapura', state: 'Jharkhand' },
+  { code: 'BGS', name: 'Begusarai', city: 'Begusarai', state: 'Bihar' },
+  { code: 'BCA', name: 'Bachhwara Junction', city: 'Bachhwara', state: 'Bihar' },
+  { code: 'SPP', name: 'Shahpur Patoree', city: 'Shahpur Patoree', state: 'Bihar' },
+  { code: 'RHA', name: 'Ranaghat Junction', city: 'Ranaghat', state: 'West Bengal' },
+  { code: 'BNJ', name: 'Bangaon Junction', city: 'Bangaon', state: 'West Bengal' },
+  { code: 'SNT', name: 'Sainthia Junction', city: 'Sainthia', state: 'West Bengal' },
+  { code: 'NHT', name: 'Nalhati Junction', city: 'Nalhati', state: 'West Bengal' },
+  { code: 'ANGL', name: 'Angul', city: 'Angul', state: 'Odisha' },
+  { code: 'TLHR', name: 'Talcher', city: 'Talcher', state: 'Odisha' },
+  { code: 'PRDP', name: 'Paradeep', city: 'Paradeep', state: 'Odisha' },
+  { code: 'JSG', name: 'Jharsuguda Junction', city: 'Jharsuguda', state: 'Odisha' },
+  { code: 'BLGR', name: 'Balangir', city: 'Balangir', state: 'Odisha' },
+  { code: 'MOGA', name: 'Moga', city: 'Moga', state: 'Punjab' },
+  { code: 'FDK', name: 'Faridkot', city: 'Faridkot', state: 'Punjab' },
+  { code: 'SIR', name: 'Sirhind Junction', city: 'Sirhind', state: 'Punjab' },
+  { code: 'BHL', name: 'Bhilwara', city: 'Bhilwara', state: 'Rajasthan' },
+  { code: 'COR', name: 'Chittaurgarh Junction', city: 'Chittorgarh', state: 'Rajasthan' },
+  { code: 'FL', name: 'Phulera Junction', city: 'Phulera', state: 'Rajasthan' },
+  { code: 'MD', name: 'Madar Junction', city: 'Ajmer', state: 'Rajasthan' },
+  { code: 'SGNR', name: 'Shri Ganganagar', city: 'Sri Ganganagar', state: 'Rajasthan' },
+  { code: 'KYN', name: 'Kalyan Junction', city: 'Kalyan', state: 'Maharashtra' },
+  { code: 'TNA', name: 'Thane', city: 'Thane', state: 'Maharashtra' },
+  { code: 'DR', name: 'Dadar Central', city: 'Mumbai', state: 'Maharashtra' },
+  { code: 'IGP', name: 'Igatpuri', city: 'Igatpuri', state: 'Maharashtra' },
+  { code: 'JL', name: 'Jalgaon Junction', city: 'Jalgaon', state: 'Maharashtra' },
+  { code: 'CCH', name: 'Chinchwad', city: 'Pimpri-Chinchwad', state: 'Maharashtra' },
+  { code: 'AKOT', name: 'Akot', city: 'Akot', state: 'Maharashtra' },
+  { code: 'PVR', name: 'Pandharpur', city: 'Pandharpur', state: 'Maharashtra' },
+  { code: 'HPT', name: 'Hosapete Junction', city: 'Hosapete', state: 'Karnataka' },
+  { code: 'FKG', name: 'Furkating Junction', city: 'Furkating', state: 'Assam' },
 ];
 
 // Helper: Generates realistic seat configurations partitioned across IRCTC travel classes
@@ -323,10 +452,319 @@ function generateSeats(basePrice, totalSeats = 64, trainType = 'EXPRESS', trainN
   return seats;
 }
 
-// ─── 2. REALISTIC TRAIN SCHEDULES WITH AUTHENTIC ROUTES & TIMINGS ────────────
+// ─── 2. TRAIN ROUTES AND SAMPLE TIMETABLES ──────────────────────────────────
 // Days of Week: 0 = Sun, 1 = Mon, 2 = Tue, 3 = Wed, 4 = Thu, 5 = Fri, 6 = Sat
 
+function buildTrainPair({ outbound, inbound, trainType = 'EXPRESS', coachName = 'SL', basePrice = 850, seatsCount = 72 }) {
+  const runningDays = [0, 1, 2, 3, 4, 5, 6];
+  return [outbound, inbound].map((direction) => ({
+    trainNumber: direction.number,
+    trainName: direction.name,
+    coachName,
+    trainType,
+    basePrice,
+    seatsCount,
+    runsOn: 'Daily Service',
+    runningDays,
+    stops: direction.stops.map(([code, arrivalTime, departureTime, distance]) => ({
+      code,
+      arrivalTime,
+      departureTime,
+      distance,
+    })),
+  }));
+}
+
+// These additional route timings are sample timetable data for local/demo use.
+const ADDITIONAL_TRAIN_PAIRS = [
+  {
+    outbound: {
+      number: '12505',
+      name: 'North East Express',
+      stops: [
+        ['ANVT', null, '07:40', 0], ['GZB', '08:02', '08:05', 13],
+        ['MB', '11:55', '12:00', 157], ['LKO', '16:00', '16:10', 493],
+        ['GKP', '20:20', '20:30', 768], ['MFP', '01:35', '01:40', 1082],
+        ['KIR', '07:30', '07:40', 1460], ['NJP', '11:00', '11:10', 1695],
+        ['GHY', '18:00', '18:10', 1980], ['KYQ', '18:30', null, 1990],
+      ],
+    },
+    inbound: {
+      number: '12506',
+      name: 'North East Express',
+      stops: [
+        ['KYQ', null, '09:00', 0], ['GHY', '09:20', '09:30', 10],
+        ['NJP', '16:30', '16:40', 315], ['KIR', '20:00', '20:10', 550],
+        ['MFP', '02:00', '02:05', 928], ['GKP', '07:00', '07:10', 1242],
+        ['LKO', '11:20', '11:30', 1517], ['MB', '15:30', '15:35', 1853],
+        ['GZB', '19:25', '19:28', 1997], ['ANVT', '19:50', null, 2010],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '12703',
+      name: 'Falaknuma Express',
+      stops: [
+        ['HWH', null, '07:25', 0], ['KGP', '09:05', '09:10', 116],
+        ['BLS', '10:22', '10:24', 234], ['BBS', '13:05', '13:10', 439],
+        ['VSKP', '19:30', '19:50', 885], ['RJY', '23:10', '23:12', 1084],
+        ['BZA', '01:40', '01:50', 1234], ['KZJ', '05:45', '05:47', 1457],
+        ['SC', '09:00', null, 1592],
+      ],
+    },
+    inbound: {
+      number: '12704',
+      name: 'Falaknuma Express',
+      stops: [
+        ['SC', null, '15:00', 0], ['KZJ', '18:05', '18:07', 135],
+        ['BZA', '22:10', '22:20', 358], ['RJY', '00:45', '00:47', 508],
+        ['VSKP', '04:10', '04:30', 707], ['BBS', '10:45', '10:50', 1153],
+        ['BLS', '13:30', '13:32', 1358], ['KGP', '14:45', '14:50', 1476],
+        ['HWH', '16:30', null, 1592],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '12759',
+      name: 'Charminar Express',
+      stops: [
+        ['SC', null, '18:30', 0], ['KZJ', '21:00', '21:02', 142],
+        ['WL', '21:18', '21:20', 152], ['KMT', '22:35', '22:37', 252],
+        ['BZA', '01:10', '01:20', 349], ['NLR', '04:45', '04:47', 601],
+        ['MAS', '07:00', null, 711],
+      ],
+    },
+    inbound: {
+      number: '12760',
+      name: 'Charminar Express',
+      stops: [
+        ['MAS', null, '18:10', 0], ['NLR', '20:20', '20:22', 110],
+        ['BZA', '23:45', '23:55', 362], ['KMT', '02:25', '02:27', 459],
+        ['WL', '03:40', '03:42', 559], ['KZJ', '04:00', '04:02', 569],
+        ['SC', '06:30', null, 711],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '19037',
+      name: 'Avadh Express',
+      stops: [
+        ['BDTS', null, '22:00', 0], ['VAPI', '01:45', '01:47', 180],
+        ['ST', '03:00', '03:05', 275], ['BRC', '04:55', '05:00', 405],
+        ['RTM', '10:30', '10:35', 730], ['KOTA', '14:00', '14:10', 1015],
+        ['AGC', '18:30', '18:35', 1260], ['GWL', '20:05', '20:10', 1378],
+        ['VGLJ', '22:00', '22:10', 1475], ['LKO', '05:30', '05:40', 1790],
+        ['GD', '08:00', '08:05', 1950], ['GKP', '10:00', null, 2070],
+      ],
+    },
+    inbound: {
+      number: '19038',
+      name: 'Avadh Express',
+      stops: [
+        ['GKP', null, '15:00', 0], ['GD', '17:00', '17:05', 120],
+        ['LKO', '19:30', '19:40', 280], ['VGLJ', '03:00', '03:10', 595],
+        ['GWL', '05:00', '05:05', 692], ['AGC', '06:35', '06:40', 810],
+        ['KOTA', '11:00', '11:10', 1055], ['RTM', '14:30', '14:35', 1340],
+        ['BRC', '20:00', '20:05', 1665], ['ST', '21:55', '22:00', 1795],
+        ['VAPI', '23:10', '23:12', 1890], ['BDTS', '03:00', null, 2070],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '16629',
+      name: 'Malabar Express',
+      stops: [
+        ['MAQ', null, '18:30', 0], ['CAN', '21:00', '21:03', 132],
+        ['CLT', '22:20', '22:23', 231], ['TIR', '23:15', '23:17', 279],
+        ['SRR', '00:10', '00:15', 321], ['TCR', '00:55', '00:58', 354],
+        ['AWY', '02:00', '02:02', 412], ['ERS', '02:30', '02:40', 438],
+        ['KTYM', '04:00', '04:02', 500], ['KYJ', '05:05', '05:07', 556],
+        ['QLN', '06:00', '06:02', 594], ['TVC', '07:30', null, 648],
+      ],
+    },
+    inbound: {
+      number: '16630',
+      name: 'Malabar Express',
+      stops: [
+        ['TVC', null, '20:00', 0], ['QLN', '21:20', '21:22', 54],
+        ['KYJ', '22:15', '22:17', 92], ['KTYM', '23:20', '23:22', 148],
+        ['ERS', '00:40', '00:50', 210], ['AWY', '01:20', '01:22', 236],
+        ['TCR', '02:20', '02:23', 294], ['SRR', '03:00', '03:05', 327],
+        ['TIR', '03:55', '03:57', 369], ['CLT', '04:50', '04:53', 417],
+        ['CAN', '06:10', '06:13', 516], ['MAQ', '08:30', null, 648],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '22945',
+      name: 'Saurashtra Mail',
+      stops: [
+        ['MMCT', null, '21:05', 0], ['BVI', '21:30', '21:33', 30],
+        ['VAPI', '00:45', '00:47', 158], ['ST', '02:00', '02:05', 253],
+        ['BRC', '04:00', '04:05', 383], ['ADI', '06:15', '06:25', 492],
+        ['RJT', '10:00', '10:05', 745], ['DWK', '13:20', '13:25', 995],
+        ['OKHA', '14:00', null, 1015],
+      ],
+    },
+    inbound: {
+      number: '22946',
+      name: 'Saurashtra Mail',
+      stops: [
+        ['OKHA', null, '13:00', 0], ['DWK', '13:35', '13:40', 20],
+        ['RJT', '17:00', '17:05', 270], ['ADI', '20:40', '20:50', 523],
+        ['BRC', '23:00', '23:05', 632], ['ST', '01:00', '01:05', 762],
+        ['VAPI', '02:15', '02:17', 857], ['BVI', '05:30', '05:33', 985],
+        ['MMCT', '06:00', null, 1015],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '22349',
+      name: 'Patna - Ranchi Vande Bharat Express',
+      stops: [
+        ['PNBE', null, '07:00', 0], ['GAYA', '08:30', '08:35', 92],
+        ['KQR', '10:00', '10:02', 172], ['BRKA', '11:30', '11:32', 245],
+        ['HTE', '12:45', '12:47', 315], ['RNC', '13:00', null, 325],
+      ],
+    },
+    inbound: {
+      number: '22350',
+      name: 'Ranchi - Patna Vande Bharat Express',
+      stops: [
+        ['RNC', null, '15:00', 0], ['HTE', '15:13', '15:15', 10],
+        ['BRKA', '16:30', '16:32', 80], ['KQR', '18:00', '18:02', 153],
+        ['GAYA', '19:25', '19:30', 233], ['PNBE', '21:00', null, 325],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '20833',
+      name: 'Visakhapatnam - Secunderabad Vande Bharat Express',
+      stops: [
+        ['VSKP', null, '05:45', 0], ['SLO', '07:25', '07:27', 151],
+        ['RJY', '08:10', '08:12', 201], ['BZA', '10:00', '10:05', 350],
+        ['EE', '11:05', '11:07', 410], ['KMT', '12:10', '12:12', 496],
+        ['KZJ', '13:20', '13:22', 596], ['SC', '15:00', null, 731],
+      ],
+    },
+    inbound: {
+      number: '20834',
+      name: 'Secunderabad - Visakhapatnam Vande Bharat Express',
+      stops: [
+        ['SC', null, '15:30', 0], ['KZJ', '17:05', '17:07', 135],
+        ['KMT', '18:15', '18:17', 235], ['EE', '19:20', '19:22', 321],
+        ['BZA', '20:20', '20:25', 381], ['RJY', '22:10', '22:12', 530],
+        ['SLO', '22:55', '22:57', 580], ['VSKP', '00:35', null, 731],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '12779',
+      name: 'Goa Express',
+      stops: [
+        ['NZM', null, '15:00', 0], ['GWL', '19:00', '19:05', 313],
+        ['VGLJ', '21:00', '21:10', 410], ['BPL', '02:00', '02:10', 702],
+        ['ET', '04:00', '04:05', 794], ['BSL', '08:30', '08:35', 1094],
+        ['PUNE', '17:00', '17:10', 1500], ['DWR', '22:30', '22:32', 1810],
+        ['BGM', '00:30', '00:35', 1940], ['MAO', '05:00', '05:10', 2195],
+        ['VSG', '06:00', null, 2220],
+      ],
+    },
+    inbound: {
+      number: '12780',
+      name: 'Goa Express',
+      stops: [
+        ['VSG', null, '07:00', 0], ['MAO', '07:50', '08:00', 25],
+        ['BGM', '12:20', '12:25', 280], ['DWR', '14:20', '14:22', 410],
+        ['PUNE', '20:00', '20:10', 720], ['BSL', '04:30', '04:35', 1120],
+        ['ET', '08:50', '08:55', 1420], ['BPL', '10:45', '10:55', 1512],
+        ['VGLJ', '15:45', '15:55', 1804], ['GWL', '17:45', '17:50', 1901],
+        ['NZM', '21:45', null, 2220],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '12839',
+      name: 'Chennai - Howrah Mail',
+      stops: [
+        ['MAS', null, '11:00', 0], ['BZA', '18:00', '18:10', 431],
+        ['RJY', '20:35', '20:37', 581], ['VSKP', '23:45', '00:05', 780],
+        ['BBS', '06:20', '06:25', 1226], ['KUR', '07:00', '07:05', 1260],
+        ['CTC', '07:45', '07:47', 1290], ['BLS', '10:20', '10:22', 1450],
+        ['KGP', '12:00', '12:05', 1568], ['HWH', '13:45', null, 1684],
+      ],
+    },
+    inbound: {
+      number: '12840',
+      name: 'Howrah - Chennai Mail',
+      stops: [
+        ['HWH', null, '15:00', 0], ['KGP', '16:40', '16:45', 116],
+        ['BLS', '18:20', '18:22', 234], ['CTC', '20:55', '20:57', 394],
+        ['KUR', '21:35', '21:40', 424], ['BBS', '22:15', '22:20', 458],
+        ['VSKP', '04:35', '04:55', 904], ['RJY', '08:05', '08:07', 1103],
+        ['BZA', '10:35', '10:45', 1253], ['MAS', '17:45', null, 1684],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '12933',
+      name: 'Karnavati Express',
+      stops: [
+        ['MMCT', null, '13:45', 0], ['BVI', '14:10', '14:13', 30],
+        ['VAPI', '17:05', '17:07', 158], ['ST', '18:20', '18:25', 253],
+        ['BRC', '20:20', '20:25', 383], ['ANND', '21:00', '21:02', 419],
+        ['ADI', '22:00', null, 492],
+      ],
+    },
+    inbound: {
+      number: '12934',
+      name: 'Karnavati Express',
+      stops: [
+        ['ADI', null, '05:00', 0], ['ANND', '05:55', '05:57', 73],
+        ['BRC', '06:30', '06:35', 109], ['ST', '08:30', '08:35', 239],
+        ['VAPI', '09:45', '09:47', 334], ['BVI', '12:40', '12:43', 462],
+        ['MMCT', '13:10', null, 492],
+      ],
+    },
+  },
+  {
+    outbound: {
+      number: '12565',
+      name: 'Bihar Sampark Kranti Express',
+      stops: [
+        ['DBG', null, '08:00', 0], ['SPJ', '09:30', '09:35', 38],
+        ['MFP', '11:00', '11:05', 90], ['HJP', '13:15', '13:20', 212],
+        ['PNBE', '14:20', '14:30', 267], ['GAYA', '17:00', '17:05', 367],
+        ['DDU', '20:00', '20:10', 571], ['PRYJ', '22:00', '22:05', 723],
+        ['CNB', '01:00', '01:10', 918], ['NDLS', '07:00', null, 1358],
+      ],
+    },
+    inbound: {
+      number: '12566',
+      name: 'Bihar Sampark Kranti Express',
+      stops: [
+        ['NDLS', null, '14:00', 0], ['CNB', '20:00', '20:10', 440],
+        ['PRYJ', '23:05', '23:10', 635], ['DDU', '01:00', '01:10', 787],
+        ['GAYA', '04:00', '04:05', 991], ['PNBE', '06:30', '06:40', 1091],
+        ['HJP', '07:30', '07:35', 1146], ['MFP', '09:45', '09:50', 1268],
+        ['SPJ', '11:15', '11:20', 1320], ['DBG', '12:50', null, 1358],
+      ],
+    },
+  },
+];
+
 const TRAINS = [
+  ...ADDITIONAL_TRAIN_PAIRS.flatMap((pair) => buildTrainPair(pair)),
   // ═══════════════════════════════════════════════════════════════════════════
   // ── CORRIDOR 1: DELHI TO HIJLI & KHARAGPUR (User's Exact Specification)
   // ═══════════════════════════════════════════════════════════════════════════
@@ -2355,4 +2793,3 @@ seedRealIndianRailways()
     await prisma.$disconnect();
     process.exit(0);
   });
-

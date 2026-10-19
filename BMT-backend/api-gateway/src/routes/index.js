@@ -191,6 +191,12 @@ router.get(
      searchServiceProxy
 );
 
+router.get(
+     '/search/live-status',
+     endpointRateLimit(120, 60000), // 120 requests per minute
+     searchServiceProxy
+);
+
 // ===========================
 // INVENTORY SERVICE ROUTES (public read-only)
 // ===========================

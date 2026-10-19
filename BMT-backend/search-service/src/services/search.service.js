@@ -639,6 +639,392 @@ const searchByTrain = async (query) => {
      }
 };
 
+const parseTimeToMinutes = (timeStr) => {
+     if (!timeStr) return null;
+     const s = String(timeStr).trim();
+     if (s.toLowerCase() === 'starts' || s.toLowerCase() === 'terminates' || s.includes('--')) return null;
+
+     const ampmMatch = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
+     if (ampmMatch) {
+          let hours = parseInt(ampmMatch[1], 10);
+          const minutes = parseInt(ampmMatch[2], 10);
+          const modifier = ampmMatch[3]?.toUpperCase();
+          if (modifier === 'PM' && hours < 12) hours += 12;
+          if (modifier === 'AM' && hours === 12) hours = 0;
+          return hours * 60 + minutes;
+     }
+
+     const parts = s.split(':');
+     if (parts.length >= 2) {
+          const h = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          if (!isNaN(h) && !isNaN(m)) return h * 60 + m;
+     }
+     return null;
+};
+
+const formatDurationText = (minutes) => {
+     const absM = Math.max(0, Math.floor(Math.abs(minutes)));
+     const hrs = Math.floor(absM / 60);
+     const mins = absM % 60;
+     if (hrs === 0) return `${mins}m`;
+     if (mins === 0) return `${hrs}h`;
+     return `${hrs}h ${mins}m`;
+};
+
+const formatTrainLiveTelemetry = (t, customTime = null) => {
+     // 1. Current IST time (Indian Standard Time UTC+5:30)
+     const now = customTime ? new Date(customTime) : new Date();
+     let istDate = now;
+     try {
+          istDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+     } catch (_) {}
+
+     const currentHour = istDate.getHours();
+     const currentMin = istDate.getMinutes();
+     const currentClockMinutes = currentHour * 60 + currentMin;
+     const currentDayOfWeek = istDate.getDay(); // 0 = Sun, 1 = Mon ...
+     const currentTimeFormatted = istDate.toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+     });
+
+     // 2. Extract route stops
+     let rawStops = [];
+     if (Array.isArray(t.route) && t.route.length > 0) {
+          rawStops = t.route.map((rs, idx) => ({
+               name: rs.stationName ? `${rs.stationName} (${rs.stationCode || rs.code || ''})` : (rs.name || `Station #${idx + 1}`),
+               code: (rs.stationCode || rs.code || '').toUpperCase(),
+               arrivalTime: rs.arrivalTime || null,
+               departureTime: rs.departureTime || null,
+               platform: rs.platform || `Pf #${(idx % 4) + 1}`,
+               distance: rs.distanceFromOrigin || rs.distance || idx * 120,
+          }));
+     } else if (Array.isArray(t.stops) && t.stops.length > 0) {
+          rawStops = t.stops.map((s, idx) => ({
+               name: s.name || s.stationName || `Station #${idx + 1}`,
+               code: (s.code || s.stationCode || '').toUpperCase(),
+               arrivalTime: s.arrivalTime || s.time || null,
+               departureTime: s.departureTime || s.time || null,
+               platform: s.platform || `Pf #${(idx % 4) + 1}`,
+               distance: s.distance || idx * 120,
+          }));
+     }
+
+     if (rawStops.length === 0) {
+          rawStops = [
+               { name: t.from?.name || 'Origin Station', code: t.from?.code || '', arrivalTime: null, departureTime: t.from?.departure || '06:00', platform: 'Pf #1', distance: 0 },
+               { name: t.to?.name || 'Destination Station', code: t.to?.code || '', arrivalTime: t.to?.arrival || '14:00', departureTime: null, platform: 'Pf #2', distance: 750 }
+          ];
+     }
+
+     const originStop = rawStops[0];
+     const destStop = rawStops[rawStops.length - 1];
+     const originDepMin = parseTimeToMinutes(originStop.departureTime || originStop.arrivalTime) ?? 360;
+
+     // 3. Map cumulative minutes from trip departure (0 min at origin)
+     let cumulativeDayOffset = 0;
+     let prevMinute = originDepMin;
+
+     const mappedStops = rawStops.map((s, idx) => {
+          let arrM = parseTimeToMinutes(s.arrivalTime);
+          let depM = parseTimeToMinutes(s.departureTime);
+
+          if (idx === 0) {
+               arrM = originDepMin;
+               depM = originDepMin;
+          } else if (idx === rawStops.length - 1) {
+               if (arrM === null) arrM = prevMinute + 60;
+               depM = arrM;
+          } else {
+               if (arrM === null && depM !== null) arrM = depM;
+               if (depM === null && arrM !== null) depM = arrM;
+               if (arrM === null && depM === null) {
+                    arrM = prevMinute + 60;
+                    depM = arrM + 5;
+               }
+          }
+
+          if (arrM < prevMinute - 60) {
+               cumulativeDayOffset += 1440;
+          }
+          prevMinute = depM || arrM;
+
+          const cumArr = Math.max(0, (arrM + cumulativeDayOffset) - originDepMin);
+          const cumDep = Math.max(cumArr, (depM + cumulativeDayOffset) - originDepMin);
+
+          return {
+               ...s,
+               time: s.departureTime || s.arrivalTime || '--:--',
+               cumArr,
+               cumDep,
+          };
+     });
+
+     const totalTripDuration = mappedStops[mappedStops.length - 1].cumArr;
+     const runningDays = Array.isArray(t.runningDays) && t.runningDays.length > 0 ? t.runningDays : [0, 1, 2, 3, 4, 5, 6];
+
+     // 4. Check whether a trip is currently active right now
+     const maxDaysAgo = Math.min(3, Math.ceil(totalTripDuration / 1440));
+     let activeRun = null;
+
+     for (let dayAgo = 0; dayAgo <= maxDaysAgo; dayAgo++) {
+          const depDayOfWeek = (currentDayOfWeek - dayAgo + 7) % 7;
+          if (!runningDays.includes(depDayOfWeek)) continue;
+
+          const elapsedSinceDep = (currentClockMinutes + dayAgo * 1440) - originDepMin;
+          if (elapsedSinceDep >= 0 && elapsedSinceDep <= totalTripDuration) {
+               activeRun = { dayAgo, elapsedSinceDep, depDayOfWeek };
+               break;
+          }
+     }
+
+     const isRunning = activeRun !== null;
+     const delay = t.delay ?? (t.trainType === 'VANDE_BHARAT' ? 0 : t.trainType === 'RAJDHANI' ? 4 : 0);
+
+     // Phase classification: RUNNING | YET_TO_RUN | COMPLETED | FUTURE_SCHEDULE
+     let phase = 'RUNNING';
+     let completionMinsAgo = 0;
+
+     if (!isRunning) {
+          const runsToday = runningDays.includes(currentDayOfWeek);
+          if (runsToday && currentClockMinutes < originDepMin) {
+               phase = 'YET_TO_RUN';
+          } else if (runsToday && currentClockMinutes > (originDepMin + totalTripDuration)) {
+               phase = 'COMPLETED';
+               completionMinsAgo = Math.max(0, currentClockMinutes - (originDepMin + totalTripDuration));
+          } else {
+               // Check if yesterday's scheduled run completed earlier today
+               const yesterdayDayOfWeek = (currentDayOfWeek - 1 + 7) % 7;
+               const runsYesterday = runningDays.includes(yesterdayDayOfWeek);
+               const elapsedSinceYesterdayDep = (currentClockMinutes + 1440) - originDepMin;
+               const yesterdayArrClockMin = (originDepMin + totalTripDuration) - 1440;
+
+               if (runsYesterday && elapsedSinceYesterdayDep > totalTripDuration && yesterdayArrClockMin >= 0 && currentClockMinutes >= yesterdayArrClockMin) {
+                    phase = 'COMPLETED';
+                    completionMinsAgo = Math.max(0, currentClockMinutes - yesterdayArrClockMin);
+               } else {
+                    phase = 'FUTURE_SCHEDULE';
+               }
+          }
+     }
+
+     let currentStation = '';
+     let nextStation = '';
+     let currentPlatform = '';
+     let trainSpeed = '110 km/h';
+     let liveStatus = 'Running On Time';
+     let liveSummary = '';
+     let enrichedStops = [];
+
+     if (phase === 'RUNNING') {
+          const elapsed = activeRun.elapsedSinceDep;
+
+          // Check if halted at platform
+          let haltIdx = -1;
+          for (let i = 0; i < mappedStops.length; i++) {
+               if (elapsed >= mappedStops[i].cumArr && elapsed <= mappedStops[i].cumDep) {
+                    haltIdx = i;
+                    break;
+               }
+          }
+
+          if (haltIdx !== -1) {
+               const stop = mappedStops[haltIdx];
+               const nextStop = mappedStops[haltIdx + 1] || stop;
+               const haltRemain = Math.max(0, stop.cumDep - elapsed);
+               currentStation = stop.name.split(' (')[0];
+               nextStation = nextStop.name.split(' (')[0];
+               currentPlatform = stop.platform || 'Pf #1';
+               trainSpeed = '0 km/h (Platform Halt)';
+               liveStatus = delay > 0 ? `Halted • Delayed ${delay}m` : 'Halted at Platform';
+               liveSummary = `Currently standing at platform at ${currentStation} (${currentPlatform}). Scheduled departure in ${haltRemain}m towards ${nextStation}.`;
+
+               enrichedStops = mappedStops.map((s, idx) => {
+                    const isPast = idx < haltIdx;
+                    const isCurrent = idx === haltIdx;
+                    const isNext = idx === haltIdx + 1;
+                    return {
+                         ...s,
+                         departed: isPast,
+                         current: isCurrent,
+                         upcoming: idx > haltIdx,
+                         isNextHalt: isNext,
+                         statusDetail: isCurrent
+                              ? `Standing at Platform • Scheduled Departure ${s.time}`
+                              : isPast
+                              ? `Passed at ${s.time}`
+                              : `Scheduled Arrival: ${s.time}`,
+                    };
+               });
+          } else {
+               let lastPassedIdx = 0;
+               for (let i = 0; i < mappedStops.length; i++) {
+                    if (elapsed >= mappedStops[i].cumDep) {
+                         lastPassedIdx = i;
+                    } else {
+                         break;
+                    }
+               }
+
+               const lastStop = mappedStops[lastPassedIdx];
+               const nextStop = mappedStops[lastPassedIdx + 1] || mappedStops[mappedStops.length - 1];
+               const minsSinceDep = Math.max(0, elapsed - lastStop.cumDep);
+               const minsUntilNext = Math.max(1, nextStop.cumArr - elapsed);
+
+               currentStation = lastStop.name.split(' (')[0];
+               nextStation = nextStop.name.split(' (')[0];
+               currentPlatform = nextStop.platform || 'Pf #1';
+               trainSpeed = t.trainType === 'VANDE_BHARAT' ? '130 km/h' : t.trainType === 'RAJDHANI' ? '120 km/h' : '110 km/h';
+               liveStatus = delay > 0 ? `Delayed by ${delay}m` : 'Running On Time';
+               liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDep)} ago. Next Stop: ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextStop.time}).`;
+
+               enrichedStops = mappedStops.map((s, idx) => {
+                    const isPast = idx <= lastPassedIdx;
+                    const isNext = idx === lastPassedIdx + 1;
+                    return {
+                         ...s,
+                         departed: isPast,
+                         current: false,
+                         upcoming: idx > lastPassedIdx,
+                         isNextHalt: isNext,
+                         statusDetail: isNext
+                              ? `Next Halt: Expected in ${formatDurationText(minsUntilNext)} (at ${s.time})`
+                              : isPast
+                              ? `Departed at ${s.time} (${formatDurationText(elapsed - s.cumDep)} ago)`
+                              : `Scheduled Arrival: ${s.time}`,
+                    };
+               });
+          }
+     } else if (phase === 'YET_TO_RUN') {
+          const timeUntilDep = originDepMin - currentClockMinutes;
+          currentStation = originStop.name.split(' (')[0];
+          nextStation = mappedStops[1]?.name ? mappedStops[1].name.split(' (')[0] : destStop.name.split(' (')[0];
+          currentPlatform = originStop.platform || 'Pf #1';
+          trainSpeed = '0 km/h (Platform / Yard)';
+          liveStatus = `Yet to Start • Departs in ${formatDurationText(timeUntilDep)}`;
+          liveSummary = `Train is scheduled to depart today from ${currentStation} (${currentPlatform}) in ${formatDurationText(timeUntilDep)} at ${originStop.time || originStop.departureTime} towards ${destStop.name.split(' (')[0]}.`;
+
+          enrichedStops = mappedStops.map((s, idx) => ({
+               ...s,
+               departed: false,
+               current: idx === 0,
+               upcoming: idx > 0,
+               isNextHalt: false,
+               statusDetail: idx === 0
+                    ? `Origin Station • Scheduled Departure at ${s.time} (in ${formatDurationText(timeUntilDep)})`
+                    : `Scheduled Arrival: ${s.time}`,
+          }));
+     } else if (phase === 'COMPLETED') {
+          currentStation = destStop.name.split(' (')[0];
+          nextStation = 'Terminated';
+          currentPlatform = destStop.platform || 'Pf #1';
+          trainSpeed = '0 km/h (Journey Ended)';
+          liveStatus = `Journey Completed at ${destStop.time || destStop.arrivalTime}`;
+          liveSummary = `Train completed its journey today. Arrived at destination ${currentStation} (${currentPlatform}) at ${destStop.time || destStop.arrivalTime} (${formatDurationText(completionMinsAgo)} ago).`;
+
+          enrichedStops = mappedStops.map((s, idx) => {
+               const isDest = idx === mappedStops.length - 1;
+               return {
+                    ...s,
+                    departed: !isDest,
+                    current: isDest,
+                    upcoming: false,
+                    isNextHalt: false,
+                    statusDetail: isDest
+                         ? `Destination Reached at ${s.time} (${formatDurationText(completionMinsAgo)} ago)`
+                         : `Departed at ${s.time}`,
+               };
+          });
+     } else {
+          currentStation = originStop.name.split(' (')[0];
+          nextStation = mappedStops[1]?.name ? mappedStops[1].name.split(' (')[0] : destStop.name.split(' (')[0];
+          currentPlatform = originStop.platform || 'Pf #1';
+          trainSpeed = '0 km/h (Not Operating Today)';
+          liveStatus = `Runs on ${t.runsOn || 'Timetable Service'}`;
+          liveSummary = `Train does not operate on track today. Runs on: ${t.runsOn || 'Scheduled Days'}. Next run according to timetable.`;
+
+          enrichedStops = mappedStops.map((s, idx) => ({
+               ...s,
+               departed: false,
+               current: false,
+               upcoming: true,
+               isNextHalt: idx === 0,
+               statusDetail: `Scheduled Time: ${s.time}`,
+          }));
+     }
+
+     return {
+          id: t.trainId || t.id || t.trainNumber,
+          trainId: t.trainId || t.id,
+          number: t.trainNumber || t.number,
+          name: t.trainName || t.name,
+          trainType: t.trainType || 'EXPRESS',
+          fromName: originStop.name,
+          toName: destStop.name,
+          departureTime: originStop.time || originStop.departureTime,
+          arrivalTime: destStop.time || destStop.arrivalTime,
+          runsOn: t.runsOn || 'Daily Service',
+          runningDays,
+          phase,
+          isRunning: phase === 'RUNNING',
+          isYetToRun: phase === 'YET_TO_RUN',
+          isCompleted: phase === 'COMPLETED',
+          status: liveStatus,
+          liveSummary,
+          currentTimeFormatted,
+          currentStation,
+          nextStation,
+          platform: currentPlatform,
+          delay,
+          speed: trainSpeed,
+          stops: enrichedStops,
+     };
+};
+
+/**
+ * Live status query: checks timetable against real-time IST clock.
+ * Returns running trains, yet to run trains, completed trains, and full corridor schedule.
+ */
+const getLiveStatus = async ({ from, to, train, time }) => {
+     let matchedTrains = [];
+
+     if (from && to) {
+          const searchRes = await searchTrains(from, to);
+          matchedTrains = searchRes?.trains || [];
+     } else if (train) {
+          matchedTrains = await searchByTrain(train);
+     }
+
+     const evaluated = matchedTrains.map((t) => formatTrainLiveTelemetry(t, time));
+     const activeTrains = evaluated.filter((t) => t.phase === 'RUNNING');
+     const yetToRunTrains = evaluated.filter((t) => t.phase === 'YET_TO_RUN');
+     const completedTrains = evaluated.filter((t) => t.phase === 'COMPLETED');
+     const otherDayTrains = evaluated.filter((t) => t.phase === 'FUTURE_SCHEDULE');
+
+     let now = time ? new Date(time) : new Date();
+     try {
+          now = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+     } catch (_) {}
+
+     return {
+          from,
+          to,
+          queryTrain: train,
+          currentTime: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          activeCount: activeTrains.length,
+          yetToRunCount: yetToRunTrains.length,
+          completedCount: completedTrains.length,
+          totalCount: evaluated.length,
+          activeTrains,
+          yetToRunTrains,
+          completedTrains,
+          otherDayTrains,
+          allTrains: evaluated,
+     };
+};
+
 module.exports = {
      indexStation,
      indexTrainRoute,
@@ -650,4 +1036,6 @@ module.exports = {
      getAllStations,
      getAllTrains,
      searchByTrain,
+     formatTrainLiveTelemetry,
+     getLiveStatus,
 };
