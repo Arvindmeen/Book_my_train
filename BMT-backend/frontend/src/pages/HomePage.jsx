@@ -12,6 +12,7 @@ import PwaInstallModal from '../components/common/PwaInstallModal';
 import { predictWaitlist, predictPnr } from '../utils/aiPrediction';
 import AdminHomeView from '../components/admin/AdminHomeView';
 import AnimatedTrainTrack from '../components/common/AnimatedTrainTrack';
+import ServiceRealisticIcon from '../components/common/ServiceRealisticIcon';
 import { AUTHENTIC_TRAIN_ROUTES, STATION_DIRECTORY } from '../utils/trainRoutes';
 
 const parseTimeToMinutes = (timeStr) => {
@@ -2582,9 +2583,7 @@ export default function HomePage() {
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl p-2 rounded-xl bg-slate-50 border border-slate-150 group-hover:scale-105 transition-transform">
-                    {s.icon}
-                  </span>
+                  <ServiceRealisticIcon id={s.id} size="md" />
                   <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
                     s.id === 'cabs' || s.action === 'ride'
                       ? 'text-amber-800 bg-amber-50 border border-amber-200/80'

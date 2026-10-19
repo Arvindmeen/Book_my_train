@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import ServiceRealisticIcon from '../components/common/ServiceRealisticIcon';
 
 const ALL_SERVICES = [
   {
@@ -144,9 +145,7 @@ export default function ServicesPage() {
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-3xl p-2 rounded-xl bg-slate-50 border border-slate-150 group-hover:scale-105 transition-transform">
-                    {s.icon}
-                  </span>
+                  <ServiceRealisticIcon id={s.id} size="lg" />
                   <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${s.bgColor} ${s.accentColor} border ${s.borderColor}`}>
                     {s.badge}
                   </span>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { useToast } from '../components/ui/Toast';
+import ServiceRealisticIcon from '../components/common/ServiceRealisticIcon';
 
 const SERVICES_CONFIG = {
   food: {
@@ -303,9 +304,7 @@ export default function ServiceDetailPage() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
             <div className="space-y-3 max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-2xl shadow-xs">
-                  {service.icon}
-                </span>
+                <ServiceRealisticIcon id={service.id} size="lg" />
                 <span className={`text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full border ${service.bgColor} ${service.accentColor} ${service.borderColor}`}>
                   {service.badge}
                 </span>
