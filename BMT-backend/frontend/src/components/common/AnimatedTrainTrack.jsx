@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { playTrainHorn, stopTrainHorn } from '../../utils/trainHornAudio';
 
 /**
  * High-Fidelity Realistic Indian Railways Vande Bharat Express Train
  * - Dynamic spinning 8-spoke alloy wheels with center axle caps
- * - Hover to stop: Entire train halts and wheels freeze on hover
+ * - Hover on TRAIN to stop: Entire train halts and wheels freeze only when hovering the train itself (not the track)
+ * - Authentic Indian Railways Locomotive Air Chime Horn: Blows on train hover via Web Audio API based on user speaker volume
  * - Realistic aerodynamic bullet nose, driver cockpit, pantograph & headlight beam
  * - Detailed coaches with interior warm light, passenger windows & bellows connectors
  * - Authentic Last Vehicle (LV) tail marker with flashing red LED beacons
@@ -52,35 +54,98 @@ function BogieFrame({ x1, x2, y }) {
 }
 
 export default function AnimatedTrainTrack({ onTrackClick }) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isTrainHovered, setIsTrainHovered] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const handleTrainMouseEnter = () => {
+    setIsTrainHovered(true);
+    if (!isMuted) {
+      playTrainHorn(0.42);
+    }
+  };
+
+  const handleTrainMouseLeave = () => {
+    setIsTrainHovered(false);
+    stopTrainHorn(0.22);
+  };
+
+  // Clean up any active horn sound on unmount
+  useEffect(() => {
+    return () => {
+      stopTrainHorn(0.04);
+    };
+  }, []);
 
   return (
     <div
-      className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto my-3 relative z-10 select-none train-track-container group cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={onTrackClick}
-      title="Vande Bharat Express (In-Transit) · Hover to stop train · Click to track live status"
+      className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto my-3 relative z-10 select-none train-track-container"
+      title="Indian Railways High-Speed Track · Hover directly on the train to halt and blow air chime horn"
     >
-      {/* Hover Info Tooltip Badge */}
-      <div className="flex items-center justify-between px-2 mb-1">
+      {/* Track Status Bar & Interactive Controls */}
+      <div className="flex items-center justify-between px-2 mb-1.5 gap-2">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-            <span className={`w-1.5 h-1.5 rounded-full ${isHovered ? 'bg-amber-500' : 'bg-emerald-500 animate-ping'}`} />
-            <span>{isHovered ? '⏸️ Train Paused at Station (Hovered)' : '⚡ High-Speed Rail Corridor · 130 km/h'}</span>
+          <span
+            className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border transition-all duration-200 ${
+              isTrainHovered
+                ? 'text-amber-900 bg-amber-50 border-amber-300 shadow-xs'
+                : 'text-emerald-800 bg-emerald-50 border-emerald-200'
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isTrainHovered ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-ping'
+              }`}
+            />
+            <span>
+              {isTrainHovered
+                ? isMuted
+                  ? '⏸️ Train Paused (Hovered)'
+                  : '📢 ⏸️ Train Paused · Horn Active!'
+                : '⚡ High-Speed Rail Corridor · 130 km/h'}
+            </span>
           </span>
+
           <span className="text-[10px] font-bold text-slate-400 hidden sm:inline">
-            Hover to halt train &bull; Wheels spin live
+            {isTrainHovered
+              ? 'Move cursor off train to resume speed'
+              : 'Hover directly on train to stop & blow real horn'}
           </span>
         </div>
 
-        <span className="text-[10px] font-extrabold text-slate-500 hidden md:inline font-mono">
-          Route: NDLS &rarr; BSB (Vande Bharat 22436)
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Audio Mute / Unmute Toggle Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMuted((prev) => {
+                const next = !prev;
+                if (next) stopTrainHorn(0.05);
+                else if (isTrainHovered) playTrainHorn(0.42);
+                return next;
+              });
+            }}
+            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 transition-all border ${
+              isMuted
+                ? 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 shadow-2xs'
+            }`}
+            title={isMuted ? 'Click to enable train horn sound' : 'Click to mute train horn sound'}
+          >
+            <span>{isMuted ? '🔇 Horn Muted' : '🔊 Horn Sound ON'}</span>
+          </button>
+
+          <span className="text-[10px] font-extrabold text-slate-500 hidden md:inline font-mono">
+            Route: NDLS &rarr; BSB (Vande Bharat 22436)
+          </span>
+        </div>
       </div>
 
       {/* Track & Train Stage */}
-      <div className="relative h-12 overflow-hidden rounded-2xl bg-gradient-to-b from-transparent via-slate-50/50 to-slate-100/60 border border-slate-200/60 shadow-2xs">
+      <div
+        className="relative h-12 overflow-hidden rounded-2xl bg-gradient-to-b from-transparent via-slate-50/50 to-slate-100/60 border border-slate-200/60 shadow-2xs"
+        onClick={onTrackClick}
+      >
         
         {/* Railway Sleepers / Ties (Repeating Pattern along the track) */}
         <div className="absolute bottom-1 inset-x-0 h-2 flex justify-between px-1 pointer-events-none opacity-40">
@@ -94,14 +159,23 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
         <div className="absolute bottom-[9px] inset-x-0 h-[1px] bg-white/80 pointer-events-none" />
 
         {/* The Animated High-Speed Train Rake */}
-        <div className="animate-train-glide absolute bottom-1.5 flex items-end">
+        <div
+          className={`animate-train-glide absolute bottom-1.5 flex items-end cursor-pointer group/train ${
+            isTrainHovered ? 'train-is-hovered' : ''
+          }`}
+          onMouseEnter={handleTrainMouseEnter}
+          onMouseLeave={handleTrainMouseLeave}
+          title="Hover directly on train to halt and blow air chime horn"
+        >
           
           <svg
-            className="h-10 w-auto overflow-visible drop-shadow-md"
+            className="h-10 w-auto overflow-visible drop-shadow-md pointer-events-auto"
             viewBox="0 0 540 40"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
+            {/* Transparent full-rake hit-test shield ensuring rock-solid hover even between coach gaps */}
+            <rect x="0" y="2" width="540" height="36" fill="transparent" />
             {/* ═══════════════════════════════════════════════════════════════════
                 COACH 4: TAIL GUARD VEHICLE (REAR - BLINKING RED BEACONS + 'LV')
                 ═══════════════════════════════════════════════════════════════════ */}

@@ -144,14 +144,14 @@
   transform-box: fill-box;
 }
 
-/* Hover-to-Stop: Halts both train movement and wheel spin smoothly */
-.train-track-container:hover .animate-train-glide,
-.animate-train-glide:hover {
+/* Hover-on-Train: Halts only when the cursor is directly over the train rake (not track) */
+.animate-train-glide:hover,
+.animate-train-glide.train-is-hovered {
   animation-play-state: paused !important;
 }
 
-.train-track-container:hover .animate-train-wheel,
-.animate-train-glide:hover .animate-train-wheel {
+.animate-train-glide:hover .animate-train-wheel,
+.animate-train-glide.train-is-hovered .animate-train-wheel {
   animation-play-state: paused !important;
 }
 
