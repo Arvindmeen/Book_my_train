@@ -121,25 +121,56 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
           throw new BadRequestError("Google Authentication is not configured on the server. Please set GOOGLE_CLIENT_ID in user-service environment.");
      }
 
-     const oauthClient = new OAuth2Client(clientId);
-     const ticket = await oauthClient.verifyIdToken({
-          idToken,
-          audience: clientId
-     });
-     const payload = ticket.getPayload();
+     let googleUser = null;
 
-     if(!payload.sub || !payload.email){
-          throw new UnauthorizedError("Invalid Google Token Payload")
-     }
+     // 1. If token is a Google OAuth2 Access Token (from popup flow, starts with 'ya29.')
+     if (typeof idToken === 'string' && idToken.startsWith('ya29.')) {
+          try {
+               const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${idToken}` }
+               });
+               if (!userInfoRes.ok) {
+                    throw new Error(`Google UserInfo API returned ${userInfoRes.status}`);
+               }
+               const payload = await userInfoRes.json();
+               if (!payload?.sub || !payload?.email) {
+                    throw new UnauthorizedError("Invalid Google UserInfo response");
+               }
+               googleUser = {
+                    provider: "google",
+                    providerId: payload.sub,
+                    email: payload.email.toLowerCase().trim(),
+                    firstName: payload.given_name || payload.name?.split(' ')[0] || 'Traveler',
+                    lastName: payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '',
+                    emailVerified: payload.email_verified || false,
+                    profilePicture: payload.picture || null
+               };
+          } catch (err) {
+               logger.error(`Error verifying Google access token: ${err.message}`);
+               throw new UnauthorizedError("Failed to verify Google access token with Google");
+          }
+     } else {
+          // 2. Otherwise verify as an OpenID Connect JWT ID Token
+          const oauthClient = new OAuth2Client(clientId);
+          const ticket = await oauthClient.verifyIdToken({
+               idToken,
+               audience: clientId
+          });
+          const payload = ticket.getPayload();
 
-     const googleUser = {
-          provider: "google",
-          providerId: payload.sub,
-          email: payload.email.toLowerCase().trim(),
-          firstName: payload.given_name || payload.name?.split(' ')[0] || 'Traveler',
-          lastName: payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '',
-          emailVerified: payload.email_verified || false,
-          profilePicture: payload.picture || null
+          if(!payload.sub || !payload.email){
+               throw new UnauthorizedError("Invalid Google Token Payload")
+          }
+
+          googleUser = {
+               provider: "google",
+               providerId: payload.sub,
+               email: payload.email.toLowerCase().trim(),
+               firstName: payload.given_name || payload.name?.split(' ')[0] || 'Traveler',
+               lastName: payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '',
+               emailVerified: payload.email_verified || false,
+               profilePicture: payload.picture || null
+          };
      }
 
 
