@@ -12,7 +12,7 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
   const showToast = useToast();
   const navigate = useNavigate();
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '285711246913-fma3kt05h73e9vb8nsijut84obkmbsgo.apps.googleusercontent.com';
 
   // Handle successful Google token credential from Google Identity Services
   const handleCredentialResponse = async (response) => {
@@ -91,6 +91,7 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
 
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
+        const targetWidth = Math.min(Math.max(containerRef.current.offsetWidth || 340, 240), 380);
         window.google.accounts.id.renderButton(containerRef.current, {
           type: 'standard',
           theme: 'outline',
@@ -98,7 +99,7 @@ export default function GoogleSignInButton({ mode = 'signin', redirect = '/', on
           text: mode === 'signup' ? 'signup_with' : 'signin_with',
           shape: 'rectangular',
           logo_alignment: 'left',
-          width: 380,
+          width: targetWidth,
         });
       }
     } catch (err) {

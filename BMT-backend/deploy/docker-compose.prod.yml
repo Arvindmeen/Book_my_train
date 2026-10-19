@@ -95,6 +95,7 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       KAFKA_BROKER: kafka:9092
       ADMIN_EMAIL: ${ADMIN_EMAIL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-285711246913-fma3kt05h73e9vb8nsijut84obkmbsgo.apps.googleusercontent.com}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

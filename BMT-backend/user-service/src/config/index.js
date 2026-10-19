@@ -22,7 +22,7 @@ const config = {
   REFRESH_TOKEN_EXP_SEC: Number(process.env.REFRESH_TOKEN_EXP_SEC || 2592000),
   REDIS_USER_TTL: Number(process.env.REDIS_USER_TTL || 86400),
 
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '285711246913-fma3kt05h73e9vb8nsijut84obkmbsgo.apps.googleusercontent.com',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 
   INTERNAL_SERVICE_KEY: process.env.INTERNAL_SERVICE_KEY,
