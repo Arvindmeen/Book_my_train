@@ -163,13 +163,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-groww-hero">
+    <div className="min-h-[calc(100vh-70px)] flex flex-col items-center justify-start sm:justify-center px-4 pt-3 sm:pt-6 pb-6 bg-groww-hero">
       <div className="w-full max-w-md animate-fade-in-up">
         
         {/* Brand Header */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-3 mb-3 group" title="Book My Train Home">
-            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-1 shadow-md shadow-emerald-500/25 transition-all duration-300 group-hover:scale-105">
+        <div className="text-center mb-3 sm:mb-4">
+          <Link to="/" className="inline-flex items-center gap-2.5 mb-1.5 sm:mb-2 group" title="Book My Train Home">
+            <div className="relative flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-1 shadow-md shadow-emerald-500/25 transition-all duration-300 group-hover:scale-105">
               <img
                 src="/navbar-logo.jpg"
                 alt="Book My Train Logo"
@@ -177,15 +177,15 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex flex-col text-left">
-              <span className="font-display font-black text-2xl tracking-tight leading-none text-slate-900 group-hover:text-emerald-700 transition-colors">
+              <span className="font-display font-black text-xl sm:text-2xl tracking-tight leading-none text-slate-900 group-hover:text-emerald-700 transition-colors">
                 Book My <span className="text-emerald-600">Train</span>
               </span>
-              <span className="text-[10px] font-semibold text-emerald-700 tracking-wide mt-1">
+              <span className="text-[10px] font-semibold text-emerald-700 tracking-wide mt-0.5">
                 Smart Rail Ticketing Portal
               </span>
             </div>
           </Link>
-          <h2 className="text-xl font-bold text-slate-800">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-800">
             {tab === 'login'
               ? 'Sign in to your account'
               : tab === 'register'
@@ -196,7 +196,7 @@ export default function LoginPage() {
               ? 'Reset your password'
               : 'Set new password'}
           </h2>
-          <p className="text-slate-500 text-xs mt-1 font-medium">
+          <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 font-medium">
             {tab === 'forgot' || tab === 'reset'
               ? 'Secure password recovery for your railway account'
               : "India's premier portal for express railway ticket bookings"}
@@ -204,15 +204,15 @@ export default function LoginPage() {
         </div>
 
         {/* Auth Card Container */}
-        <div className="card p-6 md:p-8 bg-white border border-slate-150 shadow-card-hover">
+        <div className="card p-4 sm:p-6 md:p-7 bg-white border border-slate-150 shadow-card-hover">
           
           {/* Tabs: Login / Register (Only visible in login or register mode) */}
           {(tab === 'login' || tab === 'register') && (
-            <div className="flex mb-6 p-1 bg-slate-100 rounded-xl">
+            <div className="flex mb-3.5 p-1 bg-slate-100 rounded-xl">
               <button
                 type="button"
                 onClick={() => { setTab('login'); setError(''); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-1.5 sm:py-2 text-xs font-bold rounded-lg transition-all ${
                   tab === 'login'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-500 hover:text-slate-800'
@@ -223,7 +223,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setTab('register'); setError(''); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-1.5 sm:py-2 text-xs font-bold rounded-lg transition-all ${
                   tab === 'register'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-500 hover:text-slate-800'
@@ -235,7 +235,7 @@ export default function LoginPage() {
           )}
 
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl p-3.5 mb-5 flex items-center gap-2 animate-scale-in">
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl p-2.5 sm:p-3 mb-3.5 flex items-center gap-2 animate-scale-in">
               <span className="font-bold text-base leading-none">⚠️</span>
               <span>{error}</span>
             </div>
@@ -243,7 +243,7 @@ export default function LoginPage() {
 
           {/* Login Form */}
           {tab === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
+            <form onSubmit={handleLogin} className="space-y-3 sm:space-y-3.5" autoComplete="off">
               <Input
                 label="Email Address"
                 type="email"
@@ -271,7 +271,7 @@ export default function LoginPage() {
               />
 
               {/* Forgot password link */}
-              <div className="flex justify-end pt-1">
+              <div className="flex justify-end pt-0.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -285,8 +285,8 @@ export default function LoginPage() {
                 </button>
               </div>
               
-              <div className="pt-2">
-                <Button type="submit" loading={loading} className="w-full py-3 shadow-md shadow-emerald-500/20 font-bold">
+              <div className="pt-1.5">
+                <Button type="submit" loading={loading} className="w-full py-2.5 sm:py-3 shadow-md shadow-emerald-500/20 font-bold">
                   Sign In to Account
                 </Button>
               </div>
@@ -296,7 +296,7 @@ export default function LoginPage() {
 
           {/* Register Form */}
           {tab === 'register' && (
-            <form onSubmit={handleRegister} className="space-y-4" autoComplete="off">
+            <form onSubmit={handleRegister} className="space-y-3" autoComplete="off">
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   label="First Name"
@@ -350,13 +350,13 @@ export default function LoginPage() {
                 required
               />
               
-              <div className="pt-2">
-                <Button type="submit" loading={loading} className="w-full py-3 shadow-md shadow-emerald-500/20 font-bold">
+              <div className="pt-1.5">
+                <Button type="submit" loading={loading} className="w-full py-2.5 sm:py-3 shadow-md shadow-emerald-500/20 font-bold">
                   Create Account &rarr;
                 </Button>
               </div>
 
-              <div className="text-center pt-2">
+              <div className="text-center pt-1.5">
                 <p className="text-xs text-slate-500">
                   Already registered?{' '}
                   <button
@@ -373,9 +373,9 @@ export default function LoginPage() {
 
           {/* OTP Verification Form (for Registration) */}
           {tab === 'otp' && (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div className="text-center p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                <span className="text-2xl mb-1 inline-block">📩</span>
+            <form onSubmit={handleVerifyOtp} className="space-y-3">
+              <div className="text-center p-2.5 bg-emerald-50 rounded-xl border border-emerald-200">
+                <span className="text-2xl mb-0.5 inline-block">📩</span>
                 <p className="text-xs font-semibold text-slate-700">
                   Verification OTP code sent to:
                 </p>
@@ -392,8 +392,8 @@ export default function LoginPage() {
                 className="text-center tracking-widest font-mono text-lg"
               />
 
-              <div className="pt-2">
-                <Button type="submit" loading={loading} className="w-full py-3 shadow-md font-bold">
+              <div className="pt-1.5">
+                <Button type="submit" loading={loading} className="w-full py-2.5 sm:py-3 shadow-md font-bold">
                   Verify &amp; Activate Account
                 </Button>
               </div>
@@ -410,8 +410,8 @@ export default function LoginPage() {
 
           {/* Forgot Password Request Form */}
           {tab === 'forgot' && (
-            <form onSubmit={handleForgotPassword} className="space-y-4" autoComplete="off">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <form onSubmit={handleForgotPassword} className="space-y-3" autoComplete="off">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Enter your registered email address below. We will send you a 6-digit OTP code to safely reset your password.
                 </p>
@@ -427,8 +427,8 @@ export default function LoginPage() {
                 required
               />
 
-              <div className="pt-2">
-                <Button type="submit" loading={loading} className="w-full py-3 shadow-md shadow-emerald-500/20 font-bold">
+              <div className="pt-1.5">
+                <Button type="submit" loading={loading} className="w-full py-2.5 sm:py-3 shadow-md shadow-emerald-500/20 font-bold">
                   Send Password Reset Code &rarr;
                 </Button>
               </div>
@@ -494,8 +494,8 @@ export default function LoginPage() {
                 required
               />
 
-              <div className="pt-2">
-                <Button type="submit" loading={loading} className="w-full py-3 shadow-md shadow-emerald-500/20 font-bold">
+              <div className="pt-1.5">
+                <Button type="submit" loading={loading} className="w-full py-2.5 sm:py-3 shadow-md shadow-emerald-500/20 font-bold">
                   Update Password &amp; Sign In
                 </Button>
               </div>
