@@ -3011,24 +3011,24 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 animate-fade-in-up">
             
             {/* Panel 1: Join BMT Club CTA (Span 2) */}
-            <div className="lg:col-span-2 card bg-gradient-to-br from-slate-900 via-slate-850 to-indigo-950 text-white relative overflow-hidden p-6 md:p-8 flex flex-col justify-between shadow-card-hover border-none">
+            <div className="lg:col-span-2 card bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-900 text-white relative overflow-hidden p-6 md:p-8 flex flex-col justify-between shadow-card-hover border-none">
               <div className="space-y-4">
-                <span className="inline-block bg-emerald-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase">
+                <span className="inline-block bg-white/20 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase border border-white/20">
                   Passenger Benefits Club
                 </span>
                 <h3 className="font-extrabold text-2xl md:text-3xl tracking-tight leading-tight">
                   Unlock Flat 15% Off Your First Train Booking
                 </h3>
-                <p className="text-slate-300 text-xs md:text-sm leading-relaxed max-w-lg">
+                <p className="text-emerald-100 text-xs md:text-sm leading-relaxed max-w-lg font-medium">
                   Join Book My Train today. Save companion passenger details for lightning checkouts, predict confirmation odds on waitlist tickets, and enjoy instant refunds.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/10 mt-6">
-                <Link to="/login?tab=register" className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-center text-xs rounded-xl shadow-md shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all">
+              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/15 mt-6">
+                <Link to="/login?tab=register" className="px-6 py-3 bg-white text-emerald-900 font-extrabold text-center text-xs rounded-xl shadow-md hover:bg-emerald-50 transition-all">
                   Register Free Account
                 </Link>
-                <Link to="/login" className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/15 text-white font-bold text-center text-xs rounded-xl transition-colors">
+                <Link to="/login" className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-center text-xs rounded-xl transition-colors">
                   Sign In to Profile
                 </Link>
               </div>

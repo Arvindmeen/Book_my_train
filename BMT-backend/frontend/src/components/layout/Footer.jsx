@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSearchStore } from '../../store/search.store';
 
 export default function Footer() {
   const navigate = useNavigate();
   const setSearchParams = useSearchStore((s) => s.setSearchParams);
 
-  // Interactive Route Tabs
-  const [activeRouteTab, setActiveRouteTab] = useState('vande-bharat'); // 'vande-bharat' | 'rajdhani' | 'shatabdi' | 'corridors'
-  
-  // Interactive FAQ Accordion State (Users can explore for minutes!)
-  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  // Interactive Route Tabs: 'vande-bharat' | 'rajdhani' | 'shatabdi' | 'corridors'
+  const [activeRouteTab, setActiveRouteTab] = useState('vande-bharat');
+
+  // Interactive FAQ Accordion State (Null by default so NO question is auto-opened!)
+  const [openFaqIndex, setOpenFaqIndex] = useState(null);
+
+  // Policy / Guidance Modal State: 'tatkal' | 'refund' | 'rac' | 'quotas' | 'terms' | 'privacy' | null
+  const [policyModal, setPolicyModal] = useState(null);
 
   // Popular Corridor Data with direct search execution
   const POPULAR_ROUTES = {
@@ -104,122 +107,44 @@ export default function Footer() {
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
     setSearchParams(from, to, tomorrow, 'GN');
     navigate('/search');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStationClick = (station) => {
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
     setSearchParams(`${station.name} (${station.code})`, 'New Delhi (NDLS)', tomorrow, 'GN');
     navigate('/search');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <footer className="mt-auto bg-[#0A0F1D] text-slate-300 text-sm relative overflow-hidden border-t border-slate-800">
+    <footer className="mt-auto bg-gradient-to-b from-slate-50 via-white to-slate-100/90 text-slate-700 text-sm relative overflow-hidden border-t border-slate-200/90">
       
-      {/* Ambient background glows for rich depth */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-64 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/3 right-1/4 w-[500px] h-64 bg-teal-500/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 left-1/3 w-[450px] h-48 bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+      {/* Subtle ambient light glows */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-64 bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/3 right-1/4 w-[450px] h-64 bg-teal-500/5 rounded-full blur-[120px] pointer-events-none" />
 
       {/* ══════════════════════════════════════════════════════════════════════════════════
-          1. TOP VALUE PROPOSITION STRIP: Why Millions of Passengers Trust Book My Train
+          1. POPULAR INDIAN RAILWAY CORRIDORS & EXPRESS ROUTES (Light Mode & Interactive)
           ══════════════════════════════════════════════════════════════════════════════════ */}
-      <div className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md relative z-10">
-        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-6">
-            <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-block mb-2">
-              Next-Gen Rail Mobility
-            </span>
-            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-              Why India Trusts <span className="text-emerald-400">Book My Train</span> Every Day
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Precision railway engineering, automated banking sagas, and real-time transponder data.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            {/* Guarantee 1 */}
-            <div className="bg-slate-800/40 border border-slate-800 hover:border-emerald-500/40 p-4 rounded-2xl transition-all duration-300 hover:-translate-y-0.5 group">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition-transform">
-                ⚡
-              </div>
-              <h4 className="font-bold text-white text-xs sm:text-sm">Instant Auto-Refunds</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
-                Zero wait time. Automated webhook saga reverses ticket cancellations directly to your UPI/Bank within minutes.
-              </p>
-              <div className="mt-2.5 flex items-center gap-1.5 text-[10px] font-bold text-emerald-400">
-                <span>✓ 100% Automated Reversal</span>
-              </div>
-            </div>
-
-            {/* Guarantee 2 */}
-            <div className="bg-slate-800/40 border border-slate-800 hover:border-teal-500/40 p-4 rounded-2xl transition-all duration-300 hover:-translate-y-0.5 group">
-              <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition-transform">
-                🎯
-              </div>
-              <h4 className="font-bold text-white text-xs sm:text-sm">98.4% PNR Predictor</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
-                Algorithmic prediction analyzes 10+ years of charting logs to forecast your exact waitlist confirmation odds.
-              </p>
-              <div className="mt-2.5 flex items-center gap-1.5 text-[10px] font-bold text-teal-400">
-                <span>✓ Historical Charting Data</span>
-              </div>
-            </div>
-
-            {/* Guarantee 3 */}
-            <div className="bg-slate-800/40 border border-slate-800 hover:border-blue-500/40 p-4 rounded-2xl transition-all duration-300 hover:-translate-y-0.5 group">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition-transform">
-                📶
-              </div>
-              <h4 className="font-bold text-white text-xs sm:text-sm">Real GPS Telemetry</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
-                Zero fake placeholders. Evaluates actual timetable running minutes against Indian Standard Time (IST) live.
-              </p>
-              <div className="mt-2.5 flex items-center gap-1.5 text-[10px] font-bold text-blue-400">
-                <span>✓ Verified NTES Transponder</span>
-              </div>
-            </div>
-
-            {/* Guarantee 4 */}
-            <div className="bg-slate-800/40 border border-slate-800 hover:border-amber-500/40 p-4 rounded-2xl transition-all duration-300 hover:-translate-y-0.5 group">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition-transform">
-                🛡️
-              </div>
-              <h4 className="font-bold text-white text-xs sm:text-sm">Bank-Grade 256-Bit TLS</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
-                RBI &amp; PCI-DSS compliant payment rails with end-to-end tokenized passenger data protection.
-              </p>
-              <div className="mt-2.5 flex items-center gap-1.5 text-[10px] font-bold text-amber-400">
-                <span>✓ 100% Encrypted &amp; Verified</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════════════════════════
-          2. POPULAR INDIAN RAILWAY CORRIDORS & EXPRESS ROUTES (Users spend minutes exploring!)
-          ══════════════════════════════════════════════════════════════════════════════════ */}
-      <div className="border-b border-slate-800/80 py-10 relative z-10">
+      <div className="border-b border-slate-200/90 py-10 relative z-10 bg-white/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <h3 className="font-display font-black text-lg text-white tracking-tight">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+                <h3 className="font-display font-black text-xl text-slate-900 tracking-tight">
                   Popular Indian Railway Routes &amp; Superfast Corridors
                 </h3>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Click any express corridor to immediately search live seat availability, quotas, and Tatkal fares.
+              <p className="text-xs text-slate-500 mt-1">
+                Explore real timetable corridors &bull; Click any route to immediately check seat availability &amp; fares.
               </p>
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-bold self-start md:self-auto">
+            <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-bold self-start md:self-auto shadow-2xs">
               {[
                 { id: 'vande-bharat', label: '🚄 Vande Bharat Express' },
                 { id: 'rajdhani', label: '👑 Rajdhani & Tejas' },
@@ -230,10 +155,10 @@ export default function Footer() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveRouteTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg transition-all text-xs ${
+                  className={`px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer ${
                     activeRouteTab === tab.id
-                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-extrabold'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 font-extrabold scale-102'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
                   }`}
                 >
                   {tab.label}
@@ -243,35 +168,35 @@ export default function Footer() {
           </div>
 
           {/* Route Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {POPULAR_ROUTES[activeRouteTab].map((route, i) => (
               <div
                 key={i}
                 onClick={() => handleQuickRouteSearch(route.from, route.to)}
-                className="bg-slate-900/50 hover:bg-slate-800/70 border border-slate-800/80 hover:border-emerald-500/50 p-3.5 rounded-xl transition-all duration-200 cursor-pointer group flex flex-col justify-between"
+                className="bg-white hover:bg-emerald-50/40 border border-slate-200/90 hover:border-emerald-400 p-4 rounded-2xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer group flex flex-col justify-between shadow-2xs"
               >
                 <div>
                   <div className="flex justify-between items-start gap-2">
-                    <span className="font-mono text-[11px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
+                    <span className="font-mono text-[11px] font-black bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-md border border-emerald-200 shadow-2xs">
                       #{route.num}
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-400">
+                    <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                       ⏱️ {route.time}
                     </span>
                   </div>
-                  <h5 className="font-bold text-white text-xs mt-1.5 group-hover:text-emerald-400 transition-colors">
+                  <h5 className="font-extrabold text-slate-900 text-sm mt-2 group-hover:text-emerald-700 transition-colors">
                     {route.name}
                   </h5>
-                  <p className="text-[11px] font-medium text-slate-300 mt-1 flex items-center gap-1.5">
+                  <p className="text-xs font-semibold text-slate-700 mt-1 flex items-center gap-1.5">
                     <span>{route.from.split(' (')[0]}</span>
-                    <span className="text-emerald-400 font-bold">&rarr;</span>
+                    <span className="text-emerald-600 font-extrabold">&rarr;</span>
                     <span>{route.to.split(' (')[0]}</span>
                   </p>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex justify-between items-center text-[10px] text-slate-400">
-                  <span>Dep: <strong className="text-slate-200">{route.dep}</strong> &bull; Arr: <strong className="text-slate-200">{route.arr}</strong></span>
-                  <span className="text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform">
+                <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-500">
+                  <span>Dep: <strong className="text-slate-800">{route.dep}</strong> &bull; Arr: <strong className="text-slate-800">{route.arr}</strong></span>
+                  <span className="text-emerald-700 font-extrabold group-hover:translate-x-1 transition-transform flex items-center gap-1">
                     Book &rarr;
                   </span>
                 </div>
@@ -283,19 +208,19 @@ export default function Footer() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════════════
-          3. PASSENGER HANDBOOK & FAQS (Users spend minutes learning real railway rules!)
+          2. PASSENGER HANDBOOK & FAQS (Light Mode, All closed by default, click to open!)
           ══════════════════════════════════════════════════════════════════════════════════ */}
-      <div className="border-b border-slate-800/80 py-10 relative z-10 bg-slate-950/40">
+      <div className="border-b border-slate-200/90 py-12 relative z-10 bg-gradient-to-b from-white via-slate-50/50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-2xl mx-auto mb-8">
-            <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 inline-block mb-2">
-              Indian Railway Rules &amp; Guidelines
+            <span className="text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200/80 inline-block mb-2 shadow-2xs">
+              INDIAN RAILWAY RULES &amp; GUIDELINES
             </span>
-            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Essential Passenger Travel Handbook &amp; FAQs
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1 font-medium">
               Clear answers to Tatkal timings, RAC entitlements, waitlist drop rules, and cancellation charges.
             </p>
           </div>
@@ -306,30 +231,34 @@ export default function Footer() {
               return (
                 <div
                   key={idx}
-                  className={`border rounded-2xl transition-all duration-200 ${
+                  className={`border rounded-2xl transition-all duration-300 ${
                     isOpen
-                      ? 'bg-slate-900 border-emerald-500/50 shadow-lg shadow-emerald-950/20'
-                      : 'bg-slate-900/40 border-slate-800/90 hover:border-slate-700'
+                      ? 'bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 border-2 border-emerald-500 shadow-md shadow-emerald-950/5 ring-4 ring-emerald-100/60'
+                      : 'bg-white border-slate-200/90 hover:border-emerald-300 hover:shadow-xs shadow-2xs'
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full p-4 text-left flex items-start justify-between gap-3 font-semibold text-xs text-slate-200 hover:text-white"
+                    className="w-full p-4 text-left flex items-start justify-between gap-3 font-bold text-xs sm:text-sm text-slate-800 hover:text-emerald-800 transition-colors cursor-pointer"
                   >
                     <span className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-slate-800 text-emerald-400 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                      <span className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                        isOpen
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
                         {idx + 1}
                       </span>
                       <span className="leading-snug">{faq.q}</span>
                     </span>
-                    <span className={`text-base font-bold text-emerald-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                    <span className={`text-base font-black text-emerald-600 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
                       ▾
                     </span>
                   </button>
 
                   {isOpen && (
-                    <div className="px-4 pb-4 pt-1 text-[11px] text-slate-400 leading-relaxed border-t border-slate-800/60 mt-1 animate-fade-in">
+                    <div className="px-4 pb-4 pt-1 text-xs text-slate-600 leading-relaxed border-t border-emerald-100 mt-1 animate-fade-in font-normal">
                       {faq.a}
                     </div>
                   )}
@@ -342,20 +271,21 @@ export default function Footer() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════════════
-          4. MAJOR JUNCTION CODES DIRECTORY
+          3. MAJOR JUNCTION CODES DIRECTORY (Light Mode)
           ══════════════════════════════════════════════════════════════════════════════════ */}
-      <div className="border-b border-slate-800/80 py-8 relative z-10">
+      <div className="border-b border-slate-200/90 py-8 relative z-10 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Major Indian Railway Junctions &amp; Station Codes
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span>🚉</span>
+                <span>Major Indian Railway Junctions &amp; Station Codes</span>
               </h4>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Quick station lookup — tap any station code to set origin.
+                Quick station lookup &bull; Tap any station code to set as origin station for ticket search.
               </p>
             </div>
-            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 self-start sm:self-auto">
+            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 self-start sm:self-auto shadow-2xs">
               Covering 10,000+ Stations Nationwide
             </span>
           </div>
@@ -366,11 +296,11 @@ export default function Footer() {
                 key={idx}
                 type="button"
                 onClick={() => handleStationClick(stn)}
-                className="bg-slate-900/60 hover:bg-emerald-600/20 border border-slate-800 hover:border-emerald-500/40 text-slate-400 hover:text-emerald-300 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 group"
+                className="bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 group shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
                 title={`Search trains from ${stn.name} (${stn.code})`}
               >
-                <span className="font-mono font-bold text-white group-hover:text-emerald-400">{stn.code}</span>
-                <span className="text-[10px] text-slate-500 group-hover:text-slate-300">&middot; {stn.name}</span>
+                <span className="font-mono font-extrabold text-slate-900 group-hover:text-emerald-700">{stn.code}</span>
+                <span className="text-[10px] text-slate-500 group-hover:text-slate-700">&middot; {stn.name}</span>
               </button>
             ))}
           </div>
@@ -378,7 +308,7 @@ export default function Footer() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════════════
-          5. MAIN FOOTER MULTI-COLUMN HUB
+          4. MAIN FOOTER MULTI-COLUMN HUB (Light Mode, All Functional Links)
           ══════════════════════════════════════════════════════════════════════════════════ */}
       <div className="max-w-7xl mx-auto px-4 pt-12 pb-8 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
@@ -389,46 +319,46 @@ export default function Footer() {
               <img
                 src="/navbar-logo.jpg"
                 alt="Book My Train logo"
-                className="w-12 h-12 rounded-2xl border-2 border-emerald-500 bg-white object-cover shadow-lg shadow-emerald-500/20 group-hover:scale-105 group-hover:shadow-emerald-500/35 transition-all duration-300"
+                className="w-12 h-12 rounded-2xl border-2 border-emerald-500 bg-white object-cover shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform"
               />
               <div>
-                <span className="font-display font-black text-2xl text-white tracking-tight">
-                  Book My <span className="text-emerald-400 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Train</span>
+                <span className="font-display font-black text-2xl text-slate-900 tracking-tight">
+                  Book My <span className="text-emerald-600 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Train</span>
                 </span>
-                <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                <p className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">
                   Indian Rail NextGen Travel Hub
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed font-normal max-w-sm">
+            <p className="text-xs text-slate-600 leading-relaxed font-normal max-w-sm">
               India's premier next-generation railway ticketing portal engineered for confirmed seat reservations, instant automated refunds, AI-based PNR forecasting, and authentic live running status.
             </p>
 
             {/* Platform Trust Highlights */}
-            <div className="space-y-2 pt-1">
-              <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>IRCTC Authorized Booking Engine Protocol</span>
+            <div className="space-y-2 pt-1 text-xs text-slate-700 font-medium">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                <span>IRCTC-Compliant Booking Engine Architecture</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                 <span>Connected to All 16 Indian Railway Zones</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-300 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>Automated UPI &amp; Razorpay Reversal Sagas</span>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                <span>Automated UPI &amp; Bank Reversal Sagas</span>
               </div>
             </div>
 
             {/* Security Badges */}
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              <span className="inline-flex items-center gap-1.5 bg-slate-900 text-[10px] text-emerald-400 px-3 py-1.5 rounded-xl font-bold border border-slate-800 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-[10px] text-emerald-800 px-3 py-1.5 rounded-xl font-bold border border-emerald-200 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>256-Bit TLS Bank Grade</span>
               </span>
 
-              <span className="inline-flex items-center gap-1.5 bg-slate-900 text-[10px] text-teal-400 px-3 py-1.5 rounded-xl font-bold border border-slate-800 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 bg-slate-100 text-[10px] text-slate-800 px-3 py-1.5 rounded-xl font-bold border border-slate-200 shadow-2xs">
                 <span>🛡️ PCI-DSS Level 1</span>
               </span>
             </div>
@@ -436,49 +366,49 @@ export default function Footer() {
 
           {/* Column 2: Travel Services & Utilities (Span 2.5) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="text-xs font-black text-white uppercase tracking-widest border-l-2 border-emerald-500 pl-2.5">
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-3 border-emerald-600 pl-2.5">
               Travel Services
             </h4>
-            <ul className="space-y-2.5 text-xs font-medium text-slate-400">
+            <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
               <li>
-                <a href="/search" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/search" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Book Train Tickets</span>
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/pnr" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/pnr" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Check Live PNR Status</span>
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/?tab=live" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/?tab=live" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Live Train GPS Tracker</span>
-                  <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-1 rounded">LIVE</span>
-                </a>
+                  <span className="text-[9px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded shadow-2xs">LIVE</span>
+                </Link>
               </li>
               <li>
-                <a href="/services" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/?tab=food" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Food on Track (E-Catering)</span>
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/services" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/?tab=hotels" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Hotels &amp; Station Lounges</span>
-                </a>
+                </Link>
               </li>
               <li>
                 <a
                   href="https://ride-tracker-ruddy.vercel.app/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group"
+                  className="hover:text-amber-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group"
                 >
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Platform Cabs via Ride Tracker ↗</span>
                 </a>
               </li>
@@ -487,121 +417,145 @@ export default function Footer() {
 
           {/* Column 3: Rules & Policy Hub (Span 2.5) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="text-xs font-black text-white uppercase tracking-widest border-l-2 border-emerald-500 pl-2.5">
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-3 border-emerald-600 pl-2.5">
               Policies &amp; Rules
             </h4>
-            <ul className="space-y-2.5 text-xs font-medium text-slate-400">
+            <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
               <li>
-                <a href="#tatkal-rules" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal('tatkal')}
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                >
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Tatkal Booking Windows</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#refund-rules" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal('refund')}
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                >
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Cancellation &amp; Refund Scale</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#rac-charting" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
-                  <span>RAC &amp; Chart Preparation Rules</span>
-                </a>
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal('rac')}
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                >
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span>RAC &amp; Charting Rules</span>
+                </button>
               </li>
               <li>
-                <a href="#quotas" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal('quotas')}
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                >
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Quota Guide (GN, LD, SS, HP)</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#terms" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal('terms')}
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                >
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Terms of Service</span>
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#privacy" className="hover:text-emerald-400 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal('privacy')}
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                >
+                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
                   <span>Privacy &amp; Data Security</span>
-                </a>
+                </button>
               </li>
             </ul>
           </div>
 
           {/* Column 4: Contact & Creator Showcase (Arvind Meena, IIT Kharagpur) (Span 4) */}
           <div className="lg:col-span-4 space-y-4">
-            <h4 className="text-xs font-black text-white uppercase tracking-widest border-l-2 border-emerald-500 pl-2.5">
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-3 border-emerald-600 pl-2.5">
               Engineering &amp; Founder Desk
             </h4>
 
-            {/* Founder Card */}
-            <div className="bg-gradient-to-br from-slate-900 via-slate-900/90 to-emerald-950/30 p-3.5 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition-all shadow-md group">
+            {/* Founder Card (Light Mode & Premium) */}
+            <div className="bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/70 p-4 rounded-2xl border border-emerald-200/90 hover:border-emerald-400 transition-all shadow-xs hover:shadow-md group">
               <a
                 href="https://arvindmeena.vercel.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 text-white"
+                className="flex items-center justify-between gap-3 text-slate-900"
                 title="Visit Arvind Meena's Portfolio"
               >
                 <div className="flex items-center gap-3">
                   <img
                     src="/arvind-meena.jpg"
                     alt="Arvind Meena"
-                    className="w-11 h-11 rounded-xl border-2 border-emerald-500/40 object-cover shadow-md group-hover:scale-105 transition-transform shrink-0"
+                    className="w-12 h-12 rounded-xl border-2 border-emerald-600 object-cover shadow-sm group-hover:scale-105 transition-transform shrink-0"
                   />
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
-                      Founder &amp; Full-Stack Architect
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                      Founder &amp; Architect
                     </span>
-                    <h5 className="font-black text-sm text-white group-hover:text-emerald-400 transition-colors">
+                    <h5 className="font-black text-sm text-slate-900 group-hover:text-emerald-700 transition-colors mt-0.5">
                       Arvind Meena
                     </h5>
-                    <p className="text-[11px] text-slate-400 font-medium">
+                    <p className="text-[11px] text-slate-600 font-semibold">
                       IIT Kharagpur &bull; Computer Science
                     </p>
                   </div>
                 </div>
 
-                <span className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs group-hover:bg-emerald-500 group-hover:text-white transition-all shrink-0">
+                <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs group-hover:scale-110 transition-transform shrink-0">
                   ↗
                 </span>
               </a>
             </div>
 
             {/* Contact Details */}
-            <ul className="space-y-2.5 text-xs text-slate-300">
+            <ul className="space-y-2.5 text-xs text-slate-700">
               <li className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-lg bg-slate-900 text-emerald-400 border border-slate-800 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                 </div>
-                <a href="tel:+917217332482" className="hover:text-emerald-400 font-semibold transition-colors">
+                <a href="tel:+917217332482" className="hover:text-emerald-700 font-bold transition-colors">
                   +91 7217332482
                 </a>
               </li>
 
               <li className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-lg bg-slate-900 text-emerald-400 border border-slate-800 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <a href="mailto:arvindmeena8171@gmail.com" className="hover:text-emerald-400 font-semibold transition-colors truncate">
+                <a href="mailto:arvindmeena8171@gmail.com" className="hover:text-emerald-700 font-bold transition-colors truncate">
                   arvindmeena8171@gmail.com
                 </a>
               </li>
 
               <li className="flex items-start gap-2.5">
-                <div className="w-6 h-6 rounded-lg bg-slate-900 text-emerald-400 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <span className="font-semibold text-slate-300">
+                <span className="font-semibold text-slate-700">
                   Indian Institute of Technology (IIT) Kharagpur, West Bengal, India
                 </span>
               </li>
@@ -613,7 +567,7 @@ export default function Footer() {
                 href="https://arvindmeena.vercel.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-slate-900 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-slate-800 flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                className="w-9 h-9 rounded-xl bg-white text-emerald-700 hover:bg-emerald-600 hover:text-white border border-slate-200 hover:border-emerald-600 flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 shadow-2xs"
                 title="Portfolio"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -625,7 +579,7 @@ export default function Footer() {
                 href="https://github.com/Arvindmeen"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800 flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                className="w-9 h-9 rounded-xl bg-white text-slate-700 hover:bg-slate-900 hover:text-white border border-slate-200 hover:border-slate-900 flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 shadow-2xs"
                 title="GitHub"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -637,7 +591,7 @@ export default function Footer() {
                 href="https://www.linkedin.com/in/arvind-meena-78a258288"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-slate-900 text-slate-300 hover:bg-[#0A66C2] hover:text-white border border-slate-800 flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                className="w-9 h-9 rounded-xl bg-white text-slate-700 hover:bg-[#0A66C2] hover:text-white border border-slate-200 hover:border-[#0A66C2] flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 shadow-2xs"
                 title="LinkedIn"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -649,7 +603,7 @@ export default function Footer() {
                 href="https://www.instagram.com/rinku_meena014/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-slate-900 text-slate-300 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:text-white border border-slate-800 flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                className="w-9 h-9 rounded-xl bg-white text-slate-700 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:text-white border border-slate-200 flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 shadow-2xs"
                 title="Instagram"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -662,52 +616,52 @@ export default function Footer() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════════════════════
-            6. OFFICIAL RAILWAY EMERGENCY HELPLINES STRIP
+            5. OFFICIAL RAILWAY EMERGENCY HELPLINES STRIP (Light Mode & Clickable tel:)
             ══════════════════════════════════════════════════════════════════════════════════ */}
-        <div className="mt-10 pt-8 border-t border-slate-800/80">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+        <div className="mt-10 pt-8 border-t border-slate-200/90">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-3 flex items-center gap-2">
             <span>🚨 24x7 Government &amp; Railway Emergency Toll-Free Helplines:</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
             
-            <a href="tel:139" className="bg-slate-900/60 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl transition-colors flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 font-black text-sm flex items-center justify-center shrink-0">139</span>
+            <a href="tel:139" className="bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
+              <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 font-black text-sm flex items-center justify-center shrink-0 border border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white transition-colors">139</span>
               <div>
-                <p className="font-bold text-white text-[11px]">Rail Madad</p>
-                <p className="text-[10px] text-slate-400">Unified Helpline</p>
+                <p className="font-extrabold text-slate-900 text-xs">Rail Madad</p>
+                <p className="text-[10px] text-slate-500">Unified Helpline</p>
               </div>
             </a>
 
-            <a href="tel:182" className="bg-slate-900/60 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl transition-colors flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 font-black text-sm flex items-center justify-center shrink-0">182</span>
+            <a href="tel:182" className="bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
+              <span className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 font-black text-sm flex items-center justify-center shrink-0 border border-rose-200 group-hover:bg-rose-600 group-hover:text-white transition-colors">182</span>
               <div>
-                <p className="font-bold text-white text-[11px]">RPF Security</p>
-                <p className="text-[10px] text-slate-400">On-Train Help</p>
+                <p className="font-extrabold text-slate-900 text-xs">RPF Security</p>
+                <p className="text-[10px] text-slate-500">On-Train Help</p>
               </div>
             </a>
 
-            <a href="tel:138" className="bg-slate-900/60 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl transition-colors flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 font-black text-sm flex items-center justify-center shrink-0">138</span>
+            <a href="tel:138" className="bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
+              <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 font-black text-sm flex items-center justify-center shrink-0 border border-blue-200 group-hover:bg-blue-600 group-hover:text-white transition-colors">138</span>
               <div>
-                <p className="font-bold text-white text-[11px]">Medical Alert</p>
-                <p className="text-[10px] text-slate-400">Coach Cleanliness</p>
+                <p className="font-extrabold text-slate-900 text-xs">Medical Alert</p>
+                <p className="text-[10px] text-slate-500">Coach Care</p>
               </div>
             </a>
 
-            <a href="tel:1090" className="bg-slate-900/60 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl transition-colors flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 font-black text-sm flex items-center justify-center shrink-0">1090</span>
+            <a href="tel:1090" className="bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
+              <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 font-black text-sm flex items-center justify-center shrink-0 border border-purple-200 group-hover:bg-purple-600 group-hover:text-white transition-colors">1090</span>
               <div>
-                <p className="font-bold text-white text-[11px]">Women Safety</p>
-                <p className="text-[10px] text-slate-400">24x7 Helpline</p>
+                <p className="font-extrabold text-slate-900 text-xs">Women Safety</p>
+                <p className="text-[10px] text-slate-500">24x7 Helpline</p>
               </div>
             </a>
 
-            <a href="tel:1930" className="bg-slate-900/60 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl transition-colors flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 font-black text-sm flex items-center justify-center shrink-0">1930</span>
+            <a href="tel:1930" className="bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
+              <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-800 font-black text-sm flex items-center justify-center shrink-0 border border-amber-200 group-hover:bg-amber-600 group-hover:text-white transition-colors">1930</span>
               <div>
-                <p className="font-bold text-white text-[11px]">Cyber Fraud</p>
-                <p className="text-[10px] text-slate-400">National Helpline</p>
+                <p className="font-extrabold text-slate-900 text-xs">Cyber Fraud</p>
+                <p className="text-[10px] text-slate-500">National Helpline</p>
               </div>
             </a>
 
@@ -715,42 +669,42 @@ export default function Footer() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════════════════════
-            7. PAYMENT & COMPLIANCE PARTNER PILLS
+            6. PAYMENT & COMPLIANCE PARTNER PILLS (Light Mode)
             ══════════════════════════════════════════════════════════════════════════════════ */}
-        <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="mt-8 pt-6 border-t border-slate-200/90 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mr-1">Verified Payment Rails:</span>
             {['UPI (GPay / PhonePe / Paytm)', 'RuPay', 'Visa', 'Mastercard', 'NetBanking 50+ Banks', 'Razorpay Verified'].map((pmt, i) => (
-              <span key={i} className="bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-semibold px-2.5 py-1 rounded-md">
+              <span key={i} className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-2xs">
                 {pmt}
               </span>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] text-slate-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <div className="flex items-center gap-2 text-[11px] text-emerald-800 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
             <span>Real-time API Gateway Cluster Online</span>
           </div>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════════════════════
-            8. FOOTER BOTTOM LINE & COPYRIGHT
+            7. FOOTER BOTTOM LINE & COPYRIGHT (Light Mode)
             ══════════════════════════════════════════════════════════════════════════════════ */}
-        <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-medium">
+        <div className="mt-8 pt-6 border-t border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
           <p>
-            &copy; {new Date().getFullYear()} <strong className="text-white">Book My Train</strong>. All rights reserved. Designed and engineered with passion by{' '}
+            &copy; {new Date().getFullYear()} <strong className="text-slate-900">Book My Train</strong>. All rights reserved. Designed and engineered with passion by{' '}
             <a
               href="https://arvindmeena.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-emerald-400 hover:text-emerald-300 font-bold hover:underline"
+              className="text-emerald-700 hover:text-emerald-800 font-extrabold hover:underline"
             >
               Arvind Meena
             </a>{' '}
             (IIT Kharagpur).
           </p>
 
-          <div className="flex items-center gap-4 text-slate-500 text-[11px]">
+          <div className="flex items-center gap-3 text-slate-400 text-[11px] font-semibold">
             <span>Fast</span>
             <span>&bull;</span>
             <span>Secure</span>
@@ -762,6 +716,120 @@ export default function Footer() {
         </div>
 
       </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════════════════
+          8. INTERACTIVE POLICY & RULES GUIDANCE MODAL (Triggered by Policy Links)
+          ══════════════════════════════════════════════════════════════════════════════════ */}
+      {policyModal && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in-up"
+          onClick={() => setPolicyModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4 animate-scale-in relative text-slate-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-150 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center text-lg font-bold">
+                  {policyModal === 'tatkal' ? '⏰' : policyModal === 'refund' ? '₹' : policyModal === 'rac' ? '💺' : policyModal === 'quotas' ? '🎟️' : '📜'}
+                </span>
+                <div>
+                  <h4 className="font-extrabold text-base text-slate-900">
+                    {policyModal === 'tatkal' && 'Official Tatkal Booking Guidelines'}
+                    {policyModal === 'refund' && 'Railway Cancellation & Refund Scale'}
+                    {policyModal === 'rac' && 'RAC & Charting Rules'}
+                    {policyModal === 'quotas' && 'Indian Railway Reservation Quotas'}
+                    {policyModal === 'terms' && 'Terms of Service'}
+                    {policyModal === 'privacy' && 'Privacy & Data Protection'}
+                  </h4>
+                  <p className="text-[11px] text-slate-500">Ministry of Railways &amp; IRCTC Standards</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPolicyModal(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Modal Content Body */}
+            <div className="text-xs text-slate-600 space-y-2.5 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+              {policyModal === 'tatkal' && (
+                <>
+                  <p><strong>1. Booking Windows:</strong> AC classes (1A, 2A, 3A, 3E, CC) open sharp at <strong>10:00 AM IST</strong> daily. Non-AC / Sleeper classes open at <strong>11:00 AM IST</strong> daily, exactly one day prior to train origin departure.</p>
+                  <p><strong>2. Passenger Limit:</strong> Maximum 4 passengers can be booked per PNR under Tatkal quota.</p>
+                  <p><strong>3. Cancellation Rules:</strong> Confirmed Tatkal tickets are non-refundable unless the train is delayed by more than 3 hours or cancelled by railways.</p>
+                </>
+              )}
+
+              {policyModal === 'refund' && (
+                <>
+                  <p><strong>1. &gt;48 Hours Before Departure:</strong> Flat clerkage fee: 1A/EC ₹240, 2A ₹200, 3A/CC ₹180, Sleeper ₹120, 2S ₹60 per passenger.</p>
+                  <p><strong>2. 48 to 12 Hours:</strong> 25% of ticket fare is deducted subject to minimum flat clerkage.</p>
+                  <p><strong>3. 12 to 4 Hours:</strong> 50% of ticket fare is deducted.</p>
+                  <p><strong>4. Auto-Refunds:</strong> Cancelled tickets via Book My Train trigger automated refund reverse sagas straight to your source UPI or bank account.</p>
+                </>
+              )}
+
+              {policyModal === 'rac' && (
+                <>
+                  <p><strong>1. RAC Entitlement:</strong> Reservation Against Cancellation grants assured travel rights on train with a shared lower berth accommodation.</p>
+                  <p><strong>2. Upgrades:</strong> As confirmed passengers cancel, RAC passengers are upgraded to full CNF berths automatically in priority sequence.</p>
+                  <p><strong>3. Dropped Waitlist:</strong> Fully waitlisted e-tickets drop automatically upon final chart preparation (4 hours before departure) with 100% automated refund.</p>
+                </>
+              )}
+
+              {policyModal === 'quotas' && (
+                <>
+                  <p><strong>&bull; GN (General Quota):</strong> Standard booking quota accessible to all passengers.</p>
+                  <p><strong>&bull; TQ (Tatkal Quota):</strong> Last-minute emergency travel quota opening 1 day prior.</p>
+                  <p><strong>&bull; LD (Ladies Quota):</strong> Dedicated 6 berths reserved in sleeper coaches for solo female passengers or women traveling with children under 12.</p>
+                  <p><strong>&bull; SS (Senior Citizen Quota):</strong> Lower berth priority quota for male seniors (60+) and female seniors (45+) traveling alone.</p>
+                </>
+              )}
+
+              {policyModal === 'terms' && (
+                <>
+                  <p>Book My Train provides authorized railway mobility and reservation tools compliant with Indian Railways and CRIS guidelines. Tickets booked through the platform are governed by standard railway passenger rules, tariff tables, and refund schedules.</p>
+                </>
+              )}
+
+              {policyModal === 'privacy' && (
+                <>
+                  <p>Your privacy and transactional integrity are our top priority. Passenger data is protected with 256-bit bank-grade TLS encryption and tokenized payment architectures. We do not store sensitive UPI PINs or card CVVs.</p>
+                </>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPolicyModal(null);
+                  navigate('/search');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer text-center"
+              >
+                Search Trains &rarr;
+              </button>
+              <button
+                type="button"
+                onClick={() => setPolicyModal(null)}
+                className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </footer>
   );
 }
