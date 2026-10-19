@@ -106,36 +106,46 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
       className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto my-3 relative z-10 select-none train-track-container"
       title="Indian Railways High-Speed Track · Hover train to blow horn & stop · Move off to resume"
     >
-      {/* Track Status Bar & Interactive Controls */}
-      <div className="flex items-center justify-between px-2 mb-1.5 gap-2">
-        <div className="flex items-center gap-2">
+      {/* Track Status Bar & Interactive Controls - Height strictly locked to 28px to prevent any vertical layout shift */}
+      <div className="h-7 min-h-[28px] max-h-[28px] flex items-center justify-between px-2 mb-1.5 gap-2 overflow-hidden select-none">
+        <div className="flex items-center gap-2 min-w-0 shrink">
           <span
-            className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border transition-all duration-200 ${
+            className={`inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 h-6 min-h-[24px] max-h-[24px] rounded-full border whitespace-nowrap shrink-0 transition-all duration-200 ${
               isTrainHovered
                 ? 'text-amber-900 bg-amber-50 border-amber-300 shadow-xs'
                 : 'text-emerald-800 bg-emerald-50 border-emerald-200'
             }`}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2 h-2 rounded-full shrink-0 ${
                 isTrainHovered ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-ping'
               }`}
             />
-            <span>
-              {isTrainHovered
-                ? isMuted
-                  ? '⏸️ Train Paused'
-                  : '📢 Train Paused · Horn Blowing'
-                : '📢 Hover train to blow horn, move off to stop'}
+            <span className="whitespace-nowrap">
+              {isTrainHovered ? (
+                isMuted ? (
+                  '⏸️ Train Paused'
+                ) : (
+                  <>
+                    <span className="inline sm:hidden">📢 Horn Blowing</span>
+                    <span className="hidden sm:inline">📢 Train Paused · Horn Blowing</span>
+                  </>
+                )
+              ) : (
+                <>
+                  <span className="inline sm:hidden">📢 Tap train for horn</span>
+                  <span className="hidden sm:inline">📢 Hover train to blow horn, move off to stop</span>
+                </>
+              )}
             </span>
           </span>
 
-          <span className="text-[10px] font-bold text-slate-400 hidden sm:inline">
+          <span className="text-[10px] font-bold text-slate-400 hidden lg:inline whitespace-nowrap">
             {isTrainHovered ? 'Move cursor away to stop horn & resume' : 'Tap train on mobile'}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Audio Mute / Unmute Toggle Button */}
           <button
             type="button"
@@ -148,17 +158,29 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
                 return next;
               });
             }}
-            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 transition-all border ${
+            className={`text-[10px] font-bold px-2.5 h-6 min-h-[24px] max-h-[24px] rounded-full flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all border ${
               isMuted
                 ? 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
                 : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 shadow-2xs'
             }`}
             title={isMuted ? 'Click to enable train horn sound' : 'Click to mute train horn sound'}
           >
-            <span>{isMuted ? '🔇 Horn Muted' : '🔊 Horn Sound ON'}</span>
+            <span>
+              {isMuted ? (
+                <>
+                  <span className="inline sm:hidden">🔇 Muted</span>
+                  <span className="hidden sm:inline">🔇 Horn Muted</span>
+                </>
+              ) : (
+                <>
+                  <span className="inline sm:hidden">🔊 Horn ON</span>
+                  <span className="hidden sm:inline">🔊 Horn Sound ON</span>
+                </>
+              )}
+            </span>
           </button>
 
-          <span className="text-[10px] font-extrabold text-slate-500 hidden md:inline font-mono">
+          <span className="text-[10px] font-extrabold text-slate-500 hidden md:inline font-mono whitespace-nowrap">
             Route: NDLS &rarr; BSB (Vande Bharat 22436)
           </span>
         </div>
