@@ -5,7 +5,9 @@ import ProfileModal from '../profile/ProfileModal';
 import PwaInstallModal from '../common/PwaInstallModal';
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,14 +48,18 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    logout();
     setProfileMenuOpen(false);
     setMobileMenuOpen(false);
-    navigate('/login');
+    logout();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    } else {
+      navigate('/login', { replace: true });
+    }
   };
 
   const isActive = (path) => location.pathname === path;
-  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true;
+  const isAdmin = Boolean(user && (user.role === 'ADMIN' || user.isAdmin === true));
   const isOnAdmin = location.pathname === '/admin' || location.pathname.startsWith('/admin');
   const currentAdminTab = new URLSearchParams(location.search).get('tab') || 'Traffic';
 

@@ -45,6 +45,17 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    // If arriving at /login without auth tokens, ensure memory store is synchronously cleared
+    if (typeof window !== 'undefined') {
+      const hasToken = localStorage.getItem('bmt_access_token');
+      const hasStoredUser = localStorage.getItem('bmt_auth_user');
+      if (!hasToken && !hasStoredUser && useAuthStore.getState().user) {
+        useAuthStore.getState().logout();
+      }
+    }
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');

@@ -138,5 +138,8 @@ export const useAuthStore = create((set, get) => ({
 if (typeof window !== 'undefined') {
   window.addEventListener('auth:logout', () => {
     useAuthStore.getState().logout();
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   });
 }

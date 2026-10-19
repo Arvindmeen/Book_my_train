@@ -15,7 +15,9 @@ const INDIAN_STATES = [
 ];
 
 export default function ProfilePage() {
-  const { user, updateProfile, logout } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const showToast = useToast();
   const photoInputRef = useRef(null);
@@ -386,7 +388,14 @@ export default function ProfilePage() {
 
               <button
                 type="button"
-                onClick={() => { logout(); navigate('/login'); }}
+                onClick={() => {
+                  logout();
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                  } else {
+                    navigate('/login', { replace: true });
+                  }
+                }}
                 className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200/80 transition-all"
                 title="Sign out of account"
               >
