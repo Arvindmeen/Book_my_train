@@ -308,9 +308,85 @@ export default function Footer() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════════════
-          4. MAIN FOOTER MULTI-COLUMN HUB (Light Mode, All Functional Links)
+          4. OFFICIAL RAILWAY EMERGENCY HELPLINES (Now placed first above main columns)
           ══════════════════════════════════════════════════════════════════════════════════ */}
       <div className="max-w-7xl mx-auto px-4 pt-12 pb-8 sm:px-6 lg:px-8 relative z-10">
+
+        {/* Emergency Helpline Banner Strip */}
+        <div className="mb-10 bg-gradient-to-r from-emerald-50/80 via-slate-50 to-teal-50/70 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-emerald-100/80">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+              </span>
+              <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+                🚨 24x7 Government &amp; Railway Emergency Toll-Free Helplines:
+              </span>
+            </div>
+            <span className="text-[11px] font-bold text-slate-500">
+              Direct National One-Touch Dialing &bull; Always Free &bull; All Telecom Networks
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+            
+            <a href="tel:139" className="bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-3 group">
+              <span className="min-w-[46px] h-9 px-2 rounded-xl bg-emerald-50 text-emerald-700 font-black text-xs flex items-center justify-center shrink-0 border border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-2xs">
+                139
+              </span>
+              <div className="min-w-0">
+                <p className="font-extrabold text-slate-900 text-xs">Rail Madad</p>
+                <p className="text-[10px] text-slate-500 truncate">Unified Helpline</p>
+              </div>
+            </a>
+
+            <a href="tel:182" className="bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-3 group">
+              <span className="min-w-[46px] h-9 px-2 rounded-xl bg-rose-50 text-rose-700 font-black text-xs flex items-center justify-center shrink-0 border border-rose-200 group-hover:bg-rose-600 group-hover:text-white transition-colors shadow-2xs">
+                182
+              </span>
+              <div className="min-w-0">
+                <p className="font-extrabold text-slate-900 text-xs">RPF Security</p>
+                <p className="text-[10px] text-slate-500 truncate">On-Train Help</p>
+              </div>
+            </a>
+
+            <a href="tel:138" className="bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-3 group">
+              <span className="min-w-[46px] h-9 px-2 rounded-xl bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center shrink-0 border border-blue-200 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-2xs">
+                138
+              </span>
+              <div className="min-w-0">
+                <p className="font-extrabold text-slate-900 text-xs">Medical Alert</p>
+                <p className="text-[10px] text-slate-500 truncate">Coach Care</p>
+              </div>
+            </a>
+
+            <a href="tel:1090" className="bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-3 group">
+              <span className="min-w-[46px] h-9 px-2 rounded-xl bg-purple-50 text-purple-700 font-black text-xs flex items-center justify-center shrink-0 border border-purple-200 group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-2xs">
+                1090
+              </span>
+              <div className="min-w-0">
+                <p className="font-extrabold text-slate-900 text-xs">Women Safety</p>
+                <p className="text-[10px] text-slate-500 truncate">24x7 Helpline</p>
+              </div>
+            </a>
+
+            <a href="tel:1930" className="bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-3 group">
+              <span className="min-w-[46px] h-9 px-2 rounded-xl bg-amber-50 text-amber-800 font-black text-xs flex items-center justify-center shrink-0 border border-amber-200 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-2xs">
+                1930
+              </span>
+              <div className="min-w-0">
+                <p className="font-extrabold text-slate-900 text-xs">Cyber Fraud</p>
+                <p className="text-[10px] text-slate-500 truncate">National Helpline</p>
+              </div>
+            </a>
+
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════════════════════
+            5. MAIN FOOTER MULTI-COLUMN HUB (Light Mode, All Functional Links)
+            ══════════════════════════════════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
           
           {/* Column 1: Brand, Identity & Mission (Span 4) */}
@@ -352,52 +428,65 @@ export default function Footer() {
             </div>
 
             {/* Security Badges */}
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-[10px] text-emerald-800 px-3 py-1.5 rounded-xl font-bold border border-emerald-200 shadow-2xs">
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <span className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 text-[11px] text-emerald-900 px-3 py-1.5 rounded-xl font-bold border border-emerald-200 shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <svg className="w-3.5 h-3.5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
                 <span>256-Bit TLS Bank Grade</span>
               </span>
 
-              <span className="inline-flex items-center gap-1.5 bg-slate-100 text-[10px] text-slate-800 px-3 py-1.5 rounded-xl font-bold border border-slate-200 shadow-2xs">
-                <span>🛡️ PCI-DSS Level 1</span>
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-50 to-slate-50 text-[11px] text-sky-950 px-3 py-1.5 rounded-xl font-bold border border-sky-200/80 shadow-2xs">
+                <svg className="w-3.5 h-3.5 text-sky-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>PCI-DSS Level 1</span>
               </span>
             </div>
           </div>
 
           {/* Column 2: Travel Services & Utilities (Span 2.5) */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-3.5">
             <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-3 border-emerald-600 pl-2.5">
               Travel Services
             </h4>
             <ul className="space-y-2.5 text-xs font-semibold text-slate-600">
               <li>
-                <Link to="/search" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/search" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group">
+                  <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">🎫</span>
                   <span>Book Train Tickets</span>
                 </Link>
               </li>
               <li>
-                <Link to="/pnr" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/pnr" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group">
+                  <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">🔍</span>
                   <span>Check Live PNR Status</span>
                 </Link>
               </li>
               <li>
-                <Link to="/?tab=live" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/?tab=live" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group">
+                  <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">🛰️</span>
                   <span>Live Train GPS Tracker</span>
                   <span className="text-[9px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded shadow-2xs">LIVE</span>
                 </Link>
               </li>
               <li>
-                <Link to="/?tab=food" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/refunds" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group">
+                  <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">⚡</span>
+                  <span>Auto-Refund &amp; TDR</span>
+                  <span className="text-[9px] font-black bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded shadow-2xs">NEW</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/?tab=food" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group">
+                  <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">🍱</span>
                   <span>Food on Track (E-Catering)</span>
                 </Link>
               </li>
               <li>
-                <Link to="/?tab=hotels" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group">
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                <Link to="/?tab=hotels" className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group">
+                  <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">🏨</span>
                   <span>Hotels &amp; Station Lounges</span>
                 </Link>
               </li>
@@ -406,9 +495,9 @@ export default function Footer() {
                   href="https://ride-tracker-ruddy.vercel.app/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-amber-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group"
+                  className="hover:text-amber-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group"
                 >
-                  <span className="text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="w-5 h-5 rounded-md bg-amber-50 text-amber-700 flex items-center justify-center text-[10px] group-hover:bg-amber-600 group-hover:text-white transition-colors">🚕</span>
                   <span>Platform Cabs via Ride Tracker ↗</span>
                 </a>
               </li>
@@ -416,7 +505,7 @@ export default function Footer() {
           </div>
 
           {/* Column 3: Rules & Policy Hub (Span 2.5) */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-3.5">
             <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-l-3 border-emerald-600 pl-2.5">
               Policies &amp; Rules
             </h4>
@@ -425,9 +514,9 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={() => setPolicyModal('tatkal')}
-                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group text-left cursor-pointer w-full"
                 >
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">⏰</span>
                   <span>Tatkal Booking Windows</span>
                 </button>
               </li>
@@ -435,9 +524,9 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={() => setPolicyModal('refund')}
-                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group text-left cursor-pointer w-full"
                 >
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">💸</span>
                   <span>Cancellation &amp; Refund Scale</span>
                 </button>
               </li>
@@ -445,9 +534,9 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={() => setPolicyModal('rac')}
-                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group text-left cursor-pointer w-full"
                 >
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">💺</span>
                   <span>RAC &amp; Charting Rules</span>
                 </button>
               </li>
@@ -455,9 +544,9 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={() => setPolicyModal('quotas')}
-                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group text-left cursor-pointer w-full"
                 >
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">🎟️</span>
                   <span>Quota Guide (GN, LD, SS, HP)</span>
                 </button>
               </li>
@@ -465,9 +554,9 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={() => setPolicyModal('terms')}
-                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group text-left cursor-pointer w-full"
                 >
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">📜</span>
                   <span>Terms of Service</span>
                 </button>
               </li>
@@ -475,9 +564,9 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={() => setPolicyModal('privacy')}
-                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-1.5 group text-left cursor-pointer"
+                  className="hover:text-emerald-700 hover:translate-x-1 transition-all inline-flex items-center gap-2 group text-left cursor-pointer w-full"
                 >
-                  <span className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">&rsaquo;</span>
+                  <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] group-hover:bg-emerald-600 group-hover:text-white transition-colors">🔒</span>
                   <span>Privacy &amp; Data Security</span>
                 </button>
               </li>
@@ -616,62 +705,9 @@ export default function Footer() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════════════════════
-            5. OFFICIAL RAILWAY EMERGENCY HELPLINES STRIP (Light Mode & Clickable tel:)
-            ══════════════════════════════════════════════════════════════════════════════════ */}
-        <div className="mt-10 pt-8 border-t border-slate-200/90">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-800 mb-3 flex items-center gap-2">
-            <span>🚨 24x7 Government &amp; Railway Emergency Toll-Free Helplines:</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
-            
-            <a href="tel:139" className="bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
-              <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 font-black text-sm flex items-center justify-center shrink-0 border border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white transition-colors">139</span>
-              <div>
-                <p className="font-extrabold text-slate-900 text-xs">Rail Madad</p>
-                <p className="text-[10px] text-slate-500">Unified Helpline</p>
-              </div>
-            </a>
-
-            <a href="tel:182" className="bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
-              <span className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 font-black text-sm flex items-center justify-center shrink-0 border border-rose-200 group-hover:bg-rose-600 group-hover:text-white transition-colors">182</span>
-              <div>
-                <p className="font-extrabold text-slate-900 text-xs">RPF Security</p>
-                <p className="text-[10px] text-slate-500">On-Train Help</p>
-              </div>
-            </a>
-
-            <a href="tel:138" className="bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
-              <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 font-black text-sm flex items-center justify-center shrink-0 border border-blue-200 group-hover:bg-blue-600 group-hover:text-white transition-colors">138</span>
-              <div>
-                <p className="font-extrabold text-slate-900 text-xs">Medical Alert</p>
-                <p className="text-[10px] text-slate-500">Coach Care</p>
-              </div>
-            </a>
-
-            <a href="tel:1090" className="bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
-              <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 font-black text-sm flex items-center justify-center shrink-0 border border-purple-200 group-hover:bg-purple-600 group-hover:text-white transition-colors">1090</span>
-              <div>
-                <p className="font-extrabold text-slate-900 text-xs">Women Safety</p>
-                <p className="text-[10px] text-slate-500">24x7 Helpline</p>
-              </div>
-            </a>
-
-            <a href="tel:1930" className="bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 p-3 rounded-2xl transition-all shadow-2xs hover:shadow-xs flex items-center gap-2.5 group">
-              <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-800 font-black text-sm flex items-center justify-center shrink-0 border border-amber-200 group-hover:bg-amber-600 group-hover:text-white transition-colors">1930</span>
-              <div>
-                <p className="font-extrabold text-slate-900 text-xs">Cyber Fraud</p>
-                <p className="text-[10px] text-slate-500">National Helpline</p>
-              </div>
-            </a>
-
-          </div>
-        </div>
-
-        {/* ══════════════════════════════════════════════════════════════════════════════════
             6. PAYMENT & COMPLIANCE PARTNER PILLS (Light Mode)
             ══════════════════════════════════════════════════════════════════════════════════ */}
-        <div className="mt-8 pt-6 border-t border-slate-200/90 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="mt-10 pt-8 border-t border-slate-200/90 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mr-1">Verified Payment Rails:</span>
             {['UPI (GPay / PhonePe / Paytm)', 'RuPay', 'Visa', 'Mastercard', 'NetBanking 50+ Banks', 'Razorpay Verified'].map((pmt, i) => (
@@ -709,7 +745,7 @@ export default function Footer() {
             <span>&bull;</span>
             <span>Secure</span>
             <span>&bull;</span>
-            <span>Zero Fake Placeholders</span>
+            <span>100% Authentic Schedules</span>
             <span>&bull;</span>
             <span>Passenger-First Architecture</span>
           </div>
