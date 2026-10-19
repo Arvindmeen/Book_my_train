@@ -31,7 +31,8 @@ exports.updateProfile = asyncHandler(async(req, res) =>{
           phone, gender, dateOfBirth,
           city, state, pincode, address,
           profilePicture, berthPreference, foodPreference,
-          emergencyContactName, emergencyContactPhone, irctcUsername
+          emergencyContactName, emergencyContactPhone, irctcUsername,
+          savedPassengers
      } = req.body;
 
      const user = await userService.updateProfile(userId, { 
@@ -39,7 +40,8 @@ exports.updateProfile = asyncHandler(async(req, res) =>{
           phone, gender, dateOfBirth,
           city, state, pincode, address,
           profilePicture, berthPreference, foodPreference,
-          emergencyContactName, emergencyContactPhone, irctcUsername
+          emergencyContactName, emergencyContactPhone, irctcUsername,
+          savedPassengers
      });
      return res.status(200).json({
           success: true,

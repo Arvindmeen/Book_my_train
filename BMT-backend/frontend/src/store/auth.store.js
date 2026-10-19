@@ -27,9 +27,25 @@ const mergeExtendedProfile = (rawUser) => {
   if (!key || typeof window === 'undefined') return enriched;
   try {
     const saved = localStorage.getItem(key);
+    let merged = { ...enriched };
     if (saved) {
-      return enrichUserRole({ ...enriched, ...JSON.parse(saved) });
+      const parsed = JSON.parse(saved);
+      // Database (enriched) is authoritative. If DB returned a field, DB wins.
+      // parsed is only a fallback for any client-only temporary flags if any.
+      merged = {
+        ...parsed,
+        ...enriched,
+      };
+      // Ensure all fields present in enriched take strict precedence over stale local storage
+      Object.keys(enriched).forEach((k) => {
+        merged[k] = enriched[k];
+      });
     }
+    const finalUser = enrichUserRole(merged);
+    try {
+      localStorage.setItem(key, JSON.stringify(finalUser));
+    } catch {}
+    return finalUser;
   } catch (e) {
     console.error('Failed to parse local profile:', e);
   }

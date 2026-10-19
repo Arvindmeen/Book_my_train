@@ -52,7 +52,8 @@ const updateProfile = async (userId, data) => {
           phone, gender, dateOfBirth,
           city, state, pincode, address,
           profilePicture, berthPreference, foodPreference,
-          emergencyContactName, emergencyContactPhone, irctcUsername
+          emergencyContactName, emergencyContactPhone, irctcUsername,
+          savedPassengers
      } = data;
 
      const updateData = {};
@@ -72,6 +73,7 @@ const updateProfile = async (userId, data) => {
      if (emergencyContactName !== undefined) updateData.emergencyContactName = emergencyContactName;
      if (emergencyContactPhone !== undefined) updateData.emergencyContactPhone = emergencyContactPhone;
      if (irctcUsername !== undefined) updateData.irctcUsername = irctcUsername;
+     if (savedPassengers !== undefined) updateData.savedPassengers = savedPassengers;
 
      const updatedUser = await prisma.user.update({
           where: { id: userId },

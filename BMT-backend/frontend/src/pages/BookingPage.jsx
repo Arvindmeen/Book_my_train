@@ -101,10 +101,22 @@ export default function BookingPage() {
   const handleAutofillMasterPassengers = () => {
     try {
       let masterList = [];
-      const passengerStorageKey = `bmt_master_passengers_${user?.id || user?.email || 'default'}`;
-      const saved = localStorage.getItem(passengerStorageKey);
-      if (saved) {
-        masterList = JSON.parse(saved);
+      if (user?.savedPassengers) {
+        try {
+          const parsed = typeof user.savedPassengers === 'string'
+            ? JSON.parse(user.savedPassengers)
+            : user.savedPassengers;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            masterList = parsed;
+          }
+        } catch {}
+      }
+      if (!masterList || masterList.length === 0) {
+        const passengerStorageKey = `bmt_master_passengers_${user?.id || user?.email || 'default'}`;
+        const saved = localStorage.getItem(passengerStorageKey);
+        if (saved) {
+          masterList = JSON.parse(saved);
+        }
       }
       if (!masterList || masterList.length === 0) {
         const ownName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
@@ -119,8 +131,9 @@ export default function BookingPage() {
         const p = masterList[idx] || masterList[0];
         setValue(`passengers.${idx}.name`, p.name, { shouldValidate: true });
         setValue(`passengers.${idx}.age`, Number(p.age) || 25, { shouldValidate: true });
-        setValue(`passengers.${idx}.gender`, p.gender === 'FEMALE' ? 'FEMALE' : 'MALE', { shouldValidate: true });
-        setValue(`passengers.${idx}.berthPreference`, p.berthPreference || 'NO_PREF');
+        const isFemale = p.gender === 'F' || p.gender === 'FEMALE';
+        setValue(`passengers.${idx}.gender`, isFemale ? 'FEMALE' : 'MALE', { shouldValidate: true });
+        setValue(`passengers.${idx}.berthPreference`, p.berthPreference || p.berth || 'NO_PREF');
       }
 
       showToast('⚡ Fast Tatkal Autofill: Loaded from Master Passenger List in 24ms!', 'success');

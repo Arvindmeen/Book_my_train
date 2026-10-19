@@ -58,6 +58,7 @@ async function ensureUserProfileColumns() {
                ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emergencyContactName" TEXT;
                ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emergencyContactPhone" TEXT;
                ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "irctcUsername" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "savedPassengers" TEXT;
           `);
           logger.info("Successfully verified and synced all User profile columns in PostgreSQL database");
      } catch (err) {

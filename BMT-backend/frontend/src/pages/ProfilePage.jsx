@@ -114,14 +114,68 @@ export default function ProfilePage() {
   // Passengers
   const passengerKey = `bmt_master_passengers_${user?.id || user?.email || 'default'}`;
   const [passengers, setPassengers] = useState(() => {
-    try { const s = localStorage.getItem(passengerKey); if (s) return JSON.parse(s); } catch {}
+    if (user?.savedPassengers) {
+      try {
+        const parsed = typeof user.savedPassengers === 'string'
+          ? JSON.parse(user.savedPassengers)
+          : user.savedPassengers;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    try {
+      const s = localStorage.getItem(passengerKey);
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
     return [{ id: 1, name: displayName !== 'Traveler' ? displayName : 'Primary Passenger', age: 25, gender: 'M', berth: 'Lower Berth' }];
   });
   const [newPass, setNewPass] = useState({ name: '', age: '', gender: 'M', berth: 'No Preference' });
 
-  const savePassengers = (list) => {
+  // Sync passengers whenever user.savedPassengers from database updates
+  useEffect(() => {
+    if (user?.savedPassengers) {
+      try {
+        const parsed = typeof user.savedPassengers === 'string'
+          ? JSON.parse(user.savedPassengers)
+          : user.savedPassengers;
+        if (Array.isArray(parsed)) {
+          setPassengers(parsed);
+          try {
+            localStorage.setItem(passengerKey, JSON.stringify(parsed));
+          } catch {}
+          return;
+        }
+      } catch (e) {
+        console.warn('Failed to parse savedPassengers:', e);
+      }
+    }
+
+    // Auto-sync migration: If database doesn't have savedPassengers yet, but this device's localStorage
+    // already has saved passengers (e.g. from previous sessions), sync them to the database now!
+    if (user && !user.savedPassengers) {
+      try {
+        const s = localStorage.getItem(passengerKey);
+        if (s) {
+          const parsed = JSON.parse(s);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPassengers(parsed);
+            updateProfile({ savedPassengers: JSON.stringify(parsed) }).catch(() => {});
+          }
+        }
+      } catch {}
+    }
+  }, [user?.savedPassengers, user?.id, user?.email, passengerKey, updateProfile]);
+
+  const savePassengers = async (list) => {
     setPassengers(list);
     try { localStorage.setItem(passengerKey, JSON.stringify(list)); } catch {}
+    try {
+      await updateProfile({ savedPassengers: JSON.stringify(list) });
+    } catch (e) {
+      console.warn('Failed to save passengers to database:', e);
+    }
   };
 
   const compressImage = (file, maxWidth = 360, maxHeight = 360, quality = 0.82) => {
