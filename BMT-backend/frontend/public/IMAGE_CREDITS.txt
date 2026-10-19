@@ -14,3 +14,8 @@ https://commons.wikimedia.org/wiki/File:Palace_on_Wheels_at_bharatpur_Junction.j
 File: Nilgiri Mountain Railway (49443282053).jpg
 Photo: Bernard Gagnon, Wikimedia Commons, CC BY-SA 2.0
 https://commons.wikimedia.org/wiki/File:Nilgiri_Mountain_Railway_(49443282053).jpg
+
+4. Travel Services 3D Realistic Iconography
+Source: Microsoft Fluent UI Emoji Collection (MIT License)
+Repository: https://github.com/microsoft/fluentui-emoji
+Assets: Oncoming Taxi (3D), Hotel (3D), Airplane (3D), Luggage (3D), Manual Wheelchair (3D), Shield (3D), Pot of Food (3D), Mobile Phone with Arrow (3D).

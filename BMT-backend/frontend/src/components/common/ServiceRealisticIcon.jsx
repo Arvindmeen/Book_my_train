@@ -1,35 +1,54 @@
+import React, { useState } from 'react';
+
 /**
- * Premium Illustrated Icons for Rail Travel Services
- * - Designed on a crisp 24x24 standard vector grid
- * - Multi-layer duotone fills, glossy light reflections and jewel-tone backdrops
+ * Premium 3D Rendered & Illustrated Realistic Icons for Rail Travel Services
+ * - Uses high-definition, glossy 3D rendered icons with transparent backgrounds
+ * - Multi-layer duotone vector fallback
  * - Strictly bounded dimensions (never breaks card layouts or flex containers)
  */
 
+const SERVICE_3D_ASSETS = {
+  food: '/services/food_pot.png',
+  hotels: '/services/hotels.png',
+  cabs: '/services/cabs.png',
+  flights: '/services/flights.png',
+  porter: '/services/porter.png',
+  wheelchair: '/services/wheelchair.png',
+  insurance: '/services/insurance.png',
+  radar: '/services/radar_phone.png'
+};
+
 const SIZE_CONFIGS = {
   sm: {
-    boxClass: 'w-8 h-8 p-1.5 rounded-lg',
+    boxClass: 'w-8 h-8 p-1 rounded-lg',
+    imgSize: 22,
     svgSize: 18,
     px: 32
   },
   md: {
-    boxClass: 'w-10 h-10 p-2 rounded-xl',
+    boxClass: 'w-10 h-10 p-1 rounded-xl',
+    imgSize: 28,
     svgSize: 22,
     px: 40
   },
   lg: {
-    boxClass: 'w-11 h-11 p-2 rounded-xl',
+    boxClass: 'w-11 h-11 p-1 rounded-xl',
+    imgSize: 32,
     svgSize: 24,
     px: 44
   },
   xl: {
-    boxClass: 'w-14 h-14 p-2.5 rounded-2xl',
+    boxClass: 'w-14 h-14 p-1.5 rounded-2xl',
+    imgSize: 42,
     svgSize: 30,
     px: 56
   }
 };
 
 export default function ServiceRealisticIcon({ id, size = 'md', className = '' }) {
+  const [imgError, setImgError] = useState(false);
   const cfg = SIZE_CONFIGS[size] || SIZE_CONFIGS.md;
+  const imgSrc = SERVICE_3D_ASSETS[id];
 
   // Curated jewel-tone gradient backgrounds with delicate borders and ambient glow
   const containerThemes = {
@@ -267,6 +286,27 @@ export default function ServiceRealisticIcon({ id, size = 'md', className = '' }
     }
   };
 
+  const renderContent = () => {
+    if (imgSrc && !imgError) {
+      return (
+        <img
+          src={imgSrc}
+          alt={id}
+          loading="lazy"
+          onError={() => setImgError(true)}
+          className="object-contain drop-shadow-sm select-none transition-transform duration-300 group-hover:scale-110"
+          style={{
+            width: `${cfg.imgSize}px`,
+            height: `${cfg.imgSize}px`,
+            maxWidth: `${cfg.imgSize}px`,
+            maxHeight: `${cfg.imgSize}px`
+          }}
+        />
+      );
+    }
+    return renderSvg();
+  };
+
   return (
     <div
       className={`inline-flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 ${cfg.boxClass} ${containerThemes} ${className}`}
@@ -279,7 +319,7 @@ export default function ServiceRealisticIcon({ id, size = 'md', className = '' }
         maxHeight: `${cfg.px}px`
       }}
     >
-      {renderSvg()}
+      {renderContent()}
     </div>
   );
 }
