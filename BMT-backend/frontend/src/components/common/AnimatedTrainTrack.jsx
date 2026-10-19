@@ -69,6 +69,31 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
     stopTrainHorn(0.22);
   };
 
+  // Toggle horn & stop/resume train on mobile tap or click without any screen jump
+  const handleTrainClick = (e) => {
+    e.stopPropagation();
+    setIsTrainHovered((prev) => {
+      const next = !prev;
+      if (next) {
+        if (!isMuted) playTrainHorn(0.42);
+      } else {
+        stopTrainHorn(0.22);
+      }
+      return next;
+    });
+  };
+
+  // Tapping track outside the train dismisses active horn without moving viewport
+  const handleTrackStageClick = (e) => {
+    if (isTrainHovered) {
+      setIsTrainHovered(false);
+      stopTrainHorn(0.22);
+    }
+    if (onTrackClick) {
+      onTrackClick(e);
+    }
+  };
+
   // Clean up any active horn sound on unmount
   useEffect(() => {
     return () => {
@@ -79,7 +104,7 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
   return (
     <div
       className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto my-3 relative z-10 select-none train-track-container"
-      title="Indian Railways High-Speed Track · Hover directly on the train to halt and blow air chime horn"
+      title="Indian Railways High-Speed Track · Hover train to blow horn & stop · Move off to resume"
     >
       {/* Track Status Bar & Interactive Controls */}
       <div className="flex items-center justify-between px-2 mb-1.5 gap-2">
@@ -99,16 +124,14 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
             <span>
               {isTrainHovered
                 ? isMuted
-                  ? '⏸️ Train Paused (Hovered)'
-                  : '📢 ⏸️ Train Paused · Horn Active!'
-                : '⚡ High-Speed Rail Corridor · 130 km/h'}
+                  ? '⏸️ Train Paused'
+                  : '📢 Train Paused · Horn Blowing'
+                : '📢 Hover train to blow horn, move off to stop'}
             </span>
           </span>
 
           <span className="text-[10px] font-bold text-slate-400 hidden sm:inline">
-            {isTrainHovered
-              ? 'Move cursor off train to resume speed'
-              : 'Hover directly on train to stop & blow real horn'}
+            {isTrainHovered ? 'Move cursor away to stop horn & resume' : 'Tap train on mobile'}
           </span>
         </div>
 
@@ -143,8 +166,8 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
 
       {/* Track & Train Stage */}
       <div
-        className="relative h-12 overflow-hidden rounded-2xl bg-gradient-to-b from-transparent via-slate-50/50 to-slate-100/60 border border-slate-200/60 shadow-2xs"
-        onClick={onTrackClick}
+        className="relative h-12 overflow-hidden rounded-2xl bg-gradient-to-b from-transparent via-slate-50/50 to-slate-100/60 border border-slate-200/60 shadow-2xs cursor-default"
+        onClick={handleTrackStageClick}
       >
         
         {/* Railway Sleepers / Ties (Repeating Pattern along the track) */}
@@ -165,7 +188,8 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
           }`}
           onMouseEnter={handleTrainMouseEnter}
           onMouseLeave={handleTrainMouseLeave}
-          title="Hover directly on train to halt and blow air chime horn"
+          onClick={handleTrainClick}
+          title="Hover or tap train to blow air horn & halt · Move away to resume"
         >
           
           <svg

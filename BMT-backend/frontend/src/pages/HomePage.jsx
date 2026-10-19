@@ -2502,7 +2502,7 @@ export default function HomePage() {
           </div>
 
           {/* Dedicated High-Speed Train Track (Vande Bharat Express with spinning wheels & hover-to-stop) */}
-          <AnimatedTrainTrack onTrackClick={() => window.scrollTo({ top: 120, behavior: 'smooth' })} />
+          <AnimatedTrainTrack />
 
         </div>
       </div>
