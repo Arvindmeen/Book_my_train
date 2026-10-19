@@ -3677,8 +3677,8 @@ export default function HomePage() {
             <div>
               <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
                 <img 
-                  src="/vande_bharat_optimized.jpg" 
-                  alt="Vande Bharat Express" 
+                  src="/vande_bharat_kanpur.jpg" 
+                  alt="Vande Bharat Express at Kanpur Central Platform" 
                   width="800"
                   height="800"
                   loading="lazy"
@@ -3687,6 +3687,9 @@ export default function HomePage() {
                 />
                 <div className="absolute top-4 left-4 bg-emerald-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
                   Modern Fast Rail
+                </div>
+                <div className="absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
+                  <span>📍 Platform 1 &bull; Kanpur Central</span>
                 </div>
               </div>
               <div className="p-5 space-y-2">
@@ -3706,8 +3709,8 @@ export default function HomePage() {
             <div>
               <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
                 <img 
-                  src="/palace_on_wheels_optimized.jpg" 
-                  alt="Palace on Wheels" 
+                  src="/palace_on_wheels_station.jpg" 
+                  alt="Palace on Wheels at Bharatpur Junction Platform" 
                   width="800"
                   height="800"
                   loading="lazy"
@@ -3716,6 +3719,9 @@ export default function HomePage() {
                 />
                 <div className="absolute top-4 left-4 bg-amber-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
                   Heritage Luxury
+                </div>
+                <div className="absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
+                  <span>📍 Platform 2 &bull; Bharatpur Jn</span>
                 </div>
               </div>
               <div className="p-5 space-y-2">
@@ -3735,8 +3741,8 @@ export default function HomePage() {
             <div>
               <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
                 <img 
-                  src="/nilgiri_toy_train_optimized.jpg" 
-                  alt="Nilgiri Mountain Toy Train" 
+                  src="/nilgiri_station.jpg" 
+                  alt="Nilgiri Mountain Railway at Coonoor Station Platform" 
                   width="800"
                   height="800"
                   loading="lazy"
@@ -3745,6 +3751,9 @@ export default function HomePage() {
                 />
                 <div className="absolute top-4 left-4 bg-teal-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
                   Scenic Mountain Rail
+                </div>
+                <div className="absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
+                  <span>📍 Heritage Platform &bull; Coonoor</span>
                 </div>
               </div>
               <div className="p-5 space-y-2">
