@@ -483,6 +483,25 @@ export default function ProfileModal({
                   </span>
                 </div>
 
+                {/* 6. Auto-Refund & TDR */}
+                <div
+                  onClick={() => { onClose(); navigate('/refunds'); }}
+                  className="flex items-center justify-between py-2.5 px-3 rounded-2xl hover:bg-emerald-50/80 border border-transparent hover:border-emerald-100 transition-all group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-base">⚡</span>
+                    <div>
+                      <span className="font-serif text-sm font-semibold text-slate-800 group-hover:text-emerald-800 block leading-tight">
+                        Auto-Refund &amp; TDR
+                      </span>
+                      <span className="text-[10px] text-slate-500">Track refunds &amp; claim instant UPI settlements</span>
+                    </div>
+                  </div>
+                  <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-emerald-600 group-hover:border-emerald-600 transition-all text-xs font-bold">
+                    &rarr;
+                  </span>
+                </div>
+
                 {/* 6. Download Web App */}
                 <div
                   onClick={() => { onClose(); onOpenInstall && onOpenInstall(); }}

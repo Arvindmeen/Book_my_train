@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import ProtectedRoute from './ProtectedRoute';
 import AdminRoute from './AdminRoute';
@@ -13,6 +13,7 @@ import BookingPage from '../pages/BookingPage';
 import BookingDetailPage from '../pages/BookingDetailPage';
 import MyBookingsPage from '../pages/MyBookingsPage';
 import ProfilePage from '../pages/ProfilePage';
+import RefundsPage from '../pages/RefundsPage';
 import AdminPage from '../pages/AdminPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -26,6 +27,11 @@ export default function AppRouter() {
         <Route path="/pnr" element={<PnrPage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+        <Route path="/refunds" element={<RefundsPage />} />
+        <Route path="/refund-status" element={<RefundsPage />} />
+
+        {/* Alias /my-bookings to /bookings to prevent 404s */}
+        <Route path="/my-bookings" element={<Navigate to="/bookings" replace />} />
 
         {/* Regular Authenticated User Routes */}
         <Route element={<ProtectedRoute />}>

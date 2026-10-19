@@ -375,6 +375,14 @@ export default function Navbar() {
                           <span>My Bookings &amp; Tickets</span>
                         </Link>
                         <Link
+                          to="/refunds"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-emerald-50 text-emerald-800 font-bold transition-colors"
+                        >
+                          <span className="text-base">⚡</span>
+                          <span>Auto-Refund &amp; TDR Tracker</span>
+                        </Link>
+                        <Link
                           to="/pnr"
                           onClick={() => setProfileMenuOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100/80 transition-colors"

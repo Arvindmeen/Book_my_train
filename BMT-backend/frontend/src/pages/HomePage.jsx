@@ -2757,7 +2757,7 @@ export default function HomePage() {
                       <span>Live PNR</span>
                     </Link>
                     <Link
-                      to="/my-bookings"
+                      to="/refunds"
                       className="p-2.5 bg-slate-50 hover:bg-rose-50 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-1"
                     >
                       <span>⚡</span>
@@ -2818,7 +2818,7 @@ export default function HomePage() {
                     <span>Search &amp; Book Trains</span>
                   </button>
                   <Link
-                    to="/my-bookings"
+                    to="/bookings"
                     className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-extrabold transition-all text-center border border-slate-200 flex items-center justify-center gap-2"
                   >
                     <span>📋</span>
@@ -2888,7 +2888,7 @@ export default function HomePage() {
               {/* 4 Functional Passenger Service Shortcuts */}
               <div className="grid grid-cols-2 gap-2.5 mt-4 pt-3 border-t border-slate-100">
                 <Link
-                  to="/my-bookings"
+                  to="/refunds"
                   className="p-3 border border-slate-200 bg-slate-50/70 hover:bg-emerald-50/60 hover:border-emerald-200 rounded-xl transition-all group flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between">
