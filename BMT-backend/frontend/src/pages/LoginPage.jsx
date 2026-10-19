@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { authApi } from '../api/auth.api';
@@ -168,17 +168,22 @@ export default function LoginPage() {
         
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-3 group">
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl p-2.5 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <rect x="4" y="3" width="16" height="16" rx="2" />
-                <path d="M4 11h16" />
-                <path d="M12 3v8" />
-              </svg>
+          <Link to="/" className="inline-flex items-center gap-3 mb-3 group" title="Book My Train Home">
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-1 shadow-md shadow-emerald-500/25 transition-all duration-300 group-hover:scale-105">
+              <img
+                src="/navbar-logo.jpg"
+                alt="Book My Train Logo"
+                className="h-full w-full rounded-xl object-contain bg-white/90"
+              />
             </div>
-            <span className="font-black text-2xl text-slate-900 tracking-tight">
-              Book My <span className="text-emerald-600">Train</span>
-            </span>
+            <div className="flex flex-col text-left">
+              <span className="font-display font-black text-2xl tracking-tight leading-none text-slate-900 group-hover:text-emerald-700 transition-colors">
+                Book My <span className="text-emerald-600">Train</span>
+              </span>
+              <span className="text-[10px] font-semibold text-emerald-700 tracking-wide mt-1">
+                Smart Rail Ticketing Portal
+              </span>
+            </div>
           </Link>
           <h2 className="text-xl font-bold text-slate-800">
             {tab === 'login'
