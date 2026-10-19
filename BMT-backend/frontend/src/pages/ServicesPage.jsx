@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import ServiceBookingModal from '../components/services/ServiceBookingModal';
 
 const ALL_SERVICES = [
   {
@@ -135,7 +136,14 @@ export default function ServicesPage() {
           {ALL_SERVICES.map((s) => (
             <div
               key={s.id}
-              className={`p-4 bg-white border ${s.borderColor} shadow-xs hover:shadow-card-hover rounded-2xl transition-all duration-300 flex flex-col justify-between group`}
+              onClick={() => {
+                if (s.externalUrl) {
+                  window.open(s.externalUrl, '_blank', 'noopener,noreferrer');
+                  return;
+                }
+                setSelectedService(s);
+              }}
+              className={`p-4 bg-white border ${s.borderColor} shadow-xs hover:shadow-card-hover hover:-translate-y-0.5 rounded-2xl transition-all duration-300 flex flex-col justify-between group cursor-pointer`}
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -170,13 +178,13 @@ export default function ServicesPage() {
               <div className="pt-3 mt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (s.externalUrl) {
                       window.open(s.externalUrl, '_blank', 'noopener,noreferrer');
                       return;
                     }
                     setSelectedService(s);
-                    setNotified(false);
                   }}
                   className={`w-full py-2 rounded-xl text-white font-bold text-xs bg-gradient-to-r ${s.color} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center cursor-pointer`}
                 >
@@ -187,62 +195,12 @@ export default function ServicesPage() {
           ))}
         </div>
 
-        {/* Upcoming Feature Update Modal (Requested by User!) */}
+        {/* Live Functional Service Booking Modal */}
         {selectedService && (
-          <div
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in-up"
-            onClick={() => setSelectedService(null)}
-          >
-            <div
-              className="bg-white border border-slate-200/90 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-scale-in text-center relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-3xl mx-auto shadow-xs">
-                {selectedService.icon}
-              </div>
-
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                  🚀 Upcoming Feature Update · v2.4
-                </span>
-                <h4 className="font-extrabold text-slate-900 text-xl mt-2 leading-tight">
-                  {selectedService.title}
-                </h4>
-                <p className="text-slate-600 text-xs leading-relaxed font-medium mt-1.5 max-w-sm mx-auto">
-                  We will add these features in our upcoming update! We are currently completing live API testing with the Indian Railway catering and logistics network.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs text-slate-600 font-semibold">
-                ⏳ Integration in progress. Thank you for your patience while we connect all stations!
-              </div>
-
-              <div className="flex flex-col gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setNotified(true)}
-                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
-                    notified
-                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20'
-                  }`}
-                >
-                  {notified ? '✓ You are on the priority launch list!' : 'Notify Me When Live'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedService(null);
-                    setNotified(false);
-                  }}
-                  className="w-full py-2 text-xs font-semibold text-slate-500 hover:text-slate-800"
-                >
-                  Close Window
-                </button>
-              </div>
-            </div>
-          </div>
+          <ServiceBookingModal
+            service={selectedService}
+            onClose={() => setSelectedService(null)}
+          />
         )}
 
         {/* Back to Home CTA */}

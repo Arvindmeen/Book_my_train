@@ -11,6 +11,7 @@ import { useToast } from '../components/ui/Toast';
 import PwaInstallModal from '../components/common/PwaInstallModal';
 import { predictWaitlist, predictPnr } from '../utils/aiPrediction';
 import AdminHomeView from '../components/admin/AdminHomeView';
+import ServiceBookingModal from '../components/services/ServiceBookingModal';
 import { AUTHENTIC_TRAIN_ROUTES, STATION_DIRECTORY } from '../utils/trainRoutes';
 
 const parseTimeToMinutes = (timeStr) => {
@@ -2563,10 +2564,12 @@ export default function HomePage() {
               onClick={() => {
                 if (s.id === 'cabs' || s.action === 'ride') {
                   window.open('https://ride-tracker-ruddy.vercel.app/', '_blank', 'noopener,noreferrer');
+                } else {
+                  setUpcomingService(s);
                 }
               }}
-              className={`p-3.5 sm:p-4 bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-card-hover rounded-2xl transition-all duration-300 group flex flex-col justify-between ${
-                s.id === 'cabs' || s.action === 'ride' ? 'cursor-pointer hover:border-amber-400 ring-0 hover:ring-2 hover:ring-amber-200/50' : ''
+              className={`p-3.5 sm:p-4 bg-white border border-slate-200/90 hover:border-emerald-400 hover:shadow-card-hover hover:-translate-y-0.5 rounded-2xl transition-all duration-300 group flex flex-col justify-between cursor-pointer ${
+                s.id === 'cabs' || s.action === 'ride' ? 'hover:border-amber-400 ring-0 hover:ring-2 hover:ring-amber-200/50' : ''
               }`}
             >
               <div className="space-y-2">
@@ -2605,27 +2608,29 @@ export default function HomePage() {
                       window.open('https://ride-tracker-ruddy.vercel.app/', '_blank', 'noopener,noreferrer');
                       return;
                     }
-                    if (s.action === 'food') {
-                      setActiveTab('food');
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    } else if (s.action === 'hotels') {
-                      setActiveTab('hotels');
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    } else if (s.action === 'flights') {
-                      setActiveTab('flights');
-                      window.scrollTo({ top: 120, behavior: 'smooth' });
-                    } else {
-                      setUpcomingService(s);
-                      setServiceNotified(false);
-                    }
+                    setUpcomingService(s);
                   }}
-                  className={`w-full py-1.5 font-bold text-xs rounded-xl transition-all text-center ${
+                  className={`w-full py-1.5 font-bold text-xs rounded-xl transition-all text-center cursor-pointer ${
                     s.id === 'cabs' || s.action === 'ride'
                       ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs'
                       : 'bg-slate-100 group-hover:bg-emerald-600 group-hover:text-white text-slate-700'
                   }`}
                 >
-                  {s.id === 'cabs' || s.action === 'ride' ? 'Book Ride ↗' : s.action === 'food' ? 'Order Food' : s.action === 'hotels' ? 'View Stays' : s.action === 'flights' ? 'Find Flights' : 'Explore Service'}
+                  {s.id === 'cabs' || s.action === 'ride'
+                    ? 'Book Ride ↗'
+                    : s.action === 'food'
+                    ? 'Order Food'
+                    : s.action === 'hotels'
+                    ? 'View Stays'
+                    : s.action === 'flights'
+                    ? 'Find Flights'
+                    : s.id === 'porter'
+                    ? 'Book Porter'
+                    : s.id === 'wheelchair'
+                    ? 'Free Assist'
+                    : s.id === 'insurance'
+                    ? 'Trip Shield'
+                    : 'Live Radar'}
                 </button>
               </div>
             </div>
@@ -2633,62 +2638,12 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Upcoming Feature Update Modal (Requested by User!) */}
+      {/* Live Interactive Service Booking Modal */}
       {upcomingService && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in-up"
-          onClick={() => setUpcomingService(null)}
-        >
-          <div
-            className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full p-6 text-center space-y-4 animate-scale-in relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-3xl mx-auto shadow-xs">
-              {upcomingService.icon}
-            </div>
-
-            <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                🚀 Upcoming Feature Update · v2.4
-              </span>
-              <h3 className="font-extrabold text-xl text-slate-900 mt-2">
-                {upcomingService.name}
-              </h3>
-              <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1.5 max-w-sm mx-auto">
-                We are actively integrating this feature with the official Indian Railway central network (CRIS) and authorized partner networks. This will be added in our upcoming update!
-              </p>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs text-slate-600 font-semibold">
-              ⏳ Integration testing in progress for zero-delay bookings. Thank you for your patience!
-            </div>
-
-            <div className="pt-2 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => setServiceNotified(true)}
-                className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all ${
-                  serviceNotified
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20'
-                }`}
-              >
-                {serviceNotified ? '✓ You are on the priority launch list!' : 'Notify Me When Live'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setUpcomingService(null);
-                  setServiceNotified(false);
-                }}
-                className="w-full py-2 text-xs font-semibold text-slate-500 hover:text-slate-800"
-              >
-                Close Window
-              </button>
-            </div>
-          </div>
-        </div>
+        <ServiceBookingModal
+          service={upcomingService}
+          onClose={() => setUpcomingService(null)}
+        />
       )}
 
       {/* 4. Dynamic Conditional Section: Logged In vs Guest */}
