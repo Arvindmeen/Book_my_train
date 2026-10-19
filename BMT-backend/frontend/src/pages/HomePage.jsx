@@ -3674,20 +3674,22 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="card p-0 overflow-hidden border border-slate-200/80 hover:shadow-card-hover transition-all duration-300 group flex flex-col justify-between">
             <div>
-              <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
+              <div className="relative overflow-hidden h-52 bg-slate-200 flex items-center justify-center">
+                {/* Instant shimmer skeleton while image loads */}
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse pointer-events-none" />
                 <img 
                   src="/vande_bharat_kanpur.jpg" 
                   alt="Vande Bharat Express at Kanpur Central Platform" 
                   width="800"
                   height="800"
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="eager"
+                  fetchpriority="high"
+                  className="relative z-10 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute top-4 left-4 bg-emerald-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
+                <div className="relative z-20 absolute top-4 left-4 bg-emerald-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
                   Modern Fast Rail
                 </div>
-                <div className="absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
+                <div className="relative z-20 absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
                   <span>📍 Platform 1 &bull; Kanpur Central</span>
                 </div>
               </div>
@@ -3706,20 +3708,22 @@ export default function HomePage() {
 
           <div className="card p-0 overflow-hidden border border-slate-200/80 hover:shadow-card-hover transition-all duration-300 group flex flex-col justify-between">
             <div>
-              <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
+              <div className="relative overflow-hidden h-52 bg-slate-200 flex items-center justify-center">
+                {/* Instant shimmer skeleton while image loads */}
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse pointer-events-none" />
                 <img 
                   src="/palace_on_wheels_station.jpg" 
                   alt="Palace on Wheels at Bharatpur Junction Platform" 
                   width="800"
                   height="800"
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="eager"
+                  fetchpriority="high"
+                  className="relative z-10 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute top-4 left-4 bg-amber-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
+                <div className="relative z-20 absolute top-4 left-4 bg-amber-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
                   Heritage Luxury
                 </div>
-                <div className="absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
+                <div className="relative z-20 absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
                   <span>📍 Platform 2 &bull; Bharatpur Jn</span>
                 </div>
               </div>
@@ -3738,20 +3742,22 @@ export default function HomePage() {
 
           <div className="card p-0 overflow-hidden border border-slate-200/80 hover:shadow-card-hover transition-all duration-300 group flex flex-col justify-between">
             <div>
-              <div className="relative overflow-hidden h-52 bg-slate-100 flex items-center justify-center">
+              <div className="relative overflow-hidden h-52 bg-slate-200 flex items-center justify-center">
+                {/* Instant shimmer skeleton while image loads */}
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse pointer-events-none" />
                 <img 
                   src="/nilgiri_station.jpg" 
                   alt="Nilgiri Mountain Railway at Coonoor Station Platform" 
                   width="800"
                   height="800"
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="eager"
+                  fetchpriority="high"
+                  className="relative z-10 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute top-4 left-4 bg-teal-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
+                <div className="relative z-20 absolute top-4 left-4 bg-teal-600 text-white font-extrabold text-[10px] tracking-widest px-3 py-1 rounded-full uppercase shadow-sm">
                   Scenic Mountain Rail
                 </div>
-                <div className="absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
+                <div className="relative z-20 absolute bottom-2.5 left-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 border border-white/20">
                   <span>📍 Heritage Platform &bull; Coonoor</span>
                 </div>
               </div>

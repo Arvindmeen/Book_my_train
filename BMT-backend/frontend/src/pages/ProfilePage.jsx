@@ -17,10 +17,16 @@ const INDIAN_STATES = [
 export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const updateProfile = useAuthStore((s) => s.updateProfile);
+  const fetchProfile = useAuthStore((s) => s.fetchProfile);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const showToast = useToast();
   const photoInputRef = useRef(null);
+
+  useEffect(() => {
+    // Proactively fetch latest profile data from database on page load
+    fetchProfile();
+  }, [fetchProfile]);
 
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);

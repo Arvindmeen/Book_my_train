@@ -122,46 +122,58 @@ export default function RefundsPage() {
           <span className="text-slate-800 font-bold">Auto-Refund &amp; TDR</span>
         </div>
 
-        {/* Hero Header */}
-        <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-6 -mr-6 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+        {/* Hero Header - Rich Vibrant Teal/Emerald/Sapphire Gradient with Frosted Glass Cards */}
+        <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-emerald-950/20 relative overflow-hidden border border-emerald-500/30">
+          {/* Ambient Glowing Highlights */}
+          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-72 h-72 bg-teal-400/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-8 -left-8 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-cyan-400/15 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="px-3 py-1 rounded-full bg-emerald-900/60 backdrop-blur-md text-emerald-200 border border-emerald-300/40 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
                 ⚡ IRCTC Instant Auto-Refund Saga
               </span>
-              <span className="px-3 py-1 rounded-full bg-white/10 text-slate-200 text-xs font-semibold">
+              <span className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white text-xs font-bold border border-white/20 shadow-sm">
                 100% Direct UPI Settlement
               </span>
             </div>
 
             <div className="max-w-2xl space-y-2">
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-sm">
                 Auto-Refund &amp; TDR Tracking Center
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-emerald-50/90 leading-relaxed font-medium">
                 Track instant automated refunds for cancelled rail tickets, monitor bank reversal sagas, or register Ticket Deposit Receipt (TDR) claims for delayed trains.
               </p>
             </div>
 
-            {/* Quick KPI stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-white/10">
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Total Refunded</p>
-                <p className="text-lg font-black text-emerald-400 mt-0.5">{formatCurrency(totalRefundAmount)}</p>
+            {/* Quick KPI stats with Glassmorphic Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-4 border-t border-white/20">
+              <div className="p-3.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:bg-white/15 transition-all">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-200">Total Refunded</p>
+                <p className="text-xl sm:text-2xl font-black text-white mt-1 drop-shadow-sm">
+                  <span className="text-emerald-300">{formatCurrency(totalRefundAmount)}</span>
+                </p>
               </div>
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Processed Tickets</p>
-                <p className="text-lg font-black text-white mt-0.5">{cancelledBookings.length}</p>
+              <div className="p-3.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:bg-white/15 transition-all">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-200">Processed Tickets</p>
+                <p className="text-xl sm:text-2xl font-black text-white mt-1 drop-shadow-sm">
+                  {cancelledBookings.length}
+                </p>
               </div>
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Average Payout SLA</p>
-                <p className="text-lg font-black text-teal-300 mt-0.5">&lt; 15 Mins (UPI)</p>
+              <div className="p-3.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:bg-white/15 transition-all">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-200">Average Payout SLA</p>
+                <p className="text-xl sm:text-2xl font-black text-teal-200 mt-1 drop-shadow-sm">
+                  &lt; 15 Mins <span className="text-xs font-bold text-teal-100">(UPI)</span>
+                </p>
               </div>
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Active Bookings</p>
-                <p className="text-lg font-black text-amber-300 mt-0.5">{activeBookings.length}</p>
+              <div className="p-3.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:bg-white/15 transition-all">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-200">Active Bookings</p>
+                <p className="text-xl sm:text-2xl font-black text-amber-300 mt-1 drop-shadow-sm">
+                  {activeBookings.length}
+                </p>
               </div>
             </div>
           </div>

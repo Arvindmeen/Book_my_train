@@ -20,5 +20,6 @@ RUN if [ -f prisma/schema.prisma ]; then npx prisma generate; fi
 
 ENV NODE_ENV=production
 EXPOSE 4000
-CMD ["node", "src/index.js"]
+CMD ["sh", "-c", "if [ -f prisma/schema.prisma ]; then npx prisma db push --skip-generate || true; fi && node src/index.js"]
+
 

@@ -8,19 +8,31 @@ const { BadRequestError, NotFoundError } = require("../utils/error");
 
 
 const getProfile = async(userId) =>{
-     logger.info("First check user in Redis");
+     logger.info("Check user in Redis");
 
      const storedUser = await redis.get(`user:${userId}`);
      if(storedUser){
-          logger.info("Fetched user profile from redis");
-          return JSON.parse(storedUser);
+          try {
+               const parsed = JSON.parse(storedUser);
+               // If cached user has extended fields or is valid, return it
+               if (parsed && parsed.id) {
+                    logger.info("Fetched user profile from redis");
+                    return parsed;
+               }
+          } catch (e) {
+               logger.warn("Failed to parse redis user, falling back to DB", e);
+          }
      }
-     logger.info("If user is not in redis, fetch user from DB");
+     logger.info("Fetch fresh user from Postgres DB");
      const userProfile = await prisma.user.findUnique({
           where: {
                id: userId
           }
-     })
+     });
+
+     if (!userProfile) {
+          throw new NotFoundError("User not found");
+     }
      
      logger.info("Exclude password field from the user");
      const {password: _password, ...safeUser} = userProfile;
@@ -71,7 +83,12 @@ const updateProfile = async (userId, data) => {
      const userEmail = (safeUser.email || '').toLowerCase().trim();
      const isAdmin = Boolean(userEmail && userEmail === adminEmail);
      const result = { ...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin };
-     await redis.set(`user:${userId}`, JSON.stringify(result), 'EX', config.REDIS_USER_TTL);
+     try {
+          await redis.del(`user:${userId}`);
+          await redis.set(`user:${userId}`, JSON.stringify(result), 'EX', config.REDIS_USER_TTL);
+     } catch (err) {
+          logger.warn("Redis sync notice during updateProfile:", err.message);
+     }
      return result;
 };
 

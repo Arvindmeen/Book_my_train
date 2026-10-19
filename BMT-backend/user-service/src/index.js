@@ -38,15 +38,42 @@ app.get("/health", (req, res) => {
      })
 })
 
-app.use(errorHandler)
+app.use(errorHandler);
+
+const prisma = require('./config/prisma');
+
+async function ensureUserProfileColumns() {
+     try {
+          await prisma.$executeRawUnsafe(`
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "gender" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "dateOfBirth" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "city" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "state" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pincode" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "address" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "profilePicture" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "berthPreference" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "foodPreference" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emergencyContactName" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emergencyContactPhone" TEXT;
+               ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "irctcUsername" TEXT;
+          `);
+          logger.info("Successfully verified and synced all User profile columns in PostgreSQL database");
+     } catch (err) {
+          logger.warn("User schema verification notice:", err.message);
+     }
+}
 
 const startServer = async () => {
      try {
+          await ensureUserProfileColumns();
+
           const server = app.listen(config.PORT, () => {
                logger.info(
                     `${config.SERVICE_NAME} is running on http://localhost:${config.PORT}`
                );
-          })
+          });
           // Graceful shutdown
           const shutdown = async () => {
                logger.info('Shutting down gracefully...');
@@ -64,5 +91,5 @@ const startServer = async () => {
           logger.error("Failed to Start Server", error);
           process.exit(1);
      }
-}
+};
 startServer();

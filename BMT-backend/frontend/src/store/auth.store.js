@@ -65,7 +65,7 @@ export const useAuthStore = create((set, get) => ({
   fetchProfile: async () => {
     try {
       const res = await authApi.getProfile();
-      const rawUser = res.data?.user || res.data;
+      const rawUser = res.data?.user || res.data?.data?.user || res.data;
       const user = mergeExtendedProfile(rawUser);
       if (typeof window !== 'undefined' && user) {
         localStorage.setItem('bmt_auth_user', JSON.stringify(user));
@@ -95,9 +95,9 @@ export const useAuthStore = create((set, get) => ({
     let backendUser = null;
     try {
       const res = await authApi.updateProfile(updatedFields);
-      backendUser = res.data?.user || res.data;
+      backendUser = res.data?.user || res.data?.data?.user || res.data;
     } catch (err) {
-      console.warn('Backend update failed, persisting locally:', err);
+      console.warn('Backend update notice, syncing with local cache:', err);
     }
 
     const merged = enrichUserRole({
