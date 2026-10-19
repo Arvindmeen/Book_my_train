@@ -11,6 +11,7 @@ import { useToast } from '../components/ui/Toast';
 import PwaInstallModal from '../components/common/PwaInstallModal';
 import { predictWaitlist, predictPnr } from '../utils/aiPrediction';
 import AdminHomeView from '../components/admin/AdminHomeView';
+import AnimatedTrainTrack from '../components/common/AnimatedTrainTrack';
 import { AUTHENTIC_TRAIN_ROUTES, STATION_DIRECTORY } from '../utils/trainRoutes';
 
 const parseTimeToMinutes = (timeStr) => {
@@ -2394,105 +2395,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Dedicated High-Speed Train Track (Engine leading in front, 4 coaches trailing behind!) */}
-          <div className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-5 pointer-events-none relative z-0">
-            <div className="relative h-8 border-b border-dashed border-emerald-300/80 overflow-hidden">
-              <div className="animate-train-glide absolute bottom-0.5 flex items-end">
-                {/* Coach 4 (Tail Guard Coach with Red Blinking Beacon) */}
-                <div className="relative h-5 w-16 bg-gradient-to-r from-emerald-700 to-teal-700 border border-emerald-800 rounded-l-md flex items-center justify-around px-1 shadow-xs shrink-0">
-                  <span className="absolute -left-1 top-1.5 h-1.5 w-1.5 rounded-full bg-rose-500 animate-ping" />
-                  <span className="absolute -left-1 top-1.5 h-1.5 w-1.5 rounded-full bg-rose-600" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="absolute -bottom-1 left-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                  <div className="absolute -bottom-1 right-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                </div>
-
-                <div className="w-1.5 h-1 bg-slate-600 my-auto shrink-0" />
-
-                {/* Coach 3 (Sleeper Coach) */}
-                <div className="relative h-5 w-16 bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-700 rounded-xs flex items-center justify-around px-1 shadow-xs shrink-0">
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="absolute -bottom-1 left-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                  <div className="absolute -bottom-1 right-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                </div>
-
-                <div className="w-1.5 h-1 bg-slate-600 my-auto shrink-0" />
-
-                {/* Coach 2 (Pantry / Buffet Car) */}
-                <div className="relative h-5 w-16 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 border border-emerald-700 rounded-xs flex items-center justify-around px-1 shadow-xs shrink-0">
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="absolute -bottom-1 left-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                  <div className="absolute -bottom-1 right-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                </div>
-
-                <div className="w-1.5 h-1 bg-slate-600 my-auto shrink-0" />
-
-                {/* Coach 1 (Executive AC Chair Car) */}
-                <div className="relative h-5 w-16 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 border border-emerald-700 rounded-xs flex items-center justify-around px-1 shadow-xs shrink-0">
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="w-2.5 h-2 bg-amber-100 rounded-xs border border-emerald-900/30" />
-                  <div className="absolute -bottom-1 left-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                  <div className="absolute -bottom-1 right-2 flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                    <span className="w-2 h-2 rounded-full bg-slate-900 ring-1 ring-slate-600" />
-                  </div>
-                </div>
-
-                <div className="w-1.5 h-1 bg-slate-600 my-auto shrink-0" />
-
-                {/* 5. LOCOMOTIVE ENGINE (LEADING IN FRONT AT THE RIGHT!) */}
-                <div className="relative shrink-0 flex translate-y-1 items-center">
-                  <svg className="w-24 h-7 text-emerald-600 drop-shadow-sm" viewBox="0 0 120 30" fill="currentColor">
-                    {/* Aerodynamic bullet train nose pointing right */}
-                    <path d="M0 24 L0 8 L88 8 C104 8 114 18 118 24 Z" />
-                    {/* Dark cockpit windshield */}
-                    <path d="M82 10 L94 10 C102 10 108 17 110 20 L82 20 Z" fill="#0f172a" />
-                    {/* Passenger / crew windows */}
-                    <rect x="15" y="11" width="14" height="6" rx="1" fill="#ffffff" />
-                    <rect x="35" y="11" width="14" height="6" rx="1" fill="#ffffff" />
-                    <rect x="55" y="11" width="14" height="6" rx="1" fill="#ffffff" />
-                    {/* Front Headlight with glow */}
-                    <circle cx="114" cy="22" r="2.5" fill="#fef08a" />
-                    {/* Bogie Wheels */}
-                    <circle cx="20" cy="25" r="3.2" fill="#0f172a" />
-                    <circle cx="35" cy="25" r="3.2" fill="#0f172a" />
-                    <circle cx="75" cy="25" r="3.2" fill="#0f172a" />
-                    <circle cx="95" cy="25" r="3.2" fill="#0f172a" />
-                  </svg>
-                  {/* Subtle forward beam of light */}
-                  <div className="w-8 h-3 bg-gradient-to-r from-amber-200/50 to-transparent -ml-2 rounded-r-full blur-2xs pointer-events-none" />
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Dedicated High-Speed Train Track (Vande Bharat Express with spinning wheels & hover-to-stop) */}
+          <AnimatedTrainTrack onTrackClick={() => window.scrollTo({ top: 120, behavior: 'smooth' })} />
 
         </div>
       </div>

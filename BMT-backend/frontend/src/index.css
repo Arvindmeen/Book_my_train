@@ -128,6 +128,33 @@
   animation: train-glide 10s linear infinite;
 }
 
+/* Train Wheel Continuous Rotation */
+@keyframes train-wheel-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-train-wheel {
+  animation: train-wheel-spin 0.45s linear infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* Hover-to-Stop: Halts both train movement and wheel spin smoothly */
+.train-track-container:hover .animate-train-glide,
+.animate-train-glide:hover {
+  animation-play-state: paused !important;
+}
+
+.train-track-container:hover .animate-train-wheel,
+.animate-train-glide:hover .animate-train-wheel {
+  animation-play-state: paused !important;
+}
+
 @media (max-width: 767px) {
   @keyframes train-glide-mobile {
     0%, 8% { transform: translateX(-100%); }
