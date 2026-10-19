@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { authApi } from '../api/auth.api';
 import { useToast } from '../components/ui/Toast';
@@ -9,9 +9,16 @@ import AnimatedEyeToggle from '../components/ui/AnimatedEyeToggle';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
-  
-  const [tab, setTab] = useState(initialTab); // 'login' | 'register' | 'otp' | 'forgot' | 'reset'
+  const location = useLocation();
+
+  const getInitialTab = () => {
+    if (location.pathname === '/forgot-password' || searchParams.get('tab') === 'forgot') return 'forgot';
+    if (location.pathname === '/reset-password' || searchParams.get('tab') === 'reset') return 'reset';
+    if (searchParams.get('tab') === 'register' || location.pathname === '/register' || location.pathname === '/signup') return 'register';
+    return 'login';
+  };
+
+  const [tab, setTab] = useState(getInitialTab); // 'login' | 'register' | 'otp' | 'forgot' | 'reset'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -36,14 +43,32 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [otpSessionId, setOtpSessionId] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
 
   const redirect = searchParams.get('redirect') || '/';
 
+  // Timer for OTP resend countdown
   useEffect(() => {
-    if (searchParams.get('tab') === 'register') {
-      setTab('register');
+    let interval;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
     }
-  }, [searchParams]);
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
+  useEffect(() => {
+    if (location.pathname === '/forgot-password' || searchParams.get('tab') === 'forgot') {
+      setTab('forgot');
+    } else if (location.pathname === '/reset-password' || searchParams.get('tab') === 'reset') {
+      setTab('reset');
+    } else if (location.pathname === '/register' || location.pathname === '/signup' || searchParams.get('tab') === 'register') {
+      setTab('register');
+    } else if (location.pathname === '/login' && !searchParams.get('tab')) {
+      setTab('login');
+    }
+  }, [location.pathname, searchParams]);
 
   useEffect(() => {
     // If arriving at /login without auth tokens, ensure memory store is synchronously cleared
@@ -126,12 +151,17 @@ export default function LoginPage() {
   };
 
   const handleForgotPassword = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (!resetEmail || !resetEmail.trim()) {
+      setError('Please enter your registered email address');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const res = await authApi.forgotPassword(resetEmail);
-      if (res.otpSessionId) setOtpSessionId(res.otpSessionId);
+      const res = await authApi.forgotPassword(resetEmail.trim());
+      if (res?.otpSessionId) setOtpSessionId(res.otpSessionId);
+      setResendTimer(60);
       showToast('Password reset code sent to your email!', 'success');
       setTab('reset');
     } catch (err) {
@@ -367,7 +397,7 @@ export default function LoginPage() {
                 </Button>
               </div>
 
-              <div className="text-center pt-1.5">
+              <div className="text-center pt-2 space-y-1">
                 <p className="text-xs text-slate-500">
                   Already registered?{' '}
                   <button
@@ -376,6 +406,20 @@ export default function LoginPage() {
                     className="text-emerald-700 font-bold hover:underline"
                   >
                     Sign in here
+                  </button>
+                </p>
+                <p className="text-xs text-slate-500">
+                  Forgot your password?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetEmail(regData.email || '');
+                      setError('');
+                      setTab('forgot');
+                    }}
+                    className="text-emerald-600 font-semibold hover:text-emerald-800 hover:underline"
+                  >
+                    Recover with OTP
                   </button>
                 </p>
               </div>
@@ -505,17 +549,42 @@ export default function LoginPage() {
                 required
               />
 
+              {/* Resend OTP countdown & action */}
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-0.5">
+                <span>Didn't receive the OTP?</span>
+                {resendTimer > 0 ? (
+                  <span className="font-semibold text-slate-400">Resend in {resendTimer}s</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-emerald-700 font-bold hover:underline disabled:opacity-50"
+                  >
+                    Resend Code
+                  </button>
+                )}
+              </div>
+
               <div className="pt-1.5">
                 <Button type="submit" loading={loading} className="w-full py-2.5 sm:py-3 shadow-md shadow-emerald-500/20 font-bold">
                   Update Password &amp; Sign In
                 </Button>
               </div>
 
-              <div className="text-center pt-2">
+              <div className="flex items-center justify-center gap-4 text-xs pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setTab('forgot'); setError(''); }}
+                  className="text-slate-500 hover:text-slate-800 font-semibold"
+                >
+                  Change email
+                </button>
+                <span className="text-slate-300">•</span>
                 <button
                   type="button"
                   onClick={() => { setTab('login'); setError(''); }}
-                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+                  className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline"
                 >
                   &larr; Back to Sign In
                 </button>

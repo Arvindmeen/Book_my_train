@@ -16,7 +16,8 @@ const toSafeUser = (user) => {
      const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
      const userEmail = (user.email || '').toLowerCase().trim();
      const isAdmin = Boolean(userEmail && userEmail === adminEmail);
-     return {...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin};
+     const hasPassword = Boolean(user.password);
+     return {...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin, hasPassword};
 };
 
 const sendOTP = async(firstName, lastName, email, password) =>{
@@ -208,8 +209,12 @@ const forgotPassword = async (email) => {
      const meta = { email: user.email, purpose: 'PASSWORD_RESET', userId: user.id };
      const { otp, otpSessionId } = await generateAndStoreOtp(meta);
 
-     await notificationProducer.sendOtpEmail(user.email, otp, Math.round(config.OTP_TTL / 60));
-     logger.info(`Password reset OTP sent to: ${user.email}`);
+     try {
+          await notificationProducer.sendOtpEmail(user.email, otp, Math.round(config.OTP_TTL / 60));
+          logger.info(`Password reset OTP sent to: ${user.email}`);
+     } catch (kafkaErr) {
+          logger.warn(`Could not dispatch password reset OTP email via Kafka (${kafkaErr.message}), fallback logged OTP: ${otp}`);
+     }
 
      return { otpSessionId };
 };

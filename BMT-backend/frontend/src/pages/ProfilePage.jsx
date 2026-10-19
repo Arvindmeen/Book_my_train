@@ -104,12 +104,34 @@ export default function ProfilePage() {
     };
   }, [user]);
 
-  // Password states
+  // Password states (Change with Current Password)
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+
+  // Security Tab States (Dual mode: 'change' using current password vs 'otp' using email OTP)
+  const [securityMode, setSecurityMode] = useState('change'); // 'change' | 'otp'
+  const [otpStep, setOtpStep] = useState('request'); // 'request' | 'verify'
+  const [secOtp, setSecOtp] = useState('');
+  const [secNewPassword, setSecNewPassword] = useState('');
+  const [secConfirmPassword, setSecConfirmPassword] = useState('');
+  const [secOtpSessionId, setSecOtpSessionId] = useState('');
+  const [secLoading, setSecLoading] = useState(false);
+  const [secShowPass, setSecShowPass] = useState(false);
+  const [secResendTimer, setSecResendTimer] = useState(0);
+
+  // Countdown timer for Security OTP resend
+  useEffect(() => {
+    let interval;
+    if (secResendTimer > 0) {
+      interval = setInterval(() => {
+        setSecResendTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [secResendTimer]);
 
   // Passengers
   const passengerKey = `bmt_master_passengers_${user?.id || user?.email || 'default'}`;
@@ -274,6 +296,65 @@ export default function ProfilePage() {
       showToast(msg, 'error');
     } finally {
       setPasswordLoading(false);
+    }
+  };
+
+  const handleSendSecurityOtp = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const targetEmail = user?.email;
+    if (!targetEmail) {
+      showToast('No registered email found for this account', 'error');
+      return;
+    }
+    setSecLoading(true);
+    try {
+      const res = await authApi.forgotPassword(targetEmail);
+      if (res?.otpSessionId) setSecOtpSessionId(res.otpSessionId);
+      setSecResendTimer(60);
+      setOtpStep('verify');
+      showToast(`Verification OTP code sent to ${targetEmail}!`, 'success');
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Failed to send OTP code';
+      showToast(msg, 'error');
+    } finally {
+      setSecLoading(false);
+    }
+  };
+
+  const handleVerifySecurityOtp = async (e) => {
+    e.preventDefault();
+    if (!secOtp || secOtp.trim().length < 6) {
+      showToast('Please enter the 6-digit OTP code', 'warning');
+      return;
+    }
+    if (!secNewPassword || secNewPassword.length < 6) {
+      showToast('New password must be at least 6 characters long', 'warning');
+      return;
+    }
+    if (secNewPassword !== secConfirmPassword) {
+      showToast('New passwords do not match', 'warning');
+      return;
+    }
+    setSecLoading(true);
+    try {
+      await authApi.resetPassword({
+        otp: secOtp.trim(),
+        otpSessionId: secOtpSessionId,
+        newPassword: secNewPassword,
+        confirmPassword: secConfirmPassword,
+      });
+      showToast('Password reset successfully! Your new password is now active 🔒', 'success');
+      setSecOtp('');
+      setSecNewPassword('');
+      setSecConfirmPassword('');
+      setSecOtpSessionId('');
+      setOtpStep('request');
+      setSecurityMode('change');
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Failed to reset password. Please check the OTP code.';
+      showToast(msg, 'error');
+    } finally {
+      setSecLoading(false);
     }
   };
 
@@ -922,41 +1003,297 @@ export default function ProfilePage() {
         {activeTab === 'security' && (
           <div className="max-w-lg mx-auto tab-content">
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 space-y-6">
-              <div>
-                <h3 className="font-black text-slate-900 text-lg">Change Password</h3>
-                <p className="text-xs text-slate-500 mt-1">Keep your account safe with a strong, unique password</p>
+              
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-black text-slate-900 text-lg">
+                    {securityMode === 'change' ? 'Change Password' : 'Reset Password with OTP'}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {securityMode === 'change'
+                      ? 'Keep your account safe with a strong, unique password'
+                      : 'Recover or reset your password using email OTP verification'}
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xl shrink-0">
+                  {securityMode === 'change' ? '🔑' : '📩'}
+                </div>
               </div>
 
+              {/* Mode Switcher Tabs */}
+              <div className="flex p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => { setSecurityMode('change'); setOtpStep('request'); }}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    securityMode === 'change'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <span>🔑</span> I Know Current Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSecurityMode('otp')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    securityMode === 'otp'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <span>📩</span> Reset via Email OTP
+                </button>
+              </div>
+
+              {/* Account Security Banner */}
               <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-xs">
                 <span className="text-emerald-600 text-lg">🛡️</span>
                 <div>
                   <p className="font-bold text-emerald-900">Account Security</p>
-                  <p className="text-emerald-700 mt-0.5">Your credentials are protected and securely stored</p>
+                  <p className="text-emerald-700 mt-0.5">Your credentials are protected with multi-layered encryption</p>
                 </div>
               </div>
 
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                {[
-                  { label: 'Current Password', value: oldPassword, onChange: setOldPassword, placeholder: 'Enter current password' },
-                  { label: 'New Password', value: newPassword, onChange: setNewPassword, placeholder: 'Minimum 6 characters' },
-                  { label: 'Confirm New Password', value: confirmPassword, onChange: setConfirmPassword, placeholder: 'Repeat new password' },
-                ].map(f => (
-                  <div key={f.label}>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">{f.label}</label>
-                    <input type={showPass ? 'text' : 'password'} value={f.value} onChange={e => f.onChange(e.target.value)}
-                      placeholder={f.placeholder} required
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all" />
+              {/* Flow 1: Change with Current Password */}
+              {securityMode === 'change' && (
+                <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700">Current Password</label>
+                      <button
+                        type="button"
+                        onClick={() => { setSecurityMode('otp'); setOtpStep('request'); }}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline"
+                      >
+                        Forgot current password?
+                      </button>
+                    </div>
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      value={oldPassword}
+                      onChange={e => setOldPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
+                    />
                   </div>
-                ))}
-                <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600">
-                  <input type="checkbox" checked={showPass} onChange={e => setShowPass(e.target.checked)} className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                  Show passwords
-                </label>
-                <button type="submit" disabled={passwordLoading}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/25 active:scale-98 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
-                  {passwordLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Updating...</span></>) : <span>Update Password</span>}
-                </button>
-              </form>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">New Password</label>
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Minimum 6 characters"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Confirm New Password</label>
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={showPass}
+                      onChange={e => setShowPass(e.target.checked)}
+                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    Show passwords
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/25 active:scale-98 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {passwordLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Updating...</span>
+                      </>
+                    ) : (
+                      <span>Update Password</span>
+                    )}
+                  </button>
+
+                  <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
+                    <p className="text-xs text-slate-500">
+                      Don't remember your current password?{' '}
+                      <button
+                        type="button"
+                        onClick={() => { setSecurityMode('otp'); setOtpStep('request'); }}
+                        className="text-emerald-700 font-bold hover:underline"
+                      >
+                        Reset via Email OTP &rarr;
+                      </button>
+                    </p>
+                  </div>
+                </form>
+              )}
+
+              {/* Flow 2: Reset with Email OTP */}
+              {securityMode === 'otp' && (
+                <div className="space-y-4">
+                  {otpStep === 'request' && (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          Forgot your password? We will send a secure 6-digit OTP code to your registered email:
+                        </p>
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-slate-200 text-slate-800 font-bold text-xs">
+                          <span className="text-base">✉️</span>
+                          <span className="font-mono text-emerald-800 text-sm truncate">{user?.email || 'Your registered email'}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSendSecurityOtp}
+                        disabled={secLoading}
+                        className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/25 active:scale-98 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                      >
+                        {secLoading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Sending OTP...</span>
+                          </>
+                        ) : (
+                          <span>Send Verification Code &rarr;</span>
+                        )}
+                      </button>
+
+                      <div className="text-center pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setSecurityMode('change')}
+                          className="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+                        >
+                          &larr; I remember my current password
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {otpStep === 'verify' && (
+                    <form onSubmit={handleVerifySecurityOtp} className="space-y-4">
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-1">
+                        <span className="text-xl">📩</span>
+                        <p className="text-xs font-semibold text-slate-700">Verification OTP sent to:</p>
+                        <p className="text-xs font-bold text-emerald-900 font-mono truncate">{user?.email}</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">6-Digit Verification Code</label>
+                        <input
+                          type="text"
+                          value={secOtp}
+                          onChange={e => setSecOtp(e.target.value)}
+                          placeholder="Enter 6-digit OTP"
+                          maxLength={6}
+                          required
+                          className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 text-center tracking-widest font-mono text-lg focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">New Password</label>
+                        <input
+                          type={secShowPass ? 'text' : 'password'}
+                          value={secNewPassword}
+                          onChange={e => setSecNewPassword(e.target.value)}
+                          placeholder="Minimum 6 characters"
+                          required
+                          className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Confirm New Password</label>
+                        <input
+                          type={secShowPass ? 'text' : 'password'}
+                          value={secConfirmPassword}
+                          onChange={e => setSecConfirmPassword(e.target.value)}
+                          placeholder="Repeat new password"
+                          required
+                          className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600">
+                          <input
+                            type="checkbox"
+                            checked={secShowPass}
+                            onChange={e => setSecShowPass(e.target.checked)}
+                            className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          Show passwords
+                        </label>
+
+                        {secResendTimer > 0 ? (
+                          <span className="text-xs font-semibold text-slate-400">Resend in {secResendTimer}s</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendSecurityOtp}
+                            disabled={secLoading}
+                            className="text-xs font-bold text-emerald-700 hover:underline disabled:opacity-50"
+                          >
+                            Resend Code
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={secLoading}
+                        className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/25 active:scale-98 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                      >
+                        {secLoading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Updating...</span>
+                          </>
+                        ) : (
+                          <span>Verify OTP &amp; Update Password</span>
+                        )}
+                      </button>
+
+                      <div className="flex items-center justify-center gap-4 text-xs pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setOtpStep('request')}
+                          className="text-slate-500 hover:text-slate-800 font-semibold"
+                        >
+                          Request New Code
+                        </button>
+                        <span className="text-slate-300">•</span>
+                        <button
+                          type="button"
+                          onClick={() => setSecurityMode('change')}
+                          className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline"
+                        >
+                          &larr; Back to Current Password
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         )}

@@ -39,7 +39,7 @@ const getProfile = async(userId) =>{
      const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
      const userEmail = (safeUser.email || '').toLowerCase().trim();
      const isAdmin = Boolean(userEmail && userEmail === adminEmail);
-     const result = { ...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin };
+     const result = { ...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin, hasPassword: Boolean(userProfile.password) };
      logger.info("Store user profile in redis for future lookups");
      await redis.set(`user:${userId}`, JSON.stringify(result), 'EX', config.REDIS_USER_TTL);
      return result;
@@ -84,7 +84,7 @@ const updateProfile = async (userId, data) => {
      const adminEmail = (config.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'arvindmeena8171@gmail.com').toLowerCase().trim();
      const userEmail = (safeUser.email || '').toLowerCase().trim();
      const isAdmin = Boolean(userEmail && userEmail === adminEmail);
-     const result = { ...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin };
+     const result = { ...safeUser, role: isAdmin ? 'ADMIN' : 'USER', isAdmin, hasPassword: Boolean(updatedUser.password) };
      try {
           await redis.del(`user:${userId}`);
           await redis.set(`user:${userId}`, JSON.stringify(result), 'EX', config.REDIS_USER_TTL);

@@ -23,6 +23,10 @@ export default function AppRouter() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<LoginPage />} />
+        <Route path="/signup" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<LoginPage />} />
+        <Route path="/reset-password" element={<LoginPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/pnr" element={<PnrPage />} />
         <Route path="/services" element={<ServicesPage />} />
