@@ -817,6 +817,8 @@ const formatTrainLiveTelemetry = (t, customTime = null) => {
      let liveStatus = 'Running On Time';
      let liveSummary = '';
      let enrichedStops = [];
+     let isMovingBetweenStations = false;
+     let inTransitSegment = null;
 
      if (phase === 'RUNNING') {
           const elapsed = activeRun.elapsedSinceDep;
@@ -872,23 +874,39 @@ const formatTrainLiveTelemetry = (t, customTime = null) => {
                const nextStop = mappedStops[lastPassedIdx + 1] || mappedStops[mappedStops.length - 1];
                const minsSinceDep = Math.max(0, elapsed - lastStop.cumDep);
                const minsUntilNext = Math.max(1, nextStop.cumArr - elapsed);
+               const segmentDuration = Math.max(1, nextStop.cumArr - lastStop.cumDep);
+               const progressPct = Math.min(95, Math.max(5, Math.round((minsSinceDep / segmentDuration) * 100)));
 
                currentStation = lastStop.name.split(' (')[0];
                nextStation = nextStop.name.split(' (')[0];
                currentPlatform = nextStop.platform || 'Pf #1';
                trainSpeed = t.trainType === 'VANDE_BHARAT' ? '130 km/h' : t.trainType === 'RAJDHANI' ? '120 km/h' : '110 km/h';
                liveStatus = delay > 0 ? `Delayed by ${delay}m` : 'Running On Time';
-               liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDep)} ago. Next Stop: ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextStop.time}).`;
+               liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDep)} ago. Currently in transit between ${currentStation} & ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextStop.time}).`;
+
+               isMovingBetweenStations = true;
+               inTransitSegment = {
+                    fromIdx: lastPassedIdx,
+                    toIdx: lastPassedIdx + 1,
+                    fromStation: currentStation,
+                    toStation: nextStation,
+                    minsSinceDep,
+                    minsUntilNext,
+                    progressPct,
+                    speed: trainSpeed,
+               };
 
                enrichedStops = mappedStops.map((s, idx) => {
                     const isPast = idx <= lastPassedIdx;
                     const isNext = idx === lastPassedIdx + 1;
+                    const inTransitAfter = idx === lastPassedIdx && lastPassedIdx < mappedStops.length - 1;
                     return {
                          ...s,
                          departed: isPast,
                          current: false,
                          upcoming: idx > lastPassedIdx,
                          isNextHalt: isNext,
+                         inTransitAfter,
                          statusDetail: isNext
                               ? `Next Halt: Expected in ${formatDurationText(minsUntilNext)} (at ${s.time})`
                               : isPast
@@ -912,6 +930,7 @@ const formatTrainLiveTelemetry = (t, customTime = null) => {
                current: idx === 0,
                upcoming: idx > 0,
                isNextHalt: false,
+               inTransitAfter: false,
                statusDetail: idx === 0
                     ? `Origin Station • Scheduled Departure at ${s.time} (in ${formatDurationText(timeUntilDep)})`
                     : `Scheduled Arrival: ${s.time}`,
@@ -932,6 +951,7 @@ const formatTrainLiveTelemetry = (t, customTime = null) => {
                     current: isDest,
                     upcoming: false,
                     isNextHalt: false,
+                    inTransitAfter: false,
                     statusDetail: isDest
                          ? `Destination Reached at ${s.time} (${formatDurationText(completionMinsAgo)} ago)`
                          : `Departed at ${s.time}`,
@@ -951,6 +971,7 @@ const formatTrainLiveTelemetry = (t, customTime = null) => {
                current: false,
                upcoming: true,
                isNextHalt: idx === 0,
+               inTransitAfter: false,
                statusDetail: `Scheduled Time: ${s.time}`,
           }));
      }
@@ -971,6 +992,8 @@ const formatTrainLiveTelemetry = (t, customTime = null) => {
           isRunning: phase === 'RUNNING',
           isYetToRun: phase === 'YET_TO_RUN',
           isCompleted: phase === 'COMPLETED',
+          inTransit: isMovingBetweenStations,
+          inTransitSegment,
           status: liveStatus,
           liveSummary,
           currentTimeFormatted,

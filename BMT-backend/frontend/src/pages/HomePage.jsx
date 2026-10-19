@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SearchForm from '../components/search/SearchForm';
 import StationAutocomplete from '../components/search/StationAutocomplete';
@@ -231,6 +231,8 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
   let liveStatus = 'Running On Time';
   let liveSummary = '';
   let enrichedStops = [];
+  let isMovingBetweenStations = false;
+  let inTransitSegment = null;
 
   if (phase === 'RUNNING') {
     const elapsed = activeRun.elapsedSinceDep;
@@ -265,6 +267,8 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
           current: isCurrent,
           upcoming: idx > haltIdx,
           isNextHalt: isNext,
+          inTransitAfter: false,
+          inTransitSegment: null,
           statusDetail: isCurrent
             ? `Standing at Platform • Scheduled Departure ${s.time}`
             : isPast
@@ -286,23 +290,45 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
       const nextStop = mappedStops[lastPassedIdx + 1] || mappedStops[mappedStops.length - 1];
       const minsSinceDep = Math.max(0, elapsed - lastStop.cumDep);
       const minsUntilNext = Math.max(1, nextStop.cumArr - elapsed);
+      const segmentDuration = Math.max(1, nextStop.cumArr - lastStop.cumDep);
+      const progressPct = Math.min(95, Math.max(5, Math.round((minsSinceDep / segmentDuration) * 100)));
 
       currentStation = lastStop.name.split(' (')[0];
       nextStation = nextStop.name.split(' (')[0];
       currentPlatform = nextStop.platform || 'Pf #1';
       trainSpeed = t.trainType === 'VANDE_BHARAT' ? '130 km/h' : t.trainType === 'RAJDHANI' ? '120 km/h' : '110 km/h';
       liveStatus = delay > 0 ? `Delayed by ${delay}m` : 'Running On Time';
-      liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDep)} ago. Next Stop: ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextStop.time}).`;
+      liveSummary = `Departed ${currentStation} ${formatDurationText(minsSinceDep)} ago. Currently in transit between ${currentStation} & ${nextStation} (Expected in ${formatDurationText(minsUntilNext)} at ${nextStop.time}).`;
+
+      isMovingBetweenStations = true;
+      inTransitSegment = {
+        fromIdx: lastPassedIdx,
+        toIdx: lastPassedIdx + 1,
+        fromStation: currentStation,
+        toStation: nextStation,
+        fromFullName: lastStop.name,
+        toFullName: nextStop.name,
+        fromTime: lastStop.time || lastStop.departureTime || '--:--',
+        toTime: nextStop.time || nextStop.arrivalTime || '--:--',
+        minsSinceDep,
+        minsUntilNext,
+        progressPct,
+        speed: trainSpeed,
+        nextPlatform: nextStop.platform || 'Pf #1',
+      };
 
       enrichedStops = mappedStops.map((s, idx) => {
         const isPast = idx <= lastPassedIdx;
         const isNext = idx === lastPassedIdx + 1;
+        const inTransitAfter = idx === lastPassedIdx && lastPassedIdx < mappedStops.length - 1;
         return {
           ...s,
           departed: isPast,
           current: false,
           upcoming: idx > lastPassedIdx,
           isNextHalt: isNext,
+          inTransitAfter,
+          inTransitSegment: inTransitAfter ? inTransitSegment : null,
           statusDetail: isNext
             ? `Next Halt: Expected in ${formatDurationText(minsUntilNext)} (at ${s.time})`
             : isPast
@@ -326,6 +352,8 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
       current: idx === 0,
       upcoming: idx > 0,
       isNextHalt: false,
+      inTransitAfter: false,
+      inTransitSegment: null,
       statusDetail: idx === 0
         ? `Origin Station • Scheduled Departure at ${s.time} (in ${formatDurationText(timeUntilDep)})`
         : `Scheduled Arrival: ${s.time}`,
@@ -346,6 +374,8 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
         current: isDest,
         upcoming: false,
         isNextHalt: false,
+        inTransitAfter: false,
+        inTransitSegment: null,
         statusDetail: isDest
           ? `Destination Reached at ${s.time} (${formatDurationText(completionMinsAgo)} ago)`
           : `Departed at ${s.time}`,
@@ -365,6 +395,8 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
       current: false,
       upcoming: true,
       isNextHalt: idx === 0,
+      inTransitAfter: false,
+      inTransitSegment: null,
       statusDetail: `Scheduled Time: ${s.time}`,
     }));
   }
@@ -386,6 +418,8 @@ const formatLiveTelemetryTrain = (t, customNow = null) => {
     isRunning: phase === 'RUNNING',
     isYetToRun: phase === 'YET_TO_RUN',
     isCompleted: phase === 'COMPLETED',
+    inTransit: isMovingBetweenStations,
+    inTransitSegment,
     status: liveStatus,
     liveSummary,
     currentTimeFormatted,
@@ -1712,80 +1746,175 @@ export default function HomePage() {
                                   const isDeparted = stop.departed;
                                   const isCompletedDest = selectedLiveTrain.phase === 'COMPLETED' && idx === selectedLiveTrain.stops.length - 1;
                                   const isOriginYetToRun = selectedLiveTrain.phase === 'YET_TO_RUN' && idx === 0;
+                                  const nextStop = selectedLiveTrain.stops[idx + 1];
+
+                                  const inTransitActive = Boolean(
+                                    (stop.inTransitAfter || (selectedLiveTrain.inTransit && selectedLiveTrain.inTransitSegment?.fromIdx === idx)) && nextStop
+                                  );
+                                  const transitInfo = stop.inTransitSegment || selectedLiveTrain.inTransitSegment || {
+                                    progressPct: 50,
+                                    minsSinceDep: 10,
+                                    minsUntilNext: 20,
+                                    speed: selectedLiveTrain.speed || '110 km/h'
+                                  };
 
                                   return (
-                                    <div key={idx} className="relative flex items-center justify-between text-xs">
-                                      <div className="flex items-center">
-                                        {/* Stop Beacon */}
-                                        <div className={`absolute -left-[20px] h-4 w-4 rounded-full border-2 border-white flex items-center justify-center ${
-                                          isCurrent
-                                            ? isCompletedDest
-                                              ? 'bg-purple-600 scale-125 z-10 ring-4 ring-purple-100 shadow-sm'
-                                              : isOriginYetToRun
-                                              ? 'bg-blue-600 scale-125 z-10 ring-4 ring-blue-100 shadow-sm'
-                                              : 'bg-emerald-600 scale-125 z-10 ring-4 ring-emerald-100 shadow-sm'
-                                            : isDeparted
-                                            ? 'bg-emerald-500'
-                                            : 'bg-slate-300'
-                                        }`}>
-                                          {isCurrent && !isCompletedDest && !isOriginYetToRun && (
-                                            <span className="absolute h-6 w-6 rounded-full bg-emerald-400/40 animate-ping-slow" />
-                                          )}
-                                          {isCompletedDest && (
-                                            <span className="text-[8px] text-white font-bold leading-none">🏁</span>
-                                          )}
-                                          {isOriginYetToRun && (
-                                            <span className="text-[8px] text-white font-bold leading-none">🕒</span>
-                                          )}
-                                          {isDeparted && !isCurrent && (
-                                            <span className="text-[8px] text-white font-bold leading-none">✓</span>
-                                          )}
-                                        </div>
-
-                                        {/* Station Name & Status */}
-                                        <div className="ml-3">
-                                          <p className={`font-bold ${
+                                    <Fragment key={idx}>
+                                      {/* Station Halt Row */}
+                                      <div className="relative flex items-center justify-between text-xs">
+                                        <div className="flex items-center">
+                                          {/* Stop Beacon */}
+                                          <div className={`absolute -left-[20px] h-4 w-4 rounded-full border-2 border-white flex items-center justify-center ${
                                             isCurrent
                                               ? isCompletedDest
-                                                ? 'text-purple-900 text-sm'
+                                                ? 'bg-purple-600 scale-125 z-10 ring-4 ring-purple-100 shadow-sm'
                                                 : isOriginYetToRun
-                                                ? 'text-blue-900 text-sm'
-                                                : 'text-emerald-900 text-sm'
+                                                ? 'bg-blue-600 scale-125 z-10 ring-4 ring-blue-100 shadow-sm'
+                                                : 'bg-emerald-600 scale-125 z-10 ring-4 ring-emerald-100 shadow-sm'
                                               : isDeparted
-                                              ? 'text-slate-800'
-                                              : 'text-slate-500'
+                                              ? 'bg-emerald-500'
+                                              : 'bg-slate-300'
                                           }`}>
-                                            {stop.name}
-                                          </p>
-                                          {isCurrent ? (
-                                            <p className={`text-[10px] font-extrabold uppercase mt-0.5 tracking-wider ${
-                                              isCompletedDest
-                                                ? 'text-purple-700'
-                                                : isOriginYetToRun
-                                                ? 'text-blue-700'
-                                                : 'text-emerald-700'
+                                            {isCurrent && !isCompletedDest && !isOriginYetToRun && (
+                                              <span className="absolute h-6 w-6 rounded-full bg-emerald-400/40 animate-ping-slow" />
+                                            )}
+                                            {isCompletedDest && (
+                                              <span className="text-[8px] text-white font-bold leading-none">🏁</span>
+                                            )}
+                                            {isOriginYetToRun && (
+                                              <span className="text-[8px] text-white font-bold leading-none">🕒</span>
+                                            )}
+                                            {isDeparted && !isCurrent && (
+                                              <span className="text-[8px] text-white font-bold leading-none">✓</span>
+                                            )}
+                                          </div>
+
+                                          {/* Station Name & Status */}
+                                          <div className="ml-3">
+                                            <p className={`font-bold ${
+                                              isCurrent
+                                                ? isCompletedDest
+                                                  ? 'text-purple-900 text-sm'
+                                                  : isOriginYetToRun
+                                                  ? 'text-blue-900 text-sm'
+                                                  : 'text-emerald-900 text-sm'
+                                                : isDeparted
+                                                ? 'text-slate-800'
+                                                : 'text-slate-500'
                                             }`}>
-                                              {isCompletedDest ? '🏁 Destination Reached' : isOriginYetToRun ? '🕒 Origin Station' : '📶 Live Location'} &middot; {stop.statusDetail}
+                                              {stop.name}
                                             </p>
-                                          ) : isDeparted ? (
-                                            <p className="text-[10px] text-emerald-700 font-semibold">
-                                              ✓ {stop.statusDetail || `Departed ${stop.time}`}
-                                            </p>
-                                          ) : (
-                                            <p className="text-[10px] text-slate-500 font-medium">
-                                              {stop.statusDetail || `Scheduled Arrival: ${stop.time}`}
-                                            </p>
-                                          )}
+                                            {isCurrent ? (
+                                              <p className={`text-[10px] font-extrabold uppercase mt-0.5 tracking-wider ${
+                                                isCompletedDest
+                                                  ? 'text-purple-700'
+                                                  : isOriginYetToRun
+                                                  ? 'text-blue-700'
+                                                  : 'text-emerald-700'
+                                              }`}>
+                                                {isCompletedDest ? '🏁 Destination Reached' : isOriginYetToRun ? '🕒 Origin Station' : '📶 Standing at Platform'} &middot; {stop.statusDetail}
+                                              </p>
+                                            ) : isDeparted ? (
+                                              <p className="text-[10px] text-emerald-700 font-semibold">
+                                                ✓ {stop.statusDetail || `Departed ${stop.time}`}
+                                              </p>
+                                            ) : (
+                                              <p className="text-[10px] text-slate-500 font-medium">
+                                                {stop.statusDetail || `Scheduled Arrival: ${stop.time}`}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* Platform Info */}
+                                        <div className="text-right">
+                                          <span className="text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md">
+                                            {stop.platform || 'Platform 1'}
+                                          </span>
                                         </div>
                                       </div>
 
-                                      {/* Platform Info */}
-                                      <div className="text-right">
-                                        <span className="text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md">
-                                          {stop.platform || 'Platform 1'}
-                                        </span>
-                                      </div>
-                                    </div>
+                                      {/* IN-TRANSIT BETWEEN STATIONS: Authentic animated locomotive running on track */}
+                                      {inTransitActive && (
+                                        <div className="relative my-3.5 pl-3 pr-1">
+                                          {/* Pulsing Animated Train Beacon on the Track Line */}
+                                          <div className="absolute -left-[23px] top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
+                                            <span className="absolute h-9 w-9 rounded-full bg-emerald-400/35 animate-ping" />
+                                            <span className="absolute h-6 w-6 rounded-full bg-teal-400/50 animate-pulse" />
+                                            <div className="relative h-6 w-6 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-lg ring-2 ring-white border border-emerald-300">
+                                              <span className="text-[11px] leading-none select-none">🚆</span>
+                                            </div>
+                                          </div>
+
+                                          {/* In-Transit Realistic Sector Card */}
+                                          <div className="bg-gradient-to-br from-emerald-50/95 via-teal-50/80 to-emerald-50/90 border-2 border-emerald-300/80 rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-shadow">
+                                            {/* Header */}
+                                            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-emerald-200/70">
+                                              <div className="flex items-center gap-2">
+                                                <span className="inline-flex items-center gap-1.5 bg-emerald-600 text-white font-black text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
+                                                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                                                  In Transit (Between Stations)
+                                                </span>
+                                                <span className="font-extrabold text-xs text-slate-800">
+                                                  {stop.name.split(' (')[0]} &rarr; {nextStop?.name.split(' (')[0]}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                <span className="font-mono text-[11px] font-extrabold bg-white text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md shadow-2xs">
+                                                  ⚡ {transitInfo.speed || selectedLiveTrain.speed || '110 km/h'}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md">
+                                                  GPS Live Telemetry
+                                                </span>
+                                              </div>
+                                            </div>
+
+                                            {/* Realistic Horizontal Sector Track Progress Bar */}
+                                            <div className="mt-3">
+                                              <div className="flex justify-between items-center text-[10px] font-bold text-slate-600 mb-1">
+                                                <span className="text-slate-800 flex items-center gap-1">
+                                                  <span className="text-emerald-600 font-extrabold">✓</span> {stop.name.split(' (')[0]}
+                                                  <span className="font-normal text-slate-400">({stop.time})</span>
+                                                </span>
+                                                <span className="text-emerald-700 font-black bg-emerald-100/90 px-2 py-0.5 rounded text-[10px] shadow-2xs">
+                                                  {transitInfo.progressPct}% distance covered
+                                                </span>
+                                                <span className="text-slate-800 flex items-center gap-1">
+                                                  <span className="text-blue-600 font-extrabold">⏳</span> {nextStop?.name.split(' (')[0]}
+                                                  <span className="font-normal text-slate-400">({nextStop?.time})</span>
+                                                </span>
+                                              </div>
+
+                                              {/* Animated Rail Track Bar */}
+                                              <div className="relative h-2.5 bg-slate-200/90 rounded-full overflow-visible my-2.5">
+                                                <div
+                                                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 rounded-full transition-all duration-700"
+                                                  style={{ width: `${transitInfo.progressPct}%` }}
+                                                />
+                                                <div
+                                                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-700 z-10"
+                                                  style={{ left: `${transitInfo.progressPct}%` }}
+                                                >
+                                                  <div className="flex flex-col items-center">
+                                                    <span className="text-sm filter drop-shadow-sm select-none transform hover:scale-125 transition-transform">🚆</span>
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              {/* Live Sector Trip Insights */}
+                                              <div className="flex flex-wrap items-center justify-between gap-y-1.5 gap-x-2 text-[11px] pt-1 text-slate-600 font-medium">
+                                                <span className="text-emerald-900">
+                                                  Departed <strong>{stop.name.split(' (')[0]}</strong> ~{transitInfo.minsSinceDep}m ago
+                                                </span>
+                                                <span className="text-teal-950 font-bold">
+                                                  Next Halt: <strong>{nextStop?.name.split(' (')[0]}</strong> in ~{transitInfo.minsUntilNext}m ({nextStop?.platform || 'Platform 1'})
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </Fragment>
                                   );
                                 })}
                               </div>
