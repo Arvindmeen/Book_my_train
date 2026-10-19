@@ -6,6 +6,7 @@ import { useToast } from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import AnimatedEyeToggle from '../components/ui/AnimatedEyeToggle';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
@@ -89,6 +90,13 @@ export default function LoginPage() {
     try {
       const res = await authApi.login(email, password);
       let user = res.loggedInUser || res.data?.user || res.data;
+
+      if (res.accessToken) {
+        localStorage.setItem('bmt_access_token', res.accessToken);
+      }
+      if (res.refreshToken) {
+        localStorage.setItem('bmt_refresh_token', res.refreshToken);
+      }
 
       setUser(user);
       showToast('Welcome back to Book My Train!', 'success');
@@ -332,6 +340,18 @@ export default function LoginPage() {
                 </Button>
               </div>
 
+              {/* Divider & Google Sign-In */}
+              <div className="relative my-3.5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-[11px] uppercase">
+                  <span className="bg-white px-2 text-slate-400 font-bold tracking-wider">Or continue with</span>
+                </div>
+              </div>
+
+              <GoogleSignInButton mode="signin" redirect={redirect} onError={setError} />
+
             </form>
           )}
 
@@ -396,6 +416,18 @@ export default function LoginPage() {
                   Create Account &rarr;
                 </Button>
               </div>
+
+              {/* Divider & Google Sign-Up */}
+              <div className="relative my-3.5">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-[11px] uppercase">
+                  <span className="bg-white px-2 text-slate-400 font-bold tracking-wider">Or sign up with</span>
+                </div>
+              </div>
+
+              <GoogleSignInButton mode="signup" redirect={redirect} onError={setError} />
 
               <div className="text-center pt-2 space-y-1">
                 <p className="text-xs text-slate-500">

@@ -116,6 +116,10 @@ const rotateRefreshToken = async(refreshToken, deviceId) =>{
 }
 
 const verifyGoogleIdToken = async(idToken, deviceId) =>{
+     if (!config.GOOGLE_CLIENT_ID) {
+          throw new BadRequestError("Google Authentication is not configured on the server. Please set GOOGLE_CLIENT_ID in user-service environment.");
+     }
+
      const ticket = await client.verifyIdToken({
           idToken,
           audience: config.GOOGLE_CLIENT_ID
@@ -129,10 +133,11 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
      const googleUser = {
           provider: "google",
           providerId: payload.sub,
-          email: payload.email,
-          firstName: payload.given_name,
-          lastName: payload.family_name,
-          emailVerified: payload.email_verified || false
+          email: payload.email.toLowerCase().trim(),
+          firstName: payload.given_name || payload.name?.split(' ')[0] || 'Traveler',
+          lastName: payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '',
+          emailVerified: payload.email_verified || false,
+          profilePicture: payload.picture || null
      }
 
 
@@ -148,6 +153,12 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
           })
 
           if(googleAuth){
+               if (!googleAuth.user.profilePicture && googleUser.profilePicture) {
+                    return await tx.user.update({
+                         where: { id: googleAuth.user.id },
+                         data: { profilePicture: googleUser.profilePicture }
+                    });
+               }
                return googleAuth.user;
           }
 
@@ -163,6 +174,12 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
                          userId: existingUser.id
                     }
                })
+               if (!existingUser.profilePicture && googleUser.profilePicture) {
+                    existingUser = await tx.user.update({
+                         where: { id: existingUser.id },
+                         data: { profilePicture: googleUser.profilePicture }
+                    });
+               }
                return existingUser;
           }
 
@@ -171,6 +188,7 @@ const verifyGoogleIdToken = async(idToken, deviceId) =>{
                     email: googleUser.email,
                     firstName: googleUser.firstName,
                     lastName: googleUser.lastName,
+                    profilePicture: googleUser.profilePicture,
                     emailVerified: googleUser.emailVerified,
                     AuthProviders: {
                          create: {

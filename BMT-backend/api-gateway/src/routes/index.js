@@ -37,7 +37,7 @@ router.post(
 
 router.post(
      '/users/auth/google-auth',
-     endpointRateLimit(10, 900000), // 10 requests per 15 minutes
+     endpointRateLimit(100, 900000), // 100 requests per 15 minutes
      userServiceProxy
 );
 
