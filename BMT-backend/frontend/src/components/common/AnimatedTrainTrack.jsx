@@ -12,25 +12,27 @@ import { useState } from 'react';
 
 function TrainWheel({ cx, cy, r = 5.2 }) {
   return (
-    <g
-      className="animate-train-wheel"
-      style={{
-        transformOrigin: `${cx}px ${cy}px`,
-        transformBox: 'fill-box'
-      }}
-    >
-      {/* Outer steel tire & flange */}
-      <circle cx={cx} cy={cy} r={r} fill="#0f172a" stroke="#64748b" strokeWidth="1" />
-      {/* Dark inner rim recess */}
-      <circle cx={cx} cy={cy} r={r * 0.75} fill="#1e293b" />
-      {/* 6 visible metallic spokes */}
-      <line x1={cx} y1={cy - r * 0.8} x2={cx} y2={cy + r * 0.8} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
-      <line x1={cx - r * 0.8} y1={cy} x2={cx + r * 0.8} y2={cy} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
-      <line x1={cx - r * 0.58} y1={cy - r * 0.58} x2={cx + r * 0.58} y2={cy + r * 0.58} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
-      <line x1={cx - r * 0.58} y1={cy + r * 0.58} x2={cx + r * 0.58} y2={cy - r * 0.58} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
-      {/* Center axle cap & hub */}
-      <circle cx={cx} cy={cy} r={r * 0.32} fill="#f8fafc" stroke="#475569" strokeWidth="0.8" />
-      <circle cx={cx} cy={cy} r={r * 0.14} fill="#f97316" />
+    <g transform={`translate(${cx}, ${cy})`}>
+      <g
+        className="animate-train-wheel"
+        style={{
+          transformOrigin: 'center',
+          transformBox: 'fill-box'
+        }}
+      >
+        {/* Outer steel tire & flange */}
+        <circle cx={0} cy={0} r={r} fill="#0f172a" stroke="#64748b" strokeWidth="1" />
+        {/* Dark inner rim recess */}
+        <circle cx={0} cy={0} r={r * 0.75} fill="#1e293b" />
+        {/* 6 visible metallic spokes */}
+        <line x1={0} y1={-r * 0.8} x2={0} y2={r * 0.8} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
+        <line x1={-r * 0.8} y1={0} x2={r * 0.8} y2={0} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
+        <line x1={-r * 0.58} y1={-r * 0.58} x2={r * 0.58} y2={r * 0.58} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
+        <line x1={-r * 0.58} y1={r * 0.58} x2={r * 0.58} y2={-r * 0.58} stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
+        {/* Center axle cap & hub */}
+        <circle cx={0} cy={0} r={r * 0.32} fill="#f8fafc" stroke="#475569" strokeWidth="0.8" />
+        <circle cx={0} cy={0} r={r * 0.14} fill="#f97316" />
+      </g>
     </g>
   );
 }
