@@ -516,6 +516,28 @@ export default function HomePage() {
   const [hotelCheckOut, setHotelCheckOut] = useState(new Date(Date.now() + 86400000).toISOString().split('T')[0]);
   const [hotelGuests, setHotelGuests] = useState('1 Room, 2 Guests');
   const [hotelSearchActive, setHotelSearchActive] = useState(false);
+  const [hotelBookingConfirmed, setHotelBookingConfirmed] = useState(null);
+
+  const handleBookHotel = (hotel) => {
+    if (!isAuthenticated) {
+      showToast('Please sign in to reserve station retiring rooms and executive pods.', 'warning');
+      navigate('/login?redirect=/');
+      return;
+    }
+
+    setHotelBookingConfirmed({
+      bookingId: `BMT-STAY-${Math.floor(100000 + Math.random() * 900000)}`,
+      name: hotel.name,
+      station: hotel.station || hotelCity,
+      rate: hotel.rate,
+      checkIn: hotelCheckIn,
+      checkOut: hotelCheckOut,
+      guests: hotelGuests,
+      keyCode: `POD-${Math.floor(1000 + Math.random() * 9000)}`,
+      passengerName: user?.name || user?.email || 'Valued Passenger'
+    });
+    showToast(`${hotel.name} confirmed! Access keycode generated.`, 'success');
+  };
 
   // Flight Interactive States
   const [flightFrom, setFlightFrom] = useState('New Delhi (DEL)');
@@ -2163,135 +2185,218 @@ export default function HomePage() {
                       <h3 className="font-bold text-lg text-slate-900">Railway Station Retiring Rooms &amp; Executive Lounges</h3>
                       <p className="text-xs text-slate-500 mt-0.5">Reserve verified AC rooms, soundproof pods, and executive lounges inside railway premises.</p>
                     </div>
-                    <Link to="/services" className="text-xs font-bold text-emerald-700 hover:underline">
+                    <Link to="/services/hotels" className="text-xs font-bold text-emerald-700 hover:underline">
                       View All 200+ Station Stays &rarr;
                     </Link>
                   </div>
 
-                  {/* Search Bar for Hotels */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Station / City</label>
-                      <input
-                        type="text"
-                        value={hotelCity}
-                        onChange={(e) => setHotelCity(e.target.value)}
-                        placeholder="Station or City Name"
-                        className="input-field text-xs font-semibold text-slate-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Check-in</label>
-                      <input
-                        type="date"
-                        value={hotelCheckIn}
-                        onChange={(e) => setHotelCheckIn(e.target.value)}
-                        className="input-field text-xs font-semibold text-slate-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Check-out</label>
-                      <input
-                        type="date"
-                        value={hotelCheckOut}
-                        onChange={(e) => setHotelCheckOut(e.target.value)}
-                        className="input-field text-xs font-semibold text-slate-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Guests &amp; Rooms</label>
-                      <select
-                        value={hotelGuests}
-                        onChange={(e) => setHotelGuests(e.target.value)}
-                        className="input-field text-xs font-semibold text-slate-800"
-                      >
-                        <option>1 Room, 1 Guest</option>
-                        <option>1 Room, 2 Guests</option>
-                        <option>2 Rooms, 4 Guests</option>
-                        <option>Executive Pod (Single)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Quick Station Chips */}
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="text-slate-400 font-medium">Popular Station Hubs:</span>
-                    {['New Delhi (NDLS)', 'Varanasi Jn (BSB)', 'Mumbai Central (MMCT)', 'Bengaluru City (SBC)'].map((hub) => (
-                      <button
-                        key={hub}
-                        type="button"
-                        onClick={() => { setHotelCity(hub); setHotelSearchActive(true); }}
-                        className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-colors ${
-                          hotelCity === hub ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {hub}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Featured Stays Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                    <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all space-y-3 flex flex-col justify-between">
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-start">
-                          <span className="text-2xl">🏨</span>
-                          <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">⭐ 4.8</span>
-                        </div>
-                        <h4 className="font-bold text-slate-900 text-sm">BMT Executive Pod Lounge</h4>
-                        <p className="text-xs text-slate-500">Platform #1, New Delhi (NDLS) • Soundproof pods with AC &amp; high-speed WiFi</p>
+                  {hotelBookingConfirmed ? (
+                    <div className="bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/60 border border-blue-200 rounded-3xl p-6 text-center space-y-4 animate-scale-in">
+                      <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-3xl mx-auto shadow-xs">
+                        🏨
                       </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-blue-800 bg-blue-100 px-3 py-1 rounded-full border border-blue-200">
+                          Access Pass: {hotelBookingConfirmed.bookingId}
+                        </span>
+                        <h4 className="font-extrabold text-xl text-slate-900 mt-2">
+                          {hotelBookingConfirmed.name} Reserved!
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-1 max-w-sm mx-auto">
+                          Station stay voucher generated for <strong>{hotelBookingConfirmed.passengerName}</strong>. Present voucher at platform concourse desk.
+                        </p>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 rounded-2xl p-4 text-xs text-left space-y-2.5 max-w-md mx-auto shadow-2xs">
+                        <div className="flex justify-between border-b border-slate-150 pb-2">
+                          <span className="text-slate-500">Location:</span>
+                          <strong className="text-slate-900">{hotelBookingConfirmed.station}</strong>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-150 pb-2">
+                          <span className="text-slate-500">Check-in:</span>
+                          <strong className="text-slate-900">{hotelBookingConfirmed.checkIn}</strong>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-150 pb-2">
+                          <span className="text-slate-500">Guests &amp; Tier:</span>
+                          <strong className="text-slate-900">{hotelBookingConfirmed.guests} · {hotelBookingConfirmed.rate}</strong>
+                        </div>
+                        <div className="flex justify-between items-center pt-1">
+                          <span className="text-slate-500 font-bold">Digital Access Keycode:</span>
+                          <strong className="text-blue-700 font-mono font-black text-sm bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                            {hotelBookingConfirmed.keyCode}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-center gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => window.print()}
+                          className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                        >
+                          🖨️ Print Voucher
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHotelBookingConfirmed(null)}
+                          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
+                        >
+                          Reserve Another Stay
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Search Bar for Hotels */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Hourly Rate</p>
-                          <p className="font-extrabold text-slate-900 text-sm">₹899 <span className="text-[10px] text-slate-500 font-normal">/ 6 hrs</span></p>
+                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Station / City</label>
+                          <input
+                            type="text"
+                            value={hotelCity}
+                            onChange={(e) => setHotelCity(e.target.value)}
+                            placeholder="Station or City Name"
+                            className="input-field text-xs font-semibold text-slate-800"
+                          />
                         </div>
-                        <Link to="/services" className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs">
-                          Book Pod
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all space-y-3 flex flex-col justify-between">
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-start">
-                          <span className="text-2xl">🛏️</span>
-                          <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">⭐ 4.7</span>
-                        </div>
-                        <h4 className="font-bold text-slate-900 text-sm">Rail Yatri Comfort Hotel</h4>
-                        <p className="text-xs text-slate-500">100m from Station Gate 2, Mumbai Central • 24x7 check-in, hot shower</p>
-                      </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
                         <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Nightly Rate</p>
-                          <p className="font-extrabold text-slate-900 text-sm">₹1,499 <span className="text-[10px] text-slate-500 font-normal">/ night</span></p>
+                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Check-in</label>
+                          <input
+                            type="date"
+                            value={hotelCheckIn}
+                            onChange={(e) => setHotelCheckIn(e.target.value)}
+                            className="input-field text-xs font-semibold text-slate-800"
+                          />
                         </div>
-                        <Link to="/services" className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs">
-                          Reserve
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all space-y-3 flex flex-col justify-between">
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-start">
-                          <span className="text-2xl">🏛️</span>
-                          <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">⭐ 4.9</span>
-                        </div>
-                        <h4 className="font-bold text-slate-900 text-sm">Heritage Retiring Rooms</h4>
-                        <p className="text-xs text-slate-500">Varanasi Cantt (BSB) • Authentic Indian vegetarian catering &amp; locker facility</p>
-                      </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
                         <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Nightly Rate</p>
-                          <p className="font-extrabold text-slate-900 text-sm">₹1,199 <span className="text-[10px] text-slate-500 font-normal">/ night</span></p>
+                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Check-out</label>
+                          <input
+                            type="date"
+                            value={hotelCheckOut}
+                            onChange={(e) => setHotelCheckOut(e.target.value)}
+                            className="input-field text-xs font-semibold text-slate-800"
+                          />
                         </div>
-                        <Link to="/services" className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs">
-                          Reserve
-                        </Link>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Guests &amp; Rooms</label>
+                          <select
+                            value={hotelGuests}
+                            onChange={(e) => setHotelGuests(e.target.value)}
+                            className="input-field text-xs font-semibold text-slate-800"
+                          >
+                            <option>1 Room, 1 Guest</option>
+                            <option>1 Room, 2 Guests</option>
+                            <option>2 Rooms, 4 Guests</option>
+                            <option>Executive Pod (Single)</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+
+                      {/* Quick Station Chips */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-slate-400 font-medium">Popular Station Hubs:</span>
+                        {['New Delhi (NDLS)', 'Varanasi Jn (BSB)', 'Mumbai Central (MMCT)', 'Bengaluru City (SBC)'].map((hub) => (
+                          <button
+                            key={hub}
+                            type="button"
+                            onClick={() => { setHotelCity(hub); setHotelSearchActive(true); }}
+                            className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-colors cursor-pointer ${
+                              hotelCity === hub ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {hub}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Featured Stays Cards with Direct In-Place Booking */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all space-y-3 flex flex-col justify-between">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-start">
+                              <span className="text-2xl">🏨</span>
+                              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">⭐ 4.8</span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-sm">BMT Executive Pod Lounge</h4>
+                            <p className="text-xs text-slate-500">Platform #1, {hotelCity} • Soundproof pods with AC &amp; high-speed WiFi</p>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase">Hourly Rate</p>
+                              <p className="font-extrabold text-slate-900 text-sm">₹899 <span className="text-[10px] text-slate-500 font-normal">/ 6 hrs</span></p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleBookHotel({
+                                name: 'BMT Executive Pod Lounge',
+                                station: `Platform #1, ${hotelCity}`,
+                                rate: '₹899 (6 hrs)'
+                              })}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                            >
+                              Book Pod
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all space-y-3 flex flex-col justify-between">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-start">
+                              <span className="text-2xl">🛏️</span>
+                              <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">⭐ 4.7</span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-sm">Rail Yatri Comfort Hotel</h4>
+                            <p className="text-xs text-slate-500">100m from Station Concourse, {hotelCity} • 24x7 check-in, hot shower</p>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase">Nightly Rate</p>
+                              <p className="font-extrabold text-slate-900 text-sm">₹1,499 <span className="text-[10px] text-slate-500 font-normal">/ night</span></p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleBookHotel({
+                                name: 'Rail Yatri Comfort Hotel',
+                                station: `Station Concourse, ${hotelCity}`,
+                                rate: '₹1,499 / night'
+                              })}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                            >
+                              Reserve
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 hover:bg-white hover:shadow-card transition-all space-y-3 flex flex-col justify-between">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-start">
+                              <span className="text-2xl">🏛️</span>
+                              <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">⭐ 4.9</span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-sm">Heritage Retiring Rooms</h4>
+                            <p className="text-xs text-slate-500">Heritage Wing, {hotelCity} • Authentic Indian vegetarian catering &amp; locker facility</p>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase">Nightly Rate</p>
+                              <p className="font-extrabold text-slate-900 text-sm">₹1,199 <span className="text-[10px] text-slate-500 font-normal">/ night</span></p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleBookHotel({
+                                name: 'Heritage Retiring Rooms',
+                                station: `Heritage Wing, ${hotelCity}`,
+                                rate: '₹1,199 / night'
+                              })}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                            >
+                              Reserve
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -2402,7 +2507,7 @@ export default function HomePage() {
       </div>
 
       {/* 2. Promotional Carousel Banner with Copy Code (Clean non-overlapping margin) */}
-      <div className="max-w-5xl mx-auto px-4 my-5 relative z-10">
+      <div className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 my-5 relative z-10">
         <div className={`rounded-3xl p-5 md:p-6 text-white shadow-card-hover bg-gradient-to-r ${PROMOTION_OFFERS[carouselIndex].gradient} transition-all duration-700 ease-in-out`}>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="space-y-1">
@@ -3682,11 +3787,11 @@ export default function HomePage() {
       )}
 
       {/* 8. Mobile App & Dedicated Platform Banner */}
-      <div className="bg-white py-12 md:py-14 px-4 border-t border-slate-150 relative">
-        <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12 relative z-10">
+      <div className="bg-white py-14 md:py-18 px-4 sm:px-6 lg:px-8 border-t border-slate-150 relative">
+        <div className="w-full max-w-6xl xl:max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-16 xl:gap-20 relative z-10">
           
           {/* Left Description Column */}
-          <div className="space-y-3.5 flex-1 max-w-xl">
+          <div className="space-y-4 flex-1 max-w-2xl">
             <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 font-bold text-[10px] sm:text-[11px] tracking-wider px-3 py-1 rounded-full uppercase border border-emerald-200/70 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               ✦ NEXT-GEN RAIL TICKETING APP
@@ -3699,29 +3804,29 @@ export default function HomePage() {
             </p>
 
             {/* Feature Highlights Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3 py-2 rounded-xl border border-slate-200/70">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3.5 py-2.5 rounded-xl border border-slate-200/70">
                 <span className="text-emerald-600 text-base">⚡</span>
                 <span>Sub-50ms Tatkal Engine</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3 py-2 rounded-xl border border-slate-200/70">
+              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3.5 py-2.5 rounded-xl border border-slate-200/70">
                 <span className="text-emerald-600 text-base">📶</span>
                 <span>Offline Ticket Pass &amp; PNR</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3 py-2 rounded-xl border border-slate-200/70">
+              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3.5 py-2.5 rounded-xl border border-slate-200/70">
                 <span className="text-emerald-600 text-base">🔔</span>
                 <span>Live Platform &amp; Delay Alerts</span>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3 py-2 rounded-xl border border-slate-200/70">
+              <div className="flex items-center gap-2.5 text-xs text-slate-700 font-semibold bg-slate-50/90 px-3.5 py-2.5 rounded-xl border border-slate-200/70">
                 <span className="text-emerald-600 text-base">🛡️</span>
                 <span>Zero-Fee UPI Cancellations</span>
               </div>
             </div>
           </div>
 
-          {/* Interactive App Download Showcase Card (Directly adjacent with balanced gap) */}
-          <div className="w-full sm:w-[320px] md:w-[340px] shrink-0">
-            <div className="bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/70 border border-emerald-200/90 rounded-3xl p-5 sm:p-6 shadow-xl shadow-emerald-950/10 space-y-3.5 text-center">
+          {/* Interactive App Download Showcase Card (Generously spaced) */}
+          <div className="w-full sm:w-[330px] lg:w-[360px] shrink-0">
+            <div className="bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/70 border border-emerald-200/90 rounded-3xl p-6 sm:p-7 shadow-xl shadow-emerald-950/10 space-y-4 text-center">
               
               {/* App Identity Row */}
               <div className="flex items-center justify-center gap-3">
