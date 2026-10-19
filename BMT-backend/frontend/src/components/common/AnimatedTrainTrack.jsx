@@ -295,12 +295,11 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
             </g>
 
             {/* ═══════════════════════════════════════════════════════════════════
-                COACH 2: PANTRY / BUFFET CAR (WITH ELECTRIC ROOF PANTOGRAPH)
+                COACH 2: PANTRY / BUFFET CAR
                 ═══════════════════════════════════════════════════════════════════ */}
             <g id="coach-2-pantry" transform="translate(251, 0)">
-              {/* Roof Pantograph (Articulated Electric Single-Arm) */}
-              <path d="M40 8 L48 2 L62 2 L56 8" stroke="#475569" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="46" y1="2" x2="64" y2="2" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+              {/* Roof AC Pod */}
+              <rect x="38" y="5" width="44" height="3" rx="1.5" fill="#475569" stroke="#334155" strokeWidth="0.5" />
 
               {/* Coach Body */}
               <rect x="0" y="8" width="120" height="19" rx="1" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.8" />
@@ -352,6 +351,13 @@ export default function AnimatedTrainTrack({ onTrackClick }) {
                 LOCOMOTIVE ENGINE: AERODYNAMIC BULLET NOSE (LEADING IN FRONT AT RIGHT)
                 ═══════════════════════════════════════════════════════════════════ */}
             <g id="locomotive-engine" transform="translate(379, 0)">
+              {/* Roof Electric Pantograph (High-Speed Single-Arm with Red Collector Pan) */}
+              <path d="M28 8 L36 2 L50 2 L44 8" stroke="#475569" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="34" y1="2" x2="52" y2="2" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
+              {/* Ceramic High-Voltage Roof Insulators */}
+              <circle cx="28" cy="7.5" r="0.8" fill="#d97706" />
+              <circle cx="44" cy="7.5" r="0.8" fill="#d97706" />
+
               {/* Forward Light Beam Cone casting over the track! */}
               <polygon
                 points="136,22 220,10 220,38 136,27"
